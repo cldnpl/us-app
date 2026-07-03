@@ -6,8 +6,7 @@ struct MainTabView: View {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            ComingSoonView(title: "Gallery", symbol: "photo.on.rectangle.angled",
-                           blurb: "Your shared album of photos & videos.")
+            GalleryView()
                 .tabItem { Label("Gallery", systemImage: "photo.on.rectangle") }
 
             ComingSoonView(title: "Together", symbol: "scribble.variable",

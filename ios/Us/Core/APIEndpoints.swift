@@ -63,4 +63,24 @@ extension APIClient {
         try await sendVoid("/v1/devices", method: "POST",
                            body: ["apnsToken": apnsToken, "environment": environment])
     }
+
+    // MARK: - Gallery
+
+    func listMedia() async throws -> MediaList {
+        try await send("/v1/media")
+    }
+
+    func uploadPhoto(_ jpeg: Data, caption: String?) async throws -> MediaItem {
+        let data = try await uploadImage("/v1/media", imageData: jpeg, filename: "photo.jpg", caption: caption)
+        return try decoder.decode(MediaItem.self, from: data)
+    }
+
+    func deletePhoto(id: String) async throws {
+        try await sendVoid("/v1/media/\(id)", method: "DELETE")
+    }
+
+    /// Loads image bytes for a relative media path (thumb or full).
+    func imageData(relativePath: String) async throws -> Data {
+        try await fetchData(relativePath)
+    }
 }

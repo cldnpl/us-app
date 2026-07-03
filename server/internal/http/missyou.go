@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -34,31 +33,10 @@ func (d Deps) handleSendMissYou(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Notify the partner (fire-and-forget).
-	sender, _ := d.Store.GetUserByID(r.Context(), userID)
-	if partner, perr := d.Store.GetPartner(r.Context(), c.ID, userID); perr == nil {
-		if tokens, terr := d.Store.GetDeviceTokens(r.Context(), partner.ID); terr == nil && len(tokens) > 0 {
-			list := make([]string, len(tokens))
-			for i, t := range tokens {
-				list[i] = t.Token
-			}
-			name := sender.DisplayName
-			if name == "" {
-				name = "Your partner"
-			}
-			go func() {
-				if err := d.Push.Send(context.Background(), list, push.Notification{
-					Title: "💜",
-					Body:  name + " misses you",
-					Data:  map[string]string{"type": "miss_you"},
-				}); err != nil {
-					d.Logger.Warn("miss-you push failed", "err", err, "recipients", len(list))
-				} else {
-					d.Logger.Info("miss-you push sent", "recipients", len(list))
-				}
-			}()
-		}
-	}
+	// Notify the partner.
+	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
+		return push.Notification{Title: "💜", Body: name + " misses you", Data: map[string]string{"type": "miss_you"}}
+	})
 
 	writeJSON(w, http.StatusCreated, toDomainMissYou(ev))
 }

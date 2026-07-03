@@ -14,6 +14,7 @@ import (
 	"github.com/sharepact/us/internal/config"
 	"github.com/sharepact/us/internal/db"
 	httpapi "github.com/sharepact/us/internal/http"
+	"github.com/sharepact/us/internal/media"
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
@@ -57,6 +58,11 @@ func run(logger *slog.Logger) error {
 		}
 	}
 
+	mediaStore, err := media.NewStorage(cfg.MediaDir)
+	if err != nil {
+		return err
+	}
+
 	router := httpapi.NewRouter(httpapi.Deps{
 		Config: cfg,
 		Pool:   pool,
@@ -64,6 +70,7 @@ func run(logger *slog.Logger) error {
 		Store:  store.New(pool),
 		Apple:  auth.NewAppleVerifier(cfg.AppleClientIDs),
 		Push:   sender,
+		Media:  mediaStore,
 	})
 
 	srv := &http.Server{

@@ -36,3 +36,15 @@ type MissYouEvent struct {
 	Kind      string    `json:"kind"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+// Media is a shared gallery item. FileURL/ThumbURL are relative API paths the
+// client resolves against the base URL (fetched with the auth header).
+type Media struct {
+	ID         string    `json:"id"`
+	Kind       string    `json:"kind"`
+	Caption    *string   `json:"caption,omitempty"`
+	UploaderID string    `json:"uploaderId"`
+	FileURL    string    `json:"fileUrl"`
+	ThumbURL   string    `json:"thumbUrl"`
+	CreatedAt  time.Time `json:"createdAt"`
+}

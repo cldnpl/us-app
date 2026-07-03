@@ -17,6 +17,9 @@ targets:
     platform: iOS
     sources:
       - path: Us
+      - path: Shared
+    dependencies:
+      - target: UsWidgetExtension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: us.elbek.com
@@ -47,3 +50,23 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp
+
+  UsWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: UsWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: us.elbek.com.widget
+        PRODUCT_NAME: UsWidget
+        DEVELOPMENT_TEAM: "988N3YY62P"
+        CODE_SIGN_ENTITLEMENTS: UsWidget/UsWidget.entitlements
+        GENERATE_INFOPLIST_FILE: "NO"
+    info:
+      path: UsWidget/Info.plist
+      properties:
+        CFBundleDisplayName: "Us."
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension

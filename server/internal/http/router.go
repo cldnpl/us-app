@@ -13,6 +13,7 @@ import (
 	"github.com/sharepact/us/internal/auth"
 	"github.com/sharepact/us/internal/config"
 	"github.com/sharepact/us/internal/http/middleware"
+	"github.com/sharepact/us/internal/media"
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
@@ -25,6 +26,7 @@ type Deps struct {
 	Store  *store.Store
 	Apple  *auth.AppleVerifier
 	Push   push.Sender
+	Media  *media.Storage
 
 	MissYouLimiter *middleware.RateLimiter
 }
@@ -86,6 +88,12 @@ func NewRouter(d Deps) http.Handler {
 
 			r.Post("/miss-you", d.handleSendMissYou)
 			r.Get("/miss-you", d.handleListMissYou)
+
+			r.Post("/media", d.handleUploadMedia)
+			r.Get("/media", d.handleListMedia)
+			r.Get("/media/{id}/file", d.handleServeMedia(false))
+			r.Get("/media/{id}/thumb", d.handleServeMedia(true))
+			r.Delete("/media/{id}", d.handleDeleteMedia)
 		})
 	})
 

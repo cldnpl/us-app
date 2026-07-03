@@ -103,6 +103,56 @@ final class APIClient {
         TokenStore.refreshToken = auth.refreshToken
         return true
     }
+
+    // MARK: - Media (raw bytes + multipart upload)
+
+    /// Authenticated GET returning raw bytes (used for loading images).
+    func fetchData(_ path: String) async throws -> Data {
+        try await raw(path, method: "GET", body: nil, authorized: true, retryOn401: true)
+    }
+
+    /// Uploads a single image as multipart/form-data and returns the JSON response.
+    func uploadImage(_ path: String, imageData: Data, filename: String, caption: String?) async throws -> Data {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = Data()
+        func appendString(_ s: String) { body.append(s.data(using: .utf8)!) }
+        appendString("--\(boundary)\r\n")
+        appendString("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n")
+        appendString("Content-Type: image/jpeg\r\n\r\n")
+        body.append(imageData)
+        appendString("\r\n")
+        if let caption, !caption.isEmpty {
+            appendString("--\(boundary)\r\n")
+            appendString("Content-Disposition: form-data; name=\"caption\"\r\n\r\n")
+            appendString(caption)
+            appendString("\r\n")
+        }
+        appendString("--\(boundary)--\r\n")
+
+        func makeRequest() -> URLRequest {
+            var req = URLRequest(url: baseURL.appendingPathComponent(path))
+            req.httpMethod = "POST"
+            req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            if let token = TokenStore.accessToken {
+                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            }
+            req.httpBody = body
+            return req
+        }
+
+        var (data, response) = try await session.data(for: makeRequest())
+        if (response as? HTTPURLResponse)?.statusCode == 401, try await refresh() {
+            (data, response) = try await session.data(for: makeRequest())
+        }
+        guard let status = (response as? HTTPURLResponse)?.statusCode else {
+            throw APIClientError.invalidResponse
+        }
+        guard (200..<300).contains(status) else {
+            if let apiErr = try? decoder.decode(APIErrorResponse.self, from: data) { throw apiErr }
+            throw APIClientError.http(status)
+        }
+        return data
+    }
 }
 
 enum DateParsing {
