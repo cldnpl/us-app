@@ -83,4 +83,34 @@ extension APIClient {
     func imageData(relativePath: String) async throws -> Data {
         try await fetchData(relativePath)
     }
+
+    // MARK: - Moments
+
+    func listMilestones() async throws -> [Milestone] {
+        let list: MilestoneList = try await send("/v1/milestones")
+        return list.milestones
+    }
+
+    func createMilestone(title: String, date: String, kind: String) async throws -> Milestone {
+        try await send("/v1/milestones", method: "POST",
+                       body: ["title": title, "date": date, "kind": kind])
+    }
+
+    func deleteMilestone(id: String) async throws {
+        try await sendVoid("/v1/milestones/\(id)", method: "DELETE")
+    }
+
+    func listReunions() async throws -> [Reunion] {
+        let list: ReunionList = try await send("/v1/reunions")
+        return list.reunions
+    }
+
+    func createReunion(title: String, targetDate: String) async throws -> Reunion {
+        try await send("/v1/reunions", method: "POST",
+                       body: ["title": title, "targetDate": targetDate])
+    }
+
+    func deleteReunion(id: String) async throws {
+        try await sendVoid("/v1/reunions/\(id)", method: "DELETE")
+    }
 }

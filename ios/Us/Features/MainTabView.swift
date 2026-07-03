@@ -13,8 +13,7 @@ struct MainTabView: View {
                            blurb: "Draw together, play games, leave notes.")
                 .tabItem { Label("Together", systemImage: "gamecontroller") }
 
-            ComingSoonView(title: "Moments", symbol: "calendar.badge.clock",
-                           blurb: "Anniversaries, reunions & your memory timeline.")
+            MomentsView()
                 .tabItem { Label("Moments", systemImage: "calendar") }
 
             ProfileView()

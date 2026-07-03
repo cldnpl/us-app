@@ -48,3 +48,18 @@ type Media struct {
 	ThumbURL   string    `json:"thumbUrl"`
 	CreatedAt  time.Time `json:"createdAt"`
 }
+
+// Milestone is a dated relationship event (first date, anniversary, …).
+type Milestone struct {
+	ID    string    `json:"id"`
+	Title string    `json:"title"`
+	Date  time.Time `json:"date"`
+	Kind  string    `json:"kind"`
+}
+
+// Reunion is a future date to count down to (great for long distance).
+type Reunion struct {
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	TargetDate time.Time `json:"targetDate"`
+}

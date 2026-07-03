@@ -60,6 +60,27 @@ struct MediaList: Codable {
     let storageUsed: Int64
 }
 
+struct Milestone: Codable, Identifiable {
+    let id: String
+    let title: String
+    let date: Date
+    let kind: String
+}
+
+struct MilestoneList: Codable {
+    let milestones: [Milestone]
+}
+
+struct Reunion: Codable, Identifiable {
+    let id: String
+    let title: String
+    let targetDate: Date
+}
+
+struct ReunionList: Codable {
+    let reunions: [Reunion]
+}
+
 /// Error payload returned by the API ({"error": "...", "code": "..."}).
 struct APIErrorResponse: Codable, Error {
     let error: String

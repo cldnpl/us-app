@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00F18112931C86D47AB2A687 /* MomentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6659B6282865999AE092EE /* MomentsView.swift */; };
 		02ECDE50B3884287C487B0AF /* UsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6AB46D7A68082C5C6C4C39E /* UsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		184D2AD9A5A725E6362FFEC0 /* UsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19564A291FAFFE2898996196 /* UsApp.swift */; };
 		1D3B41B870716A541F0D34C1 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251A0284E86354A2A203D248 /* Models.swift */; };
@@ -87,6 +88,7 @@
 		C7E0661ACBC435BFB3199C9F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		CBD710A90E4247B5A9FF820F /* UsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsWidget.swift; sourceTree = "<group>"; };
 		CD249F764F14A63C5CD51B8D /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		EA6659B6282865999AE092EE /* MomentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentsView.swift; sourceTree = "<group>"; };
 		FF76B2DE10E2AB402F433015 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -214,6 +216,7 @@
 				58D850B99E8F960F2D687EBE /* Auth */,
 				D17A381CD9B37CFADE3484A5 /* Gallery */,
 				38E6DB11B2920BE50276A732 /* Home */,
+				E323493A1D027580AF8FEB6F /* Moments */,
 				B853D8AD95B8E2EC4AC23908 /* Onboarding */,
 				65D1839D1FE5FF781E3A8481 /* Pairing */,
 				74F96603685CC52EF4E8A28D /* Profile */,
@@ -228,6 +231,14 @@
 				8E20F2BE487797208C99BF44 /* RemoteImage.swift */,
 			);
 			path = Gallery;
+			sourceTree = "<group>";
+		};
+		E323493A1D027580AF8FEB6F /* Moments */ = {
+			isa = PBXGroup;
+			children = (
+				EA6659B6282865999AE092EE /* MomentsView.swift */,
+			);
+			path = Moments;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -344,6 +355,7 @@
 				84128D68FE1615D874619234 /* Keychain.swift in Sources */,
 				BF8EB7640654AFA6AF038103 /* MainTabView.swift in Sources */,
 				1D3B41B870716A541F0D34C1 /* Models.swift in Sources */,
+				00F18112931C86D47AB2A687 /* MomentsView.swift in Sources */,
 				67DED55481D5BBE380ED0639 /* PairingView.swift in Sources */,
 				F2EF012FB70C011CD05059B8 /* ProfileView.swift in Sources */,
 				E4043192508311973ED194F8 /* PushManager.swift in Sources */,
