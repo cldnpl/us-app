@@ -81,6 +81,15 @@ struct ReunionList: Codable {
     let reunions: [Reunion]
 }
 
+struct PartnerLocation: Codable {
+    let sharing: Bool
+    let lat: Double?
+    let lng: Double?
+    let mode: String?
+    let partnerName: String?
+    let updatedAt: Date?
+}
+
 /// Error payload returned by the API ({"error": "...", "code": "..."}).
 struct APIErrorResponse: Codable, Error {
     let error: String

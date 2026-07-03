@@ -14,6 +14,7 @@ struct HomeView: View {
                     VStack(spacing: 24) {
                         partnerCard
                         missYouButton
+                        mapCard
                         if let errorMessage {
                             Text(errorMessage).font(.footnote).foregroundStyle(.red)
                         }
@@ -68,6 +69,22 @@ struct HomeView: View {
             .shadow(color: Theme.coral.opacity(0.4), radius: 16, y: 8)
         }
         .disabled(isSending)
+    }
+
+    private var mapCard: some View {
+        NavigationLink {
+            PartnerMapView()
+        } label: {
+            HStack {
+                Image(systemName: "map.fill").foregroundStyle(Theme.coral)
+                Text("Where's \(session.partner?.displayName ?? "your partner")?")
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
     }
 
     private var initials: String {
