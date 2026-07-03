@@ -25,6 +25,7 @@ final class Session: ObservableObject {
         do {
             user = try await APIClient.shared.me()
             await loadCouple()
+            await PushManager.shared.onAuthenticated()
         } catch {
             TokenStore.clear()
             state = .signedOut
@@ -51,6 +52,7 @@ final class Session: ObservableObject {
         TokenStore.refreshToken = resp.refreshToken
         user = resp.user
         await loadCouple()
+        await PushManager.shared.onAuthenticated()
     }
 
     func signOut() async {

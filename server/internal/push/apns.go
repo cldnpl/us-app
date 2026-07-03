@@ -2,6 +2,7 @@ package push
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
@@ -35,12 +36,16 @@ func (s *apnsSender) Send(ctx context.Context, deviceTokens []string, n Notifica
 		p.Custom(k, v)
 	}
 	for _, deviceToken := range deviceTokens {
-		if _, err := s.client.PushWithContext(ctx, &apns2.Notification{
+		res, err := s.client.PushWithContext(ctx, &apns2.Notification{
 			DeviceToken: deviceToken,
 			Topic:       s.topic,
 			Payload:     p,
-		}); err != nil {
+		})
+		if err != nil {
 			return err
+		}
+		if !res.Sent() {
+			return fmt.Errorf("apns rejected (%d): %s", res.StatusCode, res.Reason)
 		}
 	}
 	return nil
