@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WidgetKit
 
 /// Global app state: authentication, current user, and couple.
 @MainActor
@@ -39,6 +40,7 @@ final class Session: ObservableObject {
                 self.couple = couple
                 self.partner = resp.partner
                 state = .ready
+                updateWidget()
             } else {
                 state = .needsPairing
             }
@@ -68,5 +70,15 @@ final class Session: ObservableObject {
     var daysTogether: Int? {
         guard let start = couple?.startDate else { return nil }
         return Calendar.current.dateComponents([.day], from: start, to: Date()).day
+    }
+
+    /// Publish the couple snapshot to the App Group and refresh the widget.
+    private func updateWidget() {
+        WidgetStore.save(WidgetSnapshot(
+            partnerName: partner?.displayName ?? "",
+            daysTogether: daysTogether,
+            updatedAt: Date()
+        ))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

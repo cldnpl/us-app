@@ -7,8 +7,10 @@ Bundle id: **`us.elbek.com`**.
 Create/enable an App ID `us.elbek.com` with:
 - ✅ **Push Notifications**
 - ✅ **Sign in with Apple**
-- ✅ **App Groups** → create `group.us.elbek.com` (used later by the widget)
+- ✅ **App Groups** → create `group.us.elbek.com` (used by the widget)
 - ✅ **In-App Purchase** (on by default)
+
+The **widget** has its own App ID **`us.elbek.com.widget`** — enable **App Groups** on it too (same `group.us.elbek.com`) so the app and widget share data. Xcode's automatic signing creates the App ID on first device build; just confirm the App Group capability is checked on both the app and the widget target.
 
 ## 2. APNs Auth Key (.p8) — for push
 - Keys → **+** → enable **Apple Push Notifications service (APNs)** → download the `.p8` (once only).

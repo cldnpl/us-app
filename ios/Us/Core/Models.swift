@@ -44,6 +44,22 @@ struct MissYouList: Codable {
     let events: [MissYouEvent]
 }
 
+struct MediaItem: Codable, Identifiable {
+    let id: String
+    let kind: String
+    let caption: String?
+    let uploaderId: String
+    let fileUrl: String
+    let thumbUrl: String
+    let createdAt: Date
+}
+
+struct MediaList: Codable {
+    let media: [MediaItem]
+    let count: Int
+    let storageUsed: Int64
+}
+
 /// Error payload returned by the API ({"error": "...", "code": "..."}).
 struct APIErrorResponse: Codable, Error {
     let error: String
