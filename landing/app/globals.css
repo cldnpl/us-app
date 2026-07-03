@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --coral: #ff6b6b;
+  --blush: #ffb5c2;
+  --peach: #ffd9ba;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #2e2933;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
