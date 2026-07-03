@@ -1,0 +1,44 @@
+# ---- Secrets (NEVER commit) ----
+.env
+*.env
+!*.env.example
+**/secrets/**
+*.p8
+*.p12
+*.mobileprovision
+deploy/*.local
+id_rsa*
+*.pem
+
+# ---- macOS ----
+.DS_Store
+
+# ---- Go ----
+server/bin/
+server/tmp/
+*.test
+*.out
+
+# ---- Node / Next.js (landing) ----
+landing/node_modules/
+landing/.next/
+landing/out/
+landing/.vercel/
+npm-debug.log*
+yarn-error.log*
+
+# ---- Xcode / iOS ----
+ios/**/build/
+ios/**/DerivedData/
+ios/**/*.xcuserstate
+ios/**/xcuserdata/
+ios/**/.swiftpm/
+*.xcworkspace/xcuserdata/
+
+# ---- Media / uploads (local dev) ----
+server/media-data/
+server/postgres-data/
+
+# ---- Editors ----
+.idea/
+.vscode/

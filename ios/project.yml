@@ -1,0 +1,49 @@
+name: Us
+options:
+  bundleIdPrefix: com.sharepact
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Us:
+    type: application
+    platform: iOS
+    sources:
+      - path: Us
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: us.elbek.com
+        PRODUCT_NAME: Us
+        DEVELOPMENT_TEAM: "988N3YY62P"
+        CODE_SIGN_ENTITLEMENTS: Us/Us.entitlements
+        GENERATE_INFOPLIST_FILE: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    info:
+      path: Us/Info.plist
+      properties:
+        CFBundleDisplayName: "Us."
+        CFBundleIconName: AppIcon
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UILaunchScreen: {}
+        ITSAppUsesNonExemptEncryption: false
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSLocationWhenInUseUsageDescription: "Us shows your location to your partner only when you choose to share it."
+        NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - usapp
