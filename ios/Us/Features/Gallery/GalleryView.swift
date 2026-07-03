@@ -146,8 +146,9 @@ private struct PhotoScatterView: View {
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .top)
-                .frame(height: CGFloat(max(items.count - 1, 0)) * step + cardH + 90)
+                .frame(maxWidth: .infinity,
+                       height: CGFloat(max(items.count - 1, 0)) * step + cardH + 90,
+                       alignment: .top)
                 .animation(.spring(response: 0.5, dampingFraction: 0.85), value: items.count)
             }
         }
