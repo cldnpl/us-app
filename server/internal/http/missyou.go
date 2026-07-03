@@ -47,11 +47,15 @@ func (d Deps) handleSendMissYou(w http.ResponseWriter, r *http.Request) {
 				name = "Your partner"
 			}
 			go func() {
-				_ = d.Push.Send(context.Background(), list, push.Notification{
+				if err := d.Push.Send(context.Background(), list, push.Notification{
 					Title: "💜",
 					Body:  name + " misses you",
 					Data:  map[string]string{"type": "miss_you"},
-				})
+				}); err != nil {
+					d.Logger.Warn("miss-you push failed", "err", err, "recipients", len(list))
+				} else {
+					d.Logger.Info("miss-you push sent", "recipients", len(list))
+				}
 			}()
 		}
 	}
