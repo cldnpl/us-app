@@ -70,6 +70,7 @@ func (d Deps) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	id := uuid.NewString()
 	fullRel, thumbRel, size, err := d.Media.SaveImage(c.ID, id, file)
 	if err != nil {
+		d.Logger.Error("media: save image failed", "err", err)
 		writeError(w, http.StatusBadRequest, "bad_image", "could not process that image")
 		return
 	}
