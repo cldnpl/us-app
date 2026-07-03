@@ -9,8 +9,7 @@ struct MainTabView: View {
             GalleryView()
                 .tabItem { Label("Gallery", systemImage: "photo.on.rectangle") }
 
-            ComingSoonView(title: "Together", symbol: "scribble.variable",
-                           blurb: "Draw together, play games, leave notes.")
+            TogetherView()
                 .tabItem { Label("Together", systemImage: "gamecontroller") }
 
             MomentsView()
