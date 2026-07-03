@@ -63,3 +63,13 @@ type Reunion struct {
 	Title      string    `json:"title"`
 	TargetDate time.Time `json:"targetDate"`
 }
+
+// PartnerLocation is the partner's opt-in shared location, or {sharing:false}.
+type PartnerLocation struct {
+	Sharing     bool       `json:"sharing"`
+	Lat         *float64   `json:"lat,omitempty"`
+	Lng         *float64   `json:"lng,omitempty"`
+	Mode        *string    `json:"mode,omitempty"`
+	PartnerName *string    `json:"partnerName,omitempty"`
+	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+}

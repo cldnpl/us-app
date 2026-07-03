@@ -113,4 +113,20 @@ extension APIClient {
     func deleteReunion(id: String) async throws {
         try await sendVoid("/v1/reunions/\(id)", method: "DELETE")
     }
+
+    // MARK: - Partner location
+
+    func updateLocation(lat: Double, lng: Double, accuracy: Double?, mode: String) async throws {
+        struct Body: Encodable { let lat: Double; let lng: Double; let accuracy: Double?; let mode: String }
+        try await sendVoid("/v1/location", method: "PUT",
+                           body: Body(lat: lat, lng: lng, accuracy: accuracy, mode: mode))
+    }
+
+    func stopSharingLocation() async throws {
+        try await sendVoid("/v1/location", method: "PUT", body: ["mode": "off"])
+    }
+
+    func partnerLocation() async throws -> PartnerLocation {
+        try await send("/v1/location")
+    }
 }

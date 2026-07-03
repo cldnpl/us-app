@@ -101,6 +101,10 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/reunions", d.handleListReunions)
 			r.Post("/reunions", d.handleCreateReunion)
 			r.Delete("/reunions/{id}", d.handleDeleteReunion)
+
+			r.Put("/location", d.handleUpdateLocation)
+			r.Get("/location", d.handleGetPartnerLocation)
+			r.Delete("/location", d.handleStopLocation)
 		})
 	})
 
