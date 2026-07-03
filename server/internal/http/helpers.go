@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/sharepact/us/internal/domain"
@@ -9,6 +10,25 @@ import (
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
+
+// coupleForRequest returns the authenticated user's couple, writing the
+// appropriate error (401 unauthenticated, 409 not paired) and returning ok=false.
+func (d Deps) coupleForRequest(w http.ResponseWriter, r *http.Request) (store.Couple, string, bool) {
+	userID, ok := d.authedUser(w, r)
+	if !ok {
+		return store.Couple{}, "", false
+	}
+	c, err := d.Store.GetCoupleForUser(r.Context(), userID)
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusConflict, "not_paired", "pair with your partner first")
+		return store.Couple{}, "", false
+	}
+	if err != nil {
+		d.serverError(w, "couple lookup", err)
+		return store.Couple{}, "", false
+	}
+	return c, userID, true
+}
 
 // sendPartnerPush delivers a notification to the other member of the couple.
 // `build` receives the sender's display name so callers can compose the body.

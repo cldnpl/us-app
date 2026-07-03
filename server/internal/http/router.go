@@ -94,6 +94,13 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/media/{id}/file", d.handleServeMedia(false))
 			r.Get("/media/{id}/thumb", d.handleServeMedia(true))
 			r.Delete("/media/{id}", d.handleDeleteMedia)
+
+			r.Get("/milestones", d.handleListMilestones)
+			r.Post("/milestones", d.handleCreateMilestone)
+			r.Delete("/milestones/{id}", d.handleDeleteMilestone)
+			r.Get("/reunions", d.handleListReunions)
+			r.Post("/reunions", d.handleCreateReunion)
+			r.Delete("/reunions/{id}", d.handleDeleteReunion)
 		})
 	})
 
