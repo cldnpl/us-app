@@ -61,7 +61,10 @@ struct SettingsView: View {
                 // one (so it doesn't fire on the initial load).
                 let savedDay = session.couple?.startDate.map { Calendar.current.startOfDay(for: $0) }
                 if Calendar.current.startOfDay(for: newDate) != savedDay {
-                    Task { await saveStartDate() }
+                    // Use the session helper so the test-mode persistence
+                    // (testStartDate) + widget update happen. Don't call a local
+                    // saveStartDate that goes through loadCouple → reset.
+                    Task { await session.saveStartDate(newDate); Haptics.success() }
                 }
             }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
@@ -84,13 +87,6 @@ struct SettingsView: View {
         return max(0, cal.dateComponents([.day],
                                          from: cal.startOfDay(for: startDate),
                                          to: cal.startOfDay(for: Date())).day ?? 0)
-    }
-
-    private func saveStartDate() async {
-        let iso = startDate.formatted(.iso8601.year().month().day().dateSeparator(.dash))
-        _ = try? await APIClient.shared.setStartDate(iso)
-        await session.loadCouple()
-        Haptics.success()
     }
 
     private func unpair() async {
