@@ -201,9 +201,10 @@ struct HomeView: View {
         publishDistance()
     }
 
-    /// Keep the distance widget in sync with the REAL distance (not the sample).
+    /// Keep the distance widget in sync with what the Home map shows (real when
+    /// available; the DEBUG sample otherwise, so the test widget matches).
     private func publishDistance() {
-        session.publishDistance(realKm)
+        session.publishDistance(mapKm)
     }
 
     private func sendMissYou() async {

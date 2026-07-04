@@ -124,15 +124,32 @@ final class Session: ObservableObject {
     }
     #endif
 
+    /// Names written into the widget snapshot. In DEBUG the partner falls back
+    /// to "Elbek" (and self to "Claudia") so the test widget matches the app.
+    private var snapshotMyName: String {
+        #if DEBUG
+        return user?.displayName ?? "Claudia"
+        #else
+        return user?.displayName ?? ""
+        #endif
+    }
+    private var snapshotPartnerName: String {
+        let real = partner?.displayName
+        #if DEBUG
+        if real == nil || real?.isEmpty == true || real == "Partner" { return "Elbek" }
+        #endif
+        return real ?? ""
+    }
+
     /// Publish the couple snapshot to the App Group and refresh the widget.
     private func updateWidget() {
-        PartnerPrefs.partnerName = partner?.displayName
+        PartnerPrefs.partnerName = snapshotPartnerName
         let existing = WidgetStore.load()
         WidgetStore.save(WidgetSnapshot(
-            partnerName: partner?.displayName ?? "",
+            partnerName: snapshotPartnerName,
             daysTogether: daysTogether,
             updatedAt: Date(),
-            myName: user?.displayName,
+            myName: snapshotMyName,
             distanceKm: existing?.distanceKm
         ))
         WidgetCenter.shared.reloadAllTimelines()
@@ -143,10 +160,10 @@ final class Session: ObservableObject {
     func publishDistance(_ km: Double?) {
         let existing = WidgetStore.load()
         WidgetStore.save(WidgetSnapshot(
-            partnerName: partner?.displayName ?? existing?.partnerName ?? "",
+            partnerName: snapshotPartnerName.isEmpty ? (existing?.partnerName ?? "") : snapshotPartnerName,
             daysTogether: daysTogether ?? existing?.daysTogether,
             updatedAt: Date(),
-            myName: user?.displayName ?? existing?.myName,
+            myName: snapshotMyName.isEmpty ? existing?.myName : snapshotMyName,
             distanceKm: km
         ))
         WidgetCenter.shared.reloadAllTimelines()
