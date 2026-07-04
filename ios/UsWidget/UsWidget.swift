@@ -39,23 +39,14 @@ struct UsWidgetEntryView: View {
     var entry: UsEntry
 
     var body: some View {
-        Group {
-            if #available(iOS 17.0, *) {
-                // Interactive: tapping runs the intent in the background and
-                // sends "I miss you" WITHOUT opening the app.
-                Button(intent: MissYouIntent()) { info }
-                    .buttonStyle(.plain)
-            } else {
-                // iOS 16 can't run a widget intent, so fall back to a deep link
-                // that opens the app, which sends on launch.
-                info.widgetURL(SharedConfig.missYouURL)
-            }
-        }
-        .widgetBackground(warmGradient)
+        // Tapping the widget simply opens the app (no action, no send).
+        // "I miss you" is sent only from the button on the Home screen.
+        info.widgetBackground(warmGradient)
     }
 
     private var info: some View {
         VStack(spacing: 6) {
+            Image(systemName: "heart.fill").font(.title3).foregroundStyle(.white)
             if let days = entry.snapshot?.daysTogether {
                 Text("\(days)")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
@@ -68,17 +59,10 @@ struct UsWidgetEntryView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
             }
-            Label("I miss you", systemImage: "heart.fill")
-                .font(.caption2.bold())
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10).padding(.vertical, 5)
-                .background(.white.opacity(0.22), in: Capsule())
-                .padding(.top, 2)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
-        .contentShape(Rectangle())
     }
 }
 
@@ -102,7 +86,7 @@ struct UsWidget: Widget {
             UsWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Us.")
-        .description("Your days together — tap to send “I miss you”.")
+        .description("Your days together — tap to open the app.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

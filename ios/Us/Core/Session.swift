@@ -87,6 +87,7 @@ final class Session: ObservableObject {
         try? await APIClient.shared.logout()
         TokenStore.clear()
         UserDefaults.standard.set(false, forKey: "testPaired")
+        UserDefaults.standard.removeObject(forKey: "testStartDate")
         user = nil
         partner = nil
         couple = nil
@@ -113,6 +114,15 @@ final class Session: ObservableObject {
 
     /// Saves the couple's start date and refreshes the couple + widget.
     func saveStartDate(_ date: Date) async {
+        if SharedConfig.demoMode, UserDefaults.standard.bool(forKey: "testPaired") {
+            // Test pairing: persist locally so it survives relaunch AND the
+            // widget's day count matches what's shown in the app.
+            UserDefaults.standard.set(date, forKey: "testStartDate")
+            couple = Couple(id: couple?.id ?? "test-couple", startDate: date,
+                            status: "active", createdAt: couple?.createdAt ?? Date())
+            updateWidget()
+            return
+        }
         let iso = date.formatted(.iso8601.year().month().day().dateSeparator(.dash))
         _ = try? await APIClient.shared.setStartDate(iso)
         await loadCouple()
@@ -123,11 +133,11 @@ final class Session: ObservableObject {
     /// testable. The choice persists (`testPaired`) so relaunch goes to Home.
     func enterTestPairing() {
         UserDefaults.standard.set(true, forKey: "testPaired")
+        let start = (UserDefaults.standard.object(forKey: "testStartDate") as? Date)
+            ?? Calendar.current.date(byAdding: .day, value: -100, to: Date())
         partner = User(id: "test-partner", email: nil, displayName: "Partner",
                        avatarPath: nil, birthday: nil, createdAt: Date())
-        couple = Couple(id: "test-couple",
-                        startDate: Calendar.current.date(byAdding: .day, value: -100, to: Date()),
-                        status: "active", createdAt: Date())
+        couple = Couple(id: "test-couple", startDate: start, status: "active", createdAt: Date())
         state = .ready
         updateWidget()
     }
