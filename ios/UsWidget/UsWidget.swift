@@ -221,10 +221,91 @@ struct DistanceWidget: Widget {
 
 // MARK: - Bundle
 
+// MARK: - "Been together" widget (Home Screen + Lock Screen)
+
+struct TogetherEntry: TimelineEntry {
+    let date: Date
+    let snapshot: WidgetSnapshot?
+}
+
+struct TogetherProvider: TimelineProvider {
+    private var sample: WidgetSnapshot {
+        WidgetSnapshot(partnerName: "Alex", daysTogether: 342, updatedAt: Date(), myName: "You", distanceKm: nil)
+    }
+    func placeholder(in context: Context) -> TogetherEntry { TogetherEntry(date: Date(), snapshot: sample) }
+    func getSnapshot(in context: Context, completion: @escaping (TogetherEntry) -> Void) {
+        completion(TogetherEntry(date: Date(), snapshot: WidgetStore.load() ?? sample))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TogetherEntry>) -> Void) {
+        let entry = TogetherEntry(date: Date(), snapshot: WidgetStore.load())
+        // Refresh just after midnight so the day count ticks over.
+        let next = Calendar.current.nextDate(after: Date(), matching: DateComponents(hour: 0, minute: 5),
+                                             matchingPolicy: .nextTime) ?? Date().addingTimeInterval(6 * 3600)
+        completion(Timeline(entries: [entry], policy: .after(next)))
+    }
+}
+
+struct TogetherWidgetEntryView: View {
+    @Environment(\.widgetFamily) private var family
+    var entry: TogetherEntry
+
+    private var days: Int { entry.snapshot?.daysTogether ?? 0 }
+
+    var body: some View {
+        switch family {
+        case .accessoryInline:
+            Label("\(days) days together", systemImage: "heart.fill")
+        case .accessoryCircular:
+            VStack(spacing: 0) {
+                Image(systemName: "heart.fill").font(.caption2)
+                Text("\(days)").font(.system(.title3, design: .rounded).bold())
+                Text("days").font(.system(size: 9))
+            }
+            .widgetBackground(Color.clear)
+        case .accessoryRectangular:
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Been together").font(.caption)
+                Text("\(days) days").font(.headline)
+            }
+            .widgetBackground(Color.clear)
+        default:
+            homeTile.widgetBackground(roseGradient)
+        }
+    }
+
+    private var homeTile: some View {
+        VStack(spacing: 4) {
+            Image(systemName: "heart.fill").font(.title3).foregroundStyle(.white)
+            Text("\(days)")
+                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            Text("days together").font(.caption).foregroundStyle(.white.opacity(0.9))
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+}
+
+struct TogetherWidget: Widget {
+    let kind = "UsTogetherWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: TogetherProvider()) { entry in
+            TogetherWidgetEntryView(entry: entry)
+        }
+        .configurationDisplayName("Been together")
+        .description("How long you've been together.")
+        .supportedFamilies([.systemSmall, .systemMedium,
+                            .accessoryRectangular, .accessoryInline, .accessoryCircular])
+    }
+}
+
 @main
 struct UsWidgets: WidgetBundle {
     var body: some Widget {
         UsWidget()
         DistanceWidget()
+        TogetherWidget()
     }
 }

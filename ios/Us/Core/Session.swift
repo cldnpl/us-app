@@ -108,6 +108,13 @@ final class Session: ObservableObject {
         objectWillChange.send()
     }
 
+    /// Saves the couple's start date and refreshes the couple + widget.
+    func saveStartDate(_ date: Date) async {
+        let iso = date.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+        _ = try? await APIClient.shared.setStartDate(iso)
+        await loadCouple()
+    }
+
     #if DEBUG
     /// TEST ONLY: opens the app without a real partner (pairing code "0000").
     /// Backend-backed features will be empty/error, but the UI is fully testable.
