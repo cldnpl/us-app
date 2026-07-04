@@ -15,4 +15,9 @@ enum SharedConfig {
 
     /// Custom URL used by the iOS 16 widget fallback to open the app and send.
     static let missYouURL = URL(string: "usapp://missyou")!
+
+    /// TEST ONLY: enables the "0000" pairing bypass + demo data (Claudia/Elbek,
+    /// Naples/Tashkent) so the app can be tested without a real partner — even on
+    /// TestFlight/Release. Set to `false` before any public launch.
+    static let demoMode = true
 }

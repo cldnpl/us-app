@@ -2,12 +2,10 @@ import SwiftUI
 import CoreLocation
 import Combine
 
-#if DEBUG
-// Test positions so the map is visible before real location sharing is set up:
-// Claudia in Naples, Elbek in Tashkent.
+// Demo positions (SharedConfig.demoMode) so the map is visible before real
+// location sharing is set up: Claudia in Naples, Elbek in Tashkent.
 private let sampleMineCoord = CLLocationCoordinate2D(latitude: 40.8518, longitude: 14.2681)
 private let samplePartnerCoord = CLLocationCoordinate2D(latitude: 41.2995, longitude: 69.2401)
-#endif
 
 struct HomeView: View {
     @EnvironmentObject var session: Session
@@ -136,18 +134,14 @@ struct HomeView: View {
     // MARK: - Coordinates
 
     private var myName: String {
-        #if DEBUG
-        return session.user?.displayName ?? "Claudia"
-        #else
-        return session.user?.displayName ?? "You"
-        #endif
+        session.user?.displayName ?? (SharedConfig.demoMode ? "Claudia" : "You")
     }
     private var partnerName: String {
         let real = session.partner?.displayName
-        #if DEBUG
-        // Test fallback so the sample map/copy reads "Elbek".
-        if real == nil || real?.isEmpty == true || real == "Partner" { return "Elbek" }
-        #endif
+        // Demo fallback so the sample map/copy reads "Elbek".
+        if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
+            return "Elbek"
+        }
         return real ?? "your partner"
     }
 
@@ -161,23 +155,15 @@ struct HomeView: View {
     }
     private var realKm: Double? { km(realMine, realPartner) }
 
-    /// What the Home map shows — real when available, otherwise the test
-    /// positions (DEBUG only) so the map is always populated.
+    /// What the Home map shows — real when available, otherwise the demo
+    /// positions (SharedConfig.demoMode) so the map is always populated.
     private var mapMine: CLLocationCoordinate2D? {
         if let real = realMine { return real }
-        #if DEBUG
-        return sampleMineCoord
-        #else
-        return nil
-        #endif
+        return SharedConfig.demoMode ? sampleMineCoord : nil
     }
     private var mapPartner: CLLocationCoordinate2D? {
         if let real = realPartner { return real }
-        #if DEBUG
-        return samplePartnerCoord
-        #else
-        return nil
-        #endif
+        return SharedConfig.demoMode ? samplePartnerCoord : nil
     }
     private var mapKm: Double? { km(mapMine, mapPartner) }
 
