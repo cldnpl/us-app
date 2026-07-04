@@ -37,19 +37,21 @@ final class Session: ObservableObject {
     }
 
     func loadCouple() async {
-        do {
-            let resp = try await APIClient.shared.getCouple()
-            if resp.paired, let couple = resp.couple {
-                self.couple = couple
-                self.partner = resp.partner
-                state = .ready
-                updateWidget()
-            } else {
-                state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
-            }
-        } catch {
-            state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
+        if let resp = try? await APIClient.shared.getCouple(), resp.paired, let couple = resp.couple {
+            self.couple = couple
+            self.partner = resp.partner
+            UserDefaults.standard.set(false, forKey: "testPaired") // a real couple wins
+            state = .ready
+            updateWidget()
+            return
         }
+        // Not paired (or getCouple failed): restore the persisted "0000" test
+        // pairing if it was used, so relaunch/login goes straight to Home.
+        if SharedConfig.demoMode, UserDefaults.standard.bool(forKey: "testPaired") {
+            enterTestPairing()
+            return
+        }
+        state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
     }
 
     /// Whether the person has completed the "about you" onboarding (name +
@@ -84,6 +86,7 @@ final class Session: ObservableObject {
     func signOut() async {
         try? await APIClient.shared.logout()
         TokenStore.clear()
+        UserDefaults.standard.set(false, forKey: "testPaired")
         user = nil
         partner = nil
         couple = nil
@@ -115,36 +118,30 @@ final class Session: ObservableObject {
         await loadCouple()
     }
 
-    #if DEBUG
-    /// TEST ONLY: opens the app without a real partner (pairing code "0000").
-    /// Backend-backed features will be empty/error, but the UI is fully testable.
-    /// Remove this and the "0000" handling in PairingView before shipping.
+    /// TEST ONLY (SharedConfig.demoMode): opens the app without a real partner
+    /// (pairing code "0000"). Backend features are empty/error, but the UI is
+    /// testable. The choice persists (`testPaired`) so relaunch goes to Home.
     func enterTestPairing() {
+        UserDefaults.standard.set(true, forKey: "testPaired")
         partner = User(id: "test-partner", email: nil, displayName: "Partner",
                        avatarPath: nil, birthday: nil, createdAt: Date())
         couple = Couple(id: "test-couple",
                         startDate: Calendar.current.date(byAdding: .day, value: -100, to: Date()),
                         status: "active", createdAt: Date())
-        PartnerPrefs.partnerName = partner?.displayName
         state = .ready
         updateWidget()
     }
-    #endif
 
     /// Names written into the widget snapshot. In DEBUG the partner falls back
     /// to "Elbek" (and self to "Claudia") so the test widget matches the app.
     private var snapshotMyName: String {
-        #if DEBUG
-        return user?.displayName ?? "Claudia"
-        #else
-        return user?.displayName ?? ""
-        #endif
+        user?.displayName ?? (SharedConfig.demoMode ? "Claudia" : "")
     }
     private var snapshotPartnerName: String {
         let real = partner?.displayName
-        #if DEBUG
-        if real == nil || real?.isEmpty == true || real == "Partner" { return "Elbek" }
-        #endif
+        if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
+            return "Elbek"
+        }
         return real ?? ""
     }
 

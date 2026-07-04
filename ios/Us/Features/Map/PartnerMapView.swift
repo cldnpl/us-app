@@ -47,39 +47,29 @@ struct PartnerMapView: View {
     // MARK: - Coordinates & pins
 
     private var myName: String {
-        #if DEBUG
-        return session.user?.displayName ?? "Claudia"
-        #else
-        return session.user?.displayName ?? "You"
-        #endif
+        session.user?.displayName ?? (SharedConfig.demoMode ? "Claudia" : "You")
     }
     private var partnerName: String {
         let real = partner?.partnerName ?? session.partner?.displayName
-        #if DEBUG
-        // Test fallback so the sample map reads "Elbek".
-        if real == nil || real?.isEmpty == true || real == "Partner" { return "Elbek" }
-        #endif
+        // Demo fallback so the sample map reads "Elbek".
+        if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
+            return "Elbek"
+        }
         return real ?? "Partner"
     }
 
     private var myCoord: CLLocationCoordinate2D? {
         if location.isSharing, let c = location.currentLocation?.coordinate { return c }
-        #if DEBUG
-        return CLLocationCoordinate2D(latitude: 40.8518, longitude: 14.2681) // Naples (test)
-        #else
-        return nil
-        #endif
+        // Naples (demo)
+        return SharedConfig.demoMode ? CLLocationCoordinate2D(latitude: 40.8518, longitude: 14.2681) : nil
     }
 
     private var partnerCoord: CLLocationCoordinate2D? {
         if let p = partner, p.sharing, let lat = p.lat, let lng = p.lng {
             return CLLocationCoordinate2D(latitude: lat, longitude: lng)
         }
-        #if DEBUG
-        return CLLocationCoordinate2D(latitude: 41.2995, longitude: 69.2401) // Tashkent (test)
-        #else
-        return nil
-        #endif
+        // Tashkent (demo)
+        return SharedConfig.demoMode ? CLLocationCoordinate2D(latitude: 41.2995, longitude: 69.2401) : nil
     }
 
     private var annotations: [MapPin] {
