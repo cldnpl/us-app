@@ -49,7 +49,7 @@ struct HomeView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: 18) {
-                heroButton.padding(.top, 8)
+                heroButton.padding(.top, 28)
                 addWidgetLink
                 mapSection
                 if let errorMessage {
