@@ -5,11 +5,15 @@ struct WidgetSnapshot: Codable {
     var partnerName: String
     var daysTogether: Int?
     var updatedAt: Date
+    /// The user's own name, for the distance widget ("You ──♥── Alex").
+    var myName: String?
+    /// Distance between the two partners in kilometres, when both are sharing.
+    var distanceKm: Double?
 }
 
 /// Shared storage between the app and the widget (App Group).
 enum WidgetStore {
-    static let appGroup = "group.us.elbek.com"
+    static let appGroup = SharedConfig.appGroup
     private static let key = "widget_snapshot"
 
     static func save(_ snapshot: WidgetSnapshot) {

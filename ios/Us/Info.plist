@@ -39,7 +39,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Us shows your location to your partner only when you choose to share it.</string>
+	<string>Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Add photos to your shared gallery and send them to your partner's widget.</string>
 	<key>UILaunchScreen</key>
