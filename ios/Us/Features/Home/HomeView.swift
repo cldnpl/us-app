@@ -2,6 +2,13 @@ import SwiftUI
 import CoreLocation
 import Combine
 
+#if DEBUG
+// Test positions so the map is visible before real location sharing is set up:
+// Claudia in Naples, Elbek in Tashkent.
+private let sampleMineCoord = CLLocationCoordinate2D(latitude: 40.8518, longitude: 14.2681)
+private let samplePartnerCoord = CLLocationCoordinate2D(latitude: 41.2995, longitude: 69.2401)
+#endif
+
 struct HomeView: View {
     @EnvironmentObject var session: Session
     @StateObject private var location = LocationManager.shared
@@ -24,8 +31,7 @@ struct HomeView: View {
                 ToolbarItem(placement: .topBarLeading) { BrandLogo() }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showProfile = true } label: {
-                        Image(systemName: "person.crop.circle")
-                            .font(.system(size: 24))
+                        Image(systemName: "person.crop.circle").font(.system(size: 24))
                     }
                     .accessibilityLabel("Profile")
                 }
@@ -38,62 +44,45 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Layout (adapts when the distance map is visible)
+    // MARK: - Layout: hero + add widget + map (always visible)
 
-    @ViewBuilder
     private var content: some View {
-        if let km = distanceKm, let mine = myCoord, let partner = partnerCoord {
-            ScrollView {
-                VStack(spacing: 18) {
-                    heroButton(compact: true).padding(.top, 10)
-                    addWidgetLink
-                    NavigationLink {
-                        PartnerMapView()
-                    } label: {
-                        DistanceMapCard(mine: mine, partner: partner,
-                                        myName: myName, partnerName: partnerName, km: km)
-                    }
-                    .buttonStyle(.plain)
-                    if let errorMessage { errorText(errorMessage) }
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
-            }
-        } else {
-            VStack(spacing: 22) {
-                Spacer(minLength: 12)
-                heroButton(compact: false)
+        ScrollView {
+            VStack(spacing: 18) {
+                heroButton.padding(.top, 8)
                 addWidgetLink
-                if let errorMessage { errorText(errorMessage) }
-                Spacer(minLength: 0)
-                whereLink
+                mapSection
+                if let errorMessage {
+                    Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
         }
     }
 
     // MARK: - Hero "miss you" button
 
-    private func heroButton(compact: Bool) -> some View {
+    private var heroButton: some View {
         Button {
             Task { await sendMissYou() }
         } label: {
-            VStack(spacing: compact ? 10 : 18) {
+            VStack(spacing: 14) {
                 Image(systemName: missYouSent ? "heart.fill" : "heart")
-                    .font(.system(size: compact ? 32 : 46, weight: .semibold))
+                    .font(.system(size: 40, weight: .semibold))
                 Text(missYouSent ? "Sent 💜" : heroTitle)
-                    .font(.system(compact ? .headline : .title2, design: .rounded).weight(.bold))
+                    .font(.system(.title3, design: .rounded).weight(.bold))
                     .multilineTextAlignment(.center)
-                    .lineLimit(compact ? 2 : 4)
+                    .lineLimit(3)
                     .minimumScaleFactor(0.7)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(minHeight: compact ? 130 : 240)
-            .padding(compact ? 18 : 28)
-            .background(Theme.roseGradient, in: RoundedRectangle(cornerRadius: compact ? 28 : 36, style: .continuous))
-            .shadow(color: Theme.rose.opacity(0.35), radius: compact ? 14 : 20, y: 10)
+            .frame(minHeight: 180)
+            .padding(24)
+            .background(Theme.roseGradient, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+            .shadow(color: Theme.rose.opacity(0.35), radius: 16, y: 8)
             .overlay { if isSending { ProgressView().tint(.white).scaleEffect(1.2) } }
         }
         .buttonStyle(.plain)
@@ -103,59 +92,104 @@ struct HomeView: View {
 
     private var addWidgetLink: some View {
         Button { showAddWidget = true } label: {
-            Text("add widget")
-                .font(.headline).underline()
-                .foregroundStyle(Theme.rose)
+            Text("add widget").font(.headline).underline().foregroundStyle(Theme.rose)
         }
     }
 
-    /// Fallback link (shown only when the distance map isn't available).
-    private var whereLink: some View {
+    // MARK: - Map section (tap to expand)
+
+    @ViewBuilder
+    private var mapSection: some View {
+        if let mine = mapMine, let partner = mapPartner {
+            NavigationLink {
+                PartnerMapView()
+            } label: {
+                DistanceMapCard(mine: mine, partner: partner,
+                                myName: myName, partnerName: partnerName, km: mapKm ?? 0)
+            }
+            .buttonStyle(.plain)
+        } else {
+            shareLocationCard
+        }
+    }
+
+    private var shareLocationCard: some View {
         NavigationLink {
             PartnerMapView()
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "location.fill.viewfinder")
-                Text("Where's \(partnerName)?")
-                Image(systemName: "chevron.right").font(.caption2)
+            VStack(spacing: 10) {
+                Image(systemName: "map.fill").font(.title).foregroundStyle(Theme.rose)
+                Text("See each other on the map")
+                    .font(.headline).foregroundStyle(.primary)
+                Text("Turn on location so you and \(partnerName) appear here.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(Theme.rose)
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .background(.regularMaterial, in: Capsule())
+            .frame(maxWidth: .infinity)
+            .padding(24)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.06), radius: 12, y: 6)
         }
+        .buttonStyle(.plain)
     }
 
-    private func errorText(_ message: String) -> some View {
-        Text(message).font(.footnote).foregroundStyle(.red).multilineTextAlignment(.center)
+    // MARK: - Coordinates
+
+    private var myName: String {
+        #if DEBUG
+        return session.user?.displayName ?? "Claudia"
+        #else
+        return session.user?.displayName ?? "You"
+        #endif
+    }
+    private var partnerName: String {
+        let real = session.partner?.displayName
+        #if DEBUG
+        // Test fallback so the sample map/copy reads "Elbek".
+        if real == nil || real?.isEmpty == true || real == "Partner" { return "Elbek" }
+        #endif
+        return real ?? "your partner"
     }
 
-    // MARK: - Distance
-
-    private var myName: String { session.user?.displayName ?? "You" }
-    private var partnerName: String { session.partner?.displayName ?? "your partner" }
-
-    private var myCoord: CLLocationCoordinate2D? {
-        guard location.isSharing else { return nil }
-        return location.currentLocation?.coordinate
+    /// Real location (only while I'm sharing), used for the widget.
+    private var realMine: CLLocationCoordinate2D? {
+        location.isSharing ? location.currentLocation?.coordinate : nil
     }
-
-    private var partnerCoord: CLLocationCoordinate2D? {
+    private var realPartner: CLLocationCoordinate2D? {
         guard let p = partnerLoc, p.sharing, let lat = p.lat, let lng = p.lng else { return nil }
         return CLLocationCoordinate2D(latitude: lat, longitude: lng)
     }
+    private var realKm: Double? { km(realMine, realPartner) }
 
-    /// Distance in km, only when BOTH partners are sharing.
-    private var distanceKm: Double? {
-        guard let mine = myCoord, let pc = partnerCoord else { return nil }
-        let a = CLLocation(latitude: mine.latitude, longitude: mine.longitude)
-        let b = CLLocation(latitude: pc.latitude, longitude: pc.longitude)
-        return a.distance(from: b) / 1000.0
+    /// What the Home map shows — real when available, otherwise the test
+    /// positions (DEBUG only) so the map is always populated.
+    private var mapMine: CLLocationCoordinate2D? {
+        if let real = realMine { return real }
+        #if DEBUG
+        return sampleMineCoord
+        #else
+        return nil
+        #endif
+    }
+    private var mapPartner: CLLocationCoordinate2D? {
+        if let real = realPartner { return real }
+        #if DEBUG
+        return samplePartnerCoord
+        #else
+        return nil
+        #endif
+    }
+    private var mapKm: Double? { km(mapMine, mapPartner) }
+
+    private func km(_ a: CLLocationCoordinate2D?, _ b: CLLocationCoordinate2D?) -> Double? {
+        guard let a, let b else { return nil }
+        let la = CLLocation(latitude: a.latitude, longitude: a.longitude)
+        let lb = CLLocation(latitude: b.latitude, longitude: b.longitude)
+        return la.distance(from: lb) / 1000.0
     }
 
     // MARK: - Copy
 
-    /// "Let Alex know you're thinking of her" — name + onboarding pronoun.
     private var heroTitle: String {
         "Let \(partnerName) know you're thinking of \(session.partnerPronounObject)"
     }
@@ -167,9 +201,9 @@ struct HomeView: View {
         publishDistance()
     }
 
-    /// Keep the distance widget in sync with what Home is showing.
+    /// Keep the distance widget in sync with the REAL distance (not the sample).
     private func publishDistance() {
-        session.publishDistance(distanceKm)
+        session.publishDistance(realKm)
     }
 
     private func sendMissYou() async {

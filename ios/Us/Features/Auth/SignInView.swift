@@ -4,10 +4,13 @@ struct SignInView: View {
     @EnvironmentObject var session: Session
     @Environment(\.dismiss) private var dismiss
 
-    @State private var isSignUp = true
+    /// Fixed by the choice made on the previous screen (Register vs Log in),
+    /// so there's no mode toggle here.
+    let isSignUp: Bool
+    init(isSignUp: Bool = true) { self.isSignUp = isSignUp }
+
     @State private var email = ""
     @State private var password = ""
-    @State private var displayName = ""
     @State private var errorMessage: String?
     @State private var isLoading = false
 
@@ -15,18 +18,6 @@ struct SignInView: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("Mode", selection: $isSignUp) {
-                        Text("Sign up").tag(true)
-                        Text("Log in").tag(false)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section {
-                    if isSignUp {
-                        TextField("Your name", text: $displayName)
-                            .textContentType(.givenName)
-                    }
                     TextField("Email", text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
@@ -34,6 +25,10 @@ struct SignInView: View {
                         .autocorrectionDisabled()
                     SecureField("Password", text: $password)
                         .textContentType(isSignUp ? .newPassword : .password)
+                } footer: {
+                    if isSignUp {
+                        Text("At least 8 characters. You'll choose your name in the next step.")
+                    }
                 }
 
                 if let errorMessage {
@@ -66,7 +61,7 @@ struct SignInView: View {
     }
 
     private var isValid: Bool {
-        email.contains("@") && password.count >= 8 && (!isSignUp || !displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+        email.contains("@") && password.count >= 8
     }
 
     private func submit() async {
@@ -76,8 +71,11 @@ struct SignInView: View {
         do {
             let resp: AuthResponse
             if isSignUp {
+                // Name isn't asked here — it's collected right after, in the
+                // personal onboarding. Send a placeholder derived from the email.
+                let placeholder = String((email.split(separator: "@").first ?? "there").prefix(30))
                 resp = try await APIClient.shared.register(email: email, password: password,
-                                                           displayName: displayName)
+                                                           displayName: placeholder)
             } else {
                 resp = try await APIClient.shared.login(email: email, password: password)
             }
