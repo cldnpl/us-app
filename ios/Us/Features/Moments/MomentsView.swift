@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MomentsView: View {
+struct JournalView: View {
     @EnvironmentObject var session: Session
 
     @State private var milestones: [Milestone] = []
@@ -27,6 +27,21 @@ struct MomentsView: View {
                     }
                 }
 
+                Section {
+                    NavigationLink { GalleryView() } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Photos").font(.headline)
+                                Text("Your shared gallery")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .foregroundStyle(Theme.coral)
+                        }
+                    }
+                }
+
                 if !reunions.isEmpty {
                     Section("Countdowns") {
                         ForEach(reunions) { reunion in
@@ -49,7 +64,7 @@ struct MomentsView: View {
                     .onDelete { indexes in Task { await deleteMilestones(indexes) } }
                 }
             }
-            .navigationTitle("Moments")
+            .navigationTitle("Journal")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showAdd = true } label: { Image(systemName: "plus.circle.fill") }

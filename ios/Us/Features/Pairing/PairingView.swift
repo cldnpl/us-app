@@ -71,7 +71,7 @@ struct PairingView: View {
                                 if isLoading { ProgressView() } else { Text("Connect") }
                             }
                             .buttonStyle(PrimaryButtonStyle())
-                            .disabled(enteredCode.trimmingCharacters(in: .whitespaces).count < 6 || isLoading)
+                            .disabled(!canConnect || isLoading)
                         }
                     }
 
@@ -103,12 +103,31 @@ struct PairingView: View {
         }
     }
 
+    /// Whether the Connect button is enabled. Real codes are 6 chars.
+    private var canConnect: Bool {
+        let code = enteredCode.trimmingCharacters(in: .whitespaces)
+        #if DEBUG
+        if code == "0000" { return true } // TEST ONLY — see redeem()
+        #endif
+        return code.count >= 6
+    }
+
     private func redeem() async {
+        let code = enteredCode.trimmingCharacters(in: .whitespaces).uppercased()
+        #if DEBUG
+        // TEST ONLY: "0000" opens the app without a real partner so the UI can
+        // be tested. Remove this block (and Session.enterTestPairing) before shipping.
+        if code == "0000" {
+            Haptics.success()
+            session.enterTestPairing()
+            return
+        }
+        #endif
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            _ = try await APIClient.shared.redeemPairing(code: enteredCode.trimmingCharacters(in: .whitespaces).uppercased())
+            _ = try await APIClient.shared.redeemPairing(code: code)
             Haptics.success()
             await session.loadCouple()
         } catch {

@@ -19,7 +19,7 @@ struct TogetherView: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("Together")
+            .navigationTitle("Activities")
         }
     }
 

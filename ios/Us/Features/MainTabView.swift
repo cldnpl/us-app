@@ -1,23 +1,28 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var session: Session
+    @State private var showSetup = false
+
     var body: some View {
         TabView {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            GalleryView()
-                .tabItem { Label("Gallery", systemImage: "photo.on.rectangle") }
-
             TogetherView()
-                .tabItem { Label("Together", systemImage: "gamecontroller") }
+                .tabItem { Label("Activities", systemImage: "sparkles") }
 
-            MomentsView()
-                .tabItem { Label("Moments", systemImage: "calendar") }
+            JournalView()
+                .tabItem { Label("Journal", systemImage: "book.closed.fill") }
 
-            ProfileView()
-                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
+        // First run after pairing: pick partner pronoun + grant location.
+        .fullScreenCover(isPresented: $showSetup) {
+            SetupFlowView(isPresented: $showSetup)
+        }
+        .onAppear { showSetup = SetupFlowView.isNeeded(session: session) }
     }
 }
 

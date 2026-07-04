@@ -45,7 +45,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-        NSLocationWhenInUseUsageDescription: "Us shows your location to your partner only when you choose to share it."
+        NSLocationWhenInUseUsageDescription: "Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime."
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
@@ -70,3 +70,19 @@ targets:
         CFBundleDisplayName: "Us."
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+schemes:
+  Us:
+    build:
+      targets:
+        Us: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

@@ -10,7 +10,7 @@ struct UsApp: App {
             RootView()
                 .environmentObject(session)
                 .task { await session.bootstrap() }
-                .tint(Theme.coral)
+                .tint(Theme.rose)
         }
     }
 }

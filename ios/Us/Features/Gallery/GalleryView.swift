@@ -14,9 +14,8 @@ struct GalleryView: View {
     @State private var selected: MediaItem?
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.softBackground.ignoresSafeArea()
+        ZStack {
+            Theme.softBackground.ignoresSafeArea()
 
                 if isLoading {
                     ProgressView()
@@ -30,7 +29,7 @@ struct GalleryView: View {
                     )
                 }
             }
-            .navigationTitle("Gallery")
+            .navigationTitle("Photos")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     PhotosPicker(selection: $pickerItems, maxSelectionCount: 12, matching: .images) {
@@ -61,7 +60,6 @@ struct GalleryView: View {
                         .padding(.bottom, 12)
                 }
             }
-        }
     }
 
     private var emptyState: some View {

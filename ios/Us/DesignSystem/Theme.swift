@@ -7,9 +7,22 @@ enum Theme {
     static let peach = Color(red: 1.0, green: 0.85, blue: 0.73)
     static let ink = Color(red: 0.18, green: 0.16, blue: 0.20)
 
+    /// Brand rose used for the chrome (nav bar + tab bar) — the "fondo rosa"
+    /// from the design, with white icons and labels on top.
+    static let rose = Color(red: 0.76, green: 0.31, blue: 0.47)
+
     static var warmGradient: LinearGradient {
         LinearGradient(
             colors: [blush, coral.opacity(0.85), peach],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    /// Rose gradient for the hero "miss you" button (matches the chrome).
+    static var roseGradient: LinearGradient {
+        LinearGradient(
+            colors: [rose, rose.opacity(0.82)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -21,6 +34,24 @@ enum Theme {
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+}
+
+/// The app wordmark shown on the left of the navigation bar. Uses the brand
+/// rose so it reads on the native (glass/translucent) navigation bar.
+struct BrandLogo: View {
+    var color: Color = Theme.rose
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 15, weight: .bold))
+            Text("Us.")
+                .font(.system(size: 24, weight: .heavy, design: .rounded))
+        }
+        .foregroundStyle(color)
+        .fixedSize()
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel("Us.")
     }
 }
 

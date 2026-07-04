@@ -43,17 +43,29 @@ enum Keychain {
 }
 
 /// Access + refresh token storage.
+///
+/// The Keychain is the source of truth. Tokens are also mirrored into the App
+/// Group (`SharedTokenStore`) so the widget extension can send "I miss you"
+/// on the user's behalf without launching the app.
 enum TokenStore {
     static var accessToken: String? {
         get { Keychain.get("access") }
-        set { Keychain.set(newValue, for: "access") }
+        set { Keychain.set(newValue, for: "access"); SharedTokenStore.accessToken = newValue }
     }
     static var refreshToken: String? {
         get { Keychain.get("refresh") }
-        set { Keychain.set(newValue, for: "refresh") }
+        set { Keychain.set(newValue, for: "refresh"); SharedTokenStore.refreshToken = newValue }
     }
     static func clear() {
         Keychain.delete("access")
         Keychain.delete("refresh")
+        SharedTokenStore.clear()
+    }
+
+    /// Mirror the Keychain tokens into the App Group. Call on launch so existing
+    /// installs (whose tokens predate the shared store) become widget-usable.
+    static func syncToSharedStore() {
+        SharedTokenStore.accessToken = Keychain.get("access")
+        SharedTokenStore.refreshToken = Keychain.get("refresh")
     }
 }
