@@ -1,8 +1,9 @@
 import SwiftUI
 import AuthenticationServices
 
-/// First screen: choose intent — Register or Log in. Picking one pushes to the
-/// provider options (Apple / Google / email).
+/// First screen (signed out): a clean landing to Register or Log in. The full
+/// swipeable intro lives in onboarding (`IntroCarousel`) so everyone sees it —
+/// including already-signed-in users who skip straight past this screen.
 struct WelcomeView: View {
     enum AuthMode: Hashable { case register, login }
 
@@ -13,8 +14,12 @@ struct WelcomeView: View {
 
                 VStack(spacing: 16) {
                     Spacer()
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 68))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
                     Text("Us.")
-                        .font(.system(size: 72, weight: .bold, design: .rounded))
+                        .font(.system(size: 64, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                     Text("Two people, one little world.")
                         .font(.title3)
@@ -49,6 +54,86 @@ struct WelcomeView: View {
                 AuthOptionsView(isRegister: mode == .register)
             }
         }
+    }
+}
+
+/// The swipeable 4-page intro (icon + title + subtitle) with animated page dots.
+/// Reused as the first step of onboarding so every new member sees the welcome.
+struct IntroCarousel: View {
+    @State private var page = 0
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TabView(selection: $page) {
+                ForEach(IntroPage.all.indices, id: \.self) { i in
+                    IntroPageView(page: IntroPage.all[i])
+                        .tag(i)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+
+            HStack(spacing: 8) {
+                ForEach(IntroPage.all.indices, id: \.self) { i in
+                    Capsule()
+                        .fill(.white.opacity(i == page ? 1 : 0.45))
+                        .frame(width: i == page ? 22 : 8, height: 8)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: page)
+                }
+            }
+        }
+    }
+}
+
+/// One page of the intro carousel.
+struct IntroPage: Identifiable {
+    let id = UUID()
+    let symbol: String
+    let title: String
+    let subtitle: String
+
+    static let all: [IntroPage] = [
+        .init(symbol: "heart.fill",
+              title: "Welcome to Us.",
+              subtitle: "Everything a couple needs — in one little app."),
+        .init(symbol: "paperplane.fill",
+              title: "Feel close, always",
+              subtitle: "Send a little “thinking of you” that lands right on their widget."),
+        .init(symbol: "map.fill",
+              title: "Share your world",
+              subtitle: "Watch the distance between you shrink, share moments, and count down to reunions."),
+        .init(symbol: "heart.text.square.fill",
+              title: "Care for each other",
+              subtitle: "Cycle-aware tips so you always know how to show up for each other."),
+    ]
+}
+
+/// A single, static intro page: icon + title + subtitle. The only motion is
+/// swiping between pages — the content itself stays put (no pulsing or fading),
+/// matching the calm, static look of the other onboarding screens.
+struct IntroPageView: View {
+    let page: IntroPage
+
+    var body: some View {
+        VStack(spacing: 26) {
+            Spacer()
+            Image(systemName: page.symbol)
+                .font(.system(size: 84, weight: .semibold))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
+            VStack(spacing: 12) {
+                Text(page.title)
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                Text(page.subtitle)
+                    .font(.title3)
+                    .foregroundStyle(.white.opacity(0.95))
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 34)
     }
 }
 
