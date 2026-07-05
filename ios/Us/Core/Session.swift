@@ -19,8 +19,13 @@ final class Session: ObservableObject {
     @Published var couple: Couple?
 
     /// Called on launch to restore an existing session.
+    ///
+    /// The login must survive app restarts: once signed in, the ONLY things that
+    /// send the user back to the sign-in screen are an explicit sign-out or the
+    /// backend definitively rejecting the refresh token (a real 401). A network
+    /// blip, a server error, or a slow launch must NOT throw the session away.
     func bootstrap() async {
-        guard TokenStore.accessToken != nil else {
+        guard TokenStore.accessToken != nil || TokenStore.refreshToken != nil else {
             state = .signedOut
             return
         }
@@ -28,29 +33,79 @@ final class Session: ObservableObject {
         TokenStore.syncToSharedStore()
         do {
             user = try await APIClient.shared.me()
-            await loadCouple()
+            try await refreshCouple()
             await PushManager.shared.onAuthenticated()
-        } catch {
+        } catch APIClientError.unauthorized {
+            // Refresh token was rejected: the only unrecoverable case, and the
+            // only place bootstrap is allowed to drop the session.
             TokenStore.clear()
+            SessionCache.clear()
             state = .signedOut
+        } catch {
+            // Transient failure (offline, server error, timeout). The tokens are
+            // still valid, so keep the user logged in and restore the last known
+            // session from cache; live data refreshes on next use.
+            restoreCachedSession()
         }
     }
 
+    /// Loads the couple from the backend. Non-throwing: used after interactive
+    /// actions (login, pairing, saving the start date) where we simply route by
+    /// local progress if the request fails. Bootstrap calls `refreshCouple()`
+    /// directly so it can tell a transient failure apart from "not paired".
     func loadCouple() async {
-        if let resp = try? await APIClient.shared.getCouple(), resp.paired, let couple = resp.couple {
+        do {
+            try await refreshCouple()
+        } catch {
+            if restoreTestPairingIfNeeded() { return }
+            state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
+        }
+    }
+
+    /// Fetches the couple and updates state. On success either enters `.ready`
+    /// (paired — cached so the app can reopen logged-in even offline) or routes
+    /// to the correct onboarding/pairing step (genuinely not paired). Throws on
+    /// a network/server failure so callers can fall back to the cache.
+    private func refreshCouple() async throws {
+        let resp = try await APIClient.shared.getCouple()
+        if resp.paired, let couple = resp.couple {
             self.couple = couple
             self.partner = resp.partner
             UserDefaults.standard.set(false, forKey: "testPaired") // a real couple wins
+            if let user { SessionCache.save(user: user, partner: resp.partner, couple: couple) }
             state = .ready
             updateWidget()
             return
         }
-        // Not paired (or getCouple failed): restore the persisted "0000" test
-        // pairing if it was used, so relaunch/login goes straight to Home.
-        if SharedConfig.demoMode, UserDefaults.standard.bool(forKey: "testPaired") {
-            enterTestPairing()
+        // Reached the server and we're genuinely not paired — drop stale cache.
+        SessionCache.clear()
+        if restoreTestPairingIfNeeded() { return }
+        state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
+    }
+
+    /// Restores the persisted "0000" test pairing (DEBUG/demo) if it was used,
+    /// so relaunch/login goes straight to Home. Returns true if it took over.
+    private func restoreTestPairingIfNeeded() -> Bool {
+        guard SharedConfig.demoMode, UserDefaults.standard.bool(forKey: "testPaired") else { return false }
+        enterTestPairing()
+        return true
+    }
+
+    /// Restores the last-known signed-in UI from local cache after a transient
+    /// launch failure, so a valid login survives being offline. Prefers any
+    /// fresh data already loaded this launch and fills the gaps from cache.
+    private func restoreCachedSession() {
+        if let cached = SessionCache.load() {
+            if user == nil { user = cached.user }
+            partner = partner ?? cached.partner
+            couple = couple ?? cached.couple
+            state = .ready
+            updateWidget()
             return
         }
+        if restoreTestPairingIfNeeded() { return }
+        // Logged in (token present) but nothing cached yet: route by local
+        // progress rather than forcing the user to sign in again.
         state = personalOnboardingDone ? .needsPairing : .needsPersonalOnboarding
     }
 
@@ -86,6 +141,7 @@ final class Session: ObservableObject {
     func signOut() async {
         try? await APIClient.shared.logout()
         TokenStore.clear()
+        SessionCache.clear()
         UserDefaults.standard.set(false, forKey: "testPaired")
         UserDefaults.standard.removeObject(forKey: "testStartDate")
         user = nil
@@ -181,5 +237,35 @@ final class Session: ObservableObject {
             distanceKm: km
         ))
         WidgetCenter.shared.reloadAllTimelines()
+    }
+}
+
+/// Locally cached snapshot of the signed-in session (profile + couple) so the
+/// app can reopen straight into the logged-in UI — even before the network
+/// responds, or fully offline. The Keychain tokens remain the source of truth
+/// for *authentication*; this only remembers the *couple/profile* we last saw,
+/// so a transient launch-time API failure never forces the user back to sign-in.
+enum SessionCache {
+    private static let key = "cachedSession.v1"
+
+    struct Snapshot: Codable {
+        let user: User
+        let partner: User?
+        let couple: Couple
+    }
+
+    static func save(user: User, partner: User?, couple: Couple) {
+        let snapshot = Snapshot(user: user, partner: partner, couple: couple)
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        UserDefaults.standard.set(data, forKey: key)
+    }
+
+    static func load() -> Snapshot? {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(Snapshot.self, from: data)
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
     }
 }
