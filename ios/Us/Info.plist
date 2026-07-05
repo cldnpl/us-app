@@ -38,6 +38,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

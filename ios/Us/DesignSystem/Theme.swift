@@ -7,9 +7,10 @@ enum Theme {
     static let peach = Color(red: 1.0, green: 0.85, blue: 0.73)
     static let ink = Color(red: 0.18, green: 0.16, blue: 0.20)
 
-    /// Brand rose used for the chrome (nav bar + tab bar) — the "fondo rosa"
-    /// from the design, with white icons and labels on top.
-    static let rose = Color(red: 0.76, green: 0.31, blue: 0.47)
+    /// Brand rose used across the app (chrome, hero, accents). This is the soft
+    /// warm pink sampled straight from the app icon's gradient (its mid-tone),
+    /// so the whole app matches the icon instead of the old darker magenta.
+    static let rose = Color(red: 1.0, green: 0.55, blue: 0.57)
 
     static var warmGradient: LinearGradient {
         LinearGradient(

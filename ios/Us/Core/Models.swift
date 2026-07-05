@@ -90,6 +90,17 @@ struct PartnerLocation: Codable {
     let updatedAt: Date?
 }
 
+/// The partner's opt-in shared cycle summary, or `{sharing:false}`. Coarse by
+/// design: a phase, and optionally a day count — never raw symptoms.
+struct PartnerCycle: Codable {
+    let sharing: Bool
+    let phase: String?
+    let cycleDay: Int?
+    let periodInDays: Int?
+    let partnerName: String?
+    let updatedAt: Date?
+}
+
 /// Error payload returned by the API ({"error": "...", "code": "..."}).
 struct APIErrorResponse: Codable, Error {
     let error: String
