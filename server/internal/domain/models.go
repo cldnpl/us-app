@@ -73,3 +73,14 @@ type PartnerLocation struct {
 	PartnerName *string    `json:"partnerName,omitempty"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 }
+
+// PartnerCycle is the partner's opt-in shared cycle summary, or {sharing:false}.
+// Deliberately coarse: a phase, and optionally a day count — never symptoms.
+type PartnerCycle struct {
+	Sharing      bool       `json:"sharing"`
+	Phase        *string    `json:"phase,omitempty"`
+	CycleDay     *int       `json:"cycleDay,omitempty"`
+	PeriodInDays *int       `json:"periodInDays,omitempty"`
+	PartnerName  *string    `json:"partnerName,omitempty"`
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
+}

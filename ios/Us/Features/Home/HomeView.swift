@@ -10,6 +10,7 @@ private let samplePartnerCoord = CLLocationCoordinate2D(latitude: 41.2995, longi
 struct HomeView: View {
     @EnvironmentObject var session: Session
     @StateObject private var location = LocationManager.shared
+    @StateObject private var cycle = CycleManager.shared
 
     @State private var missYouSent = false
     @State private var isSending = false
@@ -27,6 +28,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { BrandLogo() }
+                ToolbarItem(placement: .principal) { addWidgetPill }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showProfile = true } label: {
                         Image(systemName: "person.crop.circle").font(.system(size: 24))
@@ -37,19 +39,20 @@ struct HomeView: View {
             .sheet(isPresented: $showProfile) { ProfileView() }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .task { await loadPartnerLocation() }
+            .task { await cycle.refreshOnAppear() }
             .refreshable { await loadPartnerLocation() }
             .onReceive(location.$currentLocation) { _ in publishDistance() }
         }
     }
 
-    // MARK: - Layout: hero + add widget + map (always visible)
+    // MARK: - Layout: hero → map → cycle
 
     private var content: some View {
         ScrollView {
             VStack(spacing: 18) {
                 heroButton.padding(.top, 28)
-                addWidgetLink
                 mapSection
+                cycleCards
                 if let errorMessage {
                     Text(errorMessage).font(.footnote).foregroundStyle(.red)
                         .multilineTextAlignment(.center)
@@ -88,9 +91,46 @@ struct HomeView: View {
         .accessibilityLabel(missYouSent ? "Sent" : "Send I miss you to \(partnerName)")
     }
 
-    private var addWidgetLink: some View {
+    /// Pill in the nav bar (between the Us. logo and the profile icon).
+    private var addWidgetPill: some View {
         Button { showAddWidget = true } label: {
-            Text("add widget").font(.headline).underline().foregroundStyle(Theme.rose)
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                Text("add widget")
+            }
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Theme.rose)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Theme.rose.opacity(0.15), in: Capsule())
+        }
+        .accessibilityLabel("Add widget")
+    }
+
+    // MARK: - Cycle cards (partner's shared cycle + your own, when available)
+
+    @ViewBuilder
+    private var cycleCards: some View {
+        switch cycle.userHasCycle {
+        case .some(false):
+            // He doesn't have a cycle → her current phase + supportive tips.
+            NavigationLink { CycleDetailView() } label: {
+                PartnerPeriodCard(partner: cycle.partner, partnerName: partnerName)
+            }
+            .buttonStyle(.plain)
+        case .some(true):
+            // She has a cycle → her own tracking (connect Health, then insights).
+            if let insights = cycle.insights {
+                NavigationLink { CycleDetailView() } label: { SelfCycleCard(insights: insights) }
+                    .buttonStyle(.plain)
+            } else {
+                NavigationLink { CycleDetailView() } label: { CycleSetupCard() }
+                    .buttonStyle(.plain)
+            }
+        case nil:
+            // Not answered yet (existing users) → neutral entry to the question.
+            NavigationLink { CycleDetailView() } label: { CycleSetupCard() }
+                .buttonStyle(.plain)
         }
     }
 

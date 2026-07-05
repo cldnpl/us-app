@@ -13,13 +13,14 @@ struct PersonalOnboardingView: View {
     @State private var name = ""
     @State private var saving = false
 
-    enum Step { case name, location }
+    enum Step { case name, cycle, location }
 
     var body: some View {
         ZStack {
             Theme.warmGradient.ignoresSafeArea()
             switch step {
             case .name: nameStep
+            case .cycle: cycleStep
             case .location: locationStep
             }
         }
@@ -72,10 +73,49 @@ struct PersonalOnboardingView: View {
         saving = true
         await session.updateName(trimmedName)
         saving = false
+        withAnimation { step = .cycle }
+    }
+
+    // MARK: - Step 2 · Cycle
+
+    private var cycleStep: some View {
+        VStack(spacing: 22) {
+            Spacer()
+            Image(systemName: "heart.circle.fill")
+                .font(.system(size: 60)).foregroundStyle(.white)
+            VStack(spacing: 10) {
+                Text("Do you have a\nmenstrual cycle?")
+                    .font(.system(.largeTitle, design: .rounded).bold())
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                Text("This tailors Us. for you — track your own cycle, or get gentle tips to support your partner's. You can change it anytime.")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.95))
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button { chooseCycle(true) } label: { Text("Yes, I do") }
+                    .buttonStyle(PrimaryButtonStyle())
+                Button { chooseCycle(false) } label: {
+                    Text("No, I don't")
+                        .font(.headline).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+                        .background(.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+            }
+        }
+        .padding(28)
+    }
+
+    private func chooseCycle(_ hasCycle: Bool) {
+        Haptics.tap()
+        CycleManager.shared.setUserHasCycle(hasCycle)
         withAnimation { step = .location }
     }
 
-    // MARK: - Step 2 · Location
+    // MARK: - Step 3 · Location
 
     private var locationStep: some View {
         VStack(spacing: 22) {

@@ -129,4 +129,22 @@ extension APIClient {
     func partnerLocation() async throws -> PartnerLocation {
         try await send("/v1/location")
     }
+
+    // MARK: - Cycle sharing
+
+    /// Upload the caller's opt-in cycle summary. Pass nil day/period for a
+    /// phase-only ("just how I feel") share.
+    func putCycle(phase: String, cycleDay: Int?, periodInDays: Int?) async throws {
+        struct Body: Encodable { let phase: String; let cycleDay: Int?; let periodInDays: Int? }
+        try await sendVoid("/v1/cycle", method: "PUT",
+                           body: Body(phase: phase, cycleDay: cycleDay, periodInDays: periodInDays))
+    }
+
+    func partnerCycle() async throws -> PartnerCycle {
+        try await send("/v1/cycle")
+    }
+
+    func stopSharingCycle() async throws {
+        try await sendVoid("/v1/cycle", method: "DELETE")
+    }
 }

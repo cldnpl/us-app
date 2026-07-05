@@ -47,6 +47,7 @@ targets:
           NSAllowsLocalNetworking: true
         NSLocationWhenInUseUsageDescription: "Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime."
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
+        NSHealthShareUsageDescription: "Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp

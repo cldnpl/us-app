@@ -106,6 +106,10 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/location", d.handleGetPartnerLocation)
 			r.Delete("/location", d.handleStopLocation)
 
+			r.Put("/cycle", d.handleUpdateCycle)
+			r.Get("/cycle", d.handleGetPartnerCycle)
+			r.Delete("/cycle", d.handleStopCycle)
+
 			r.Get("/games/{type}", d.handleGetGame)
 			r.Post("/games/{type}/move", d.handleGameMove)
 			r.Post("/games/{type}/new", d.handleNewGame)
