@@ -94,9 +94,16 @@ final class APIClient {
         req.httpBody = try encoder.encode(["refreshToken": rt])
 
         let (data, response) = try await session.data(for: req)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        guard let http = response as? HTTPURLResponse else { throw APIClientError.invalidResponse }
+        // Only a definitive rejection of the refresh token is a real sign-out.
+        if http.statusCode == 401 || http.statusCode == 403 {
             TokenStore.clear()
             return false
+        }
+        // Any other non-2xx (5xx, gateway, etc.) is transient: keep the tokens
+        // and surface a non-auth error so callers don't sign the user out.
+        guard (200..<300).contains(http.statusCode) else {
+            throw APIClientError.http(http.statusCode)
         }
         let auth = try decoder.decode(AuthResponse.self, from: data)
         TokenStore.accessToken = auth.accessToken
