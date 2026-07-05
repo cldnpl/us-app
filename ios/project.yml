@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
     TARGETED_DEVICE_FAMILY: "1,2"
     CODE_SIGN_STYLE: Automatic
 targets:
@@ -34,6 +34,8 @@ targets:
       properties:
         CFBundleDisplayName: "Us."
         CFBundleIconName: AppIcon
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "2"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
@@ -48,6 +50,7 @@ targets:
         NSLocationWhenInUseUsageDescription: "Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime."
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         NSHealthShareUsageDescription: "Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner."
+        NSHealthUpdateUsageDescription: "Us can save period days you log in the app to Apple Health, so your cycle stays consistent across your health apps and devices."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp
