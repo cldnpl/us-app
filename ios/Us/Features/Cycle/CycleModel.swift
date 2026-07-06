@@ -210,3 +210,87 @@ enum CycleEngine {
         return min(35, max(21, avg))
     }
 }
+
+// MARK: - Pregnancy
+
+/// Everything derived locally from a due date.
+struct PregnancyInsights: Equatable {
+    let week: Int          // completed weeks (0…42)
+    let daysToDue: Int
+    let dueDate: Date
+    let trimester: Int     // 1, 2, 3
+    let babySize: String
+}
+
+/// Pure pregnancy math from a due date (40 weeks / 280 days to term).
+enum PregnancyEngine {
+    static let termDays = 280
+
+    static func insights(dueDate: Date, today: Date = Date(), calendar: Calendar = .current) -> PregnancyInsights {
+        let today0 = calendar.startOfDay(for: today)
+        let due0 = calendar.startOfDay(for: dueDate)
+        let daysToDue = calendar.dateComponents([.day], from: today0, to: due0).day ?? 0
+        let gestationDays = max(0, termDays - daysToDue)
+        let week = min(42, gestationDays / 7)
+        let trimester = week <= 13 ? 1 : (week <= 27 ? 2 : 3)
+        return PregnancyInsights(week: week, daysToDue: daysToDue, dueDate: dueDate,
+                                 trimester: trimester, babySize: babySize(week: week))
+    }
+
+    /// A friendly size comparison for the given week (nearest defined week).
+    static func babySize(week: Int) -> String {
+        let sizes: [(Int, String)] = [
+            (4, "a poppy seed"), (5, "a sesame seed"), (6, "a lentil"), (7, "a blueberry"),
+            (8, "a raspberry"), (9, "a cherry"), (10, "a strawberry"), (11, "a lime"),
+            (12, "a plum"), (13, "a peach"), (14, "a lemon"), (15, "an apple"),
+            (16, "an avocado"), (17, "a pear"), (18, "a bell pepper"), (19, "a mango"),
+            (20, "a banana"), (22, "a papaya"), (24, "an ear of corn"), (26, "a zucchini"),
+            (28, "an eggplant"), (30, "a cabbage"), (32, "a squash"), (34, "a cantaloupe"),
+            (36, "a honeydew melon"), (38, "a pumpkin"), (40, "a watermelon"),
+        ]
+        var best = sizes[0].1
+        for s in sizes where s.0 <= week { best = s.1 }
+        return best
+    }
+
+    static func trimesterTitle(_ t: Int) -> String {
+        switch t {
+        case 1:  return "First trimester"
+        case 2:  return "Second trimester"
+        default: return "Third trimester"
+        }
+    }
+
+    /// What's happening this trimester (shown to both).
+    static func trimesterAbout(_ t: Int) -> String {
+        switch t {
+        case 1:
+            return "The baby's major organs are forming. She may feel nausea, deep fatigue, and tender breasts — even though there's little to see yet."
+        case 2:
+            return "Often the easiest stretch: energy returns and the bump grows. She may feel the baby move for the first time."
+        default:
+            return "The baby grows fast and settles into position. Sleep gets harder, with possible swelling, backache, and practice contractions."
+        }
+    }
+
+    /// How the partner can support her this trimester.
+    static func trimesterSupport(_ t: Int) -> [String] {
+        switch t {
+        case 1:
+            return ["Be patient with nausea and fatigue",
+                    "Handle cooking smells she can't stand",
+                    "Let her nap and rest without guilt",
+                    "Go with her to the first scans"]
+        case 2:
+            return ["Plan nice outings while she has energy",
+                    "Start prepping the nursery together",
+                    "Talk and sing to the bump",
+                    "Help with back or hip aches"]
+        default:
+            return ["Get her comfortable — pillows, foot rubs",
+                    "Take over the heavy lifting and chores",
+                    "Pack the hospital bag together",
+                    "Know the plan for the big day"]
+        }
+    }
+}

@@ -111,26 +111,42 @@ struct HomeView: View {
 
     @ViewBuilder
     private var cycleCards: some View {
-        switch cycle.userHasCycle {
-        case .some(false):
-            // He doesn't have a cycle → her current phase + supportive tips.
+        if cycle.userHasCycle == true, cycle.isPregnant, let pg = cycle.pregnancyInsights {
+            // She's tracking a pregnancy → show that instead of the cycle.
             NavigationLink { CycleDetailView() } label: {
-                PartnerPeriodCard(partner: cycle.partner, partnerName: partnerName)
+                PregnancyHomeCard(insights: pg, title: "Your pregnancy")
             }
             .buttonStyle(.plain)
-        case .some(true):
-            // She has a cycle → her own tracking (connect Health, then insights).
-            if let insights = cycle.insights {
-                NavigationLink { CycleDetailView() } label: { SelfCycleCard(insights: insights) }
-                    .buttonStyle(.plain)
-            } else {
+        } else if cycle.userHasCycle == false,
+                  let pgp = cycle.partnerPregnancy, pgp.sharing, let due = pgp.dueDate {
+            // His partner is expecting and sharing it.
+            NavigationLink { CycleDetailView() } label: {
+                PregnancyHomeCard(insights: PregnancyEngine.insights(dueDate: due),
+                                  title: "\(partnerName) is expecting 💛")
+            }
+            .buttonStyle(.plain)
+        } else {
+            switch cycle.userHasCycle {
+            case .some(false):
+                // He doesn't have a cycle → her current phase + supportive tips.
+                NavigationLink { CycleDetailView() } label: {
+                    PartnerPeriodCard(partner: cycle.partner, partnerName: partnerName)
+                }
+                .buttonStyle(.plain)
+            case .some(true):
+                // She has a cycle → her own tracking (connect Health, then insights).
+                if let insights = cycle.insights {
+                    NavigationLink { CycleDetailView() } label: { SelfCycleCard(insights: insights) }
+                        .buttonStyle(.plain)
+                } else {
+                    NavigationLink { CycleDetailView() } label: { CycleSetupCard() }
+                        .buttonStyle(.plain)
+                }
+            case nil:
+                // Not answered yet (existing users) → neutral entry to the question.
                 NavigationLink { CycleDetailView() } label: { CycleSetupCard() }
                     .buttonStyle(.plain)
             }
-        case nil:
-            // Not answered yet (existing users) → neutral entry to the question.
-            NavigationLink { CycleDetailView() } label: { CycleSetupCard() }
-                .buttonStyle(.plain)
         }
     }
 
