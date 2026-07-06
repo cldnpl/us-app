@@ -1,5 +1,55 @@
 import SwiftUI
 
+// MARK: - Phase ring
+
+/// The cycle wheel: a colored progress ring (color per phase) with the phase
+/// name, current cycle day, and a countdown to the next phase centered inside.
+struct PhaseRing: View {
+    let phase: CyclePhase
+    let cycleDay: Int
+    let cycleLength: Int
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(phase.color.opacity(0.16), lineWidth: 18)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(phase.color, style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 6) {
+                Text(phase.title)
+                    .font(.system(.title2, design: .rounded).weight(.bold))
+                    .foregroundStyle(phase.color)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Day \(cycleDay)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(nextPhaseText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(38)
+        }
+        .frame(width: 236, height: 236)
+        .animation(.easeInOut(duration: 0.5), value: progress)
+    }
+
+    private var progress: Double {
+        guard cycleLength > 0 else { return 0.02 }
+        return min(1, max(0.02, Double(cycleDay) / Double(cycleLength)))
+    }
+
+    private var nextPhaseText: String {
+        let next = CycleEngine.phaseProgress(cycleDay: cycleDay, cycleLength: cycleLength)
+        if next.daysToNextPhase <= 0 { return "starting \(next.nextPhase.title.lowercased())" }
+        let unit = next.daysToNextPhase == 1 ? "day" : "days"
+        return "\(next.daysToNextPhase) \(unit) to \(next.nextPhase.title.lowercased())"
+    }
+}
+
 // MARK: - Home cards
 
 /// Compact card showing *your own* cycle (people who have one). Tapping opens
@@ -12,7 +62,7 @@ struct SelfCycleCard: View {
             HStack(spacing: 16) {
                 Image(systemName: insights.phase.symbol)
                     .font(.system(size: 26))
-                    .foregroundStyle(Theme.rose)
+                    .foregroundStyle(insights.phase.color)
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(insights.phase.title).font(.headline)
@@ -45,7 +95,7 @@ struct PartnerPeriodCard: View {
             HStack(spacing: 16) {
                 Image(systemName: phase?.symbol ?? "heart.text.square.fill")
                     .font(.system(size: 26))
-                    .foregroundStyle(Theme.rose)
+                    .foregroundStyle(phase?.color ?? Theme.rose)
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     if let phase {
@@ -98,128 +148,218 @@ struct CycleDetailView: View {
     @EnvironmentObject var session: Session
     @StateObject private var cycle = CycleManager.shared
     @State private var level: CycleShareLevel = .off
+    @State private var noteText = ""
     @State private var connecting = false
 
     var body: some View {
-        Form {
-            switch cycle.userHasCycle {
-            case nil:            askSection
-            case .some(true):    selfSections
-            case .some(false):   partnerSections
+        ZStack {
+            Theme.softBackground.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 16) {
+                    switch cycle.userHasCycle {
+                    case nil:          askCard
+                    case .some(true):  selfContent
+                    case .some(false): partnerContent
+                    }
+                    privacyNote
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
             }
-            aboutSection
         }
         .navigationTitle("Cycle & health")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await cycle.refreshOnAppear()
             level = cycle.shareLevel
+            noteText = cycle.todayNote
         }
+        .onChange(of: noteText) { cycle.saveNote($0) }
+        .onDisappear { Task { await cycle.syncNoteIfSharing() } }
     }
 
     // MARK: Not answered yet → ask
 
-    private var askSection: some View {
-        Section("Cycle & health") {
-            Text("Do you have a menstrual cycle? This tailors Us. — track your own, or get gentle tips to support your partner's.")
-                .font(.subheadline).foregroundStyle(.secondary)
-            Button("Yes, I have a cycle") { cycle.setUserHasCycle(true) }
-            Button("No — I want to support \(partnerName)") { cycle.setUserHasCycle(false) }
+    private var askCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Cycle & health").font(.headline)
+                Text("Do you have a menstrual cycle? This tailors Us. — track your own, or get gentle tips to support your partner's.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button("Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
+                    .buttonStyle(PrimaryButtonStyle())
+                Button("No — I want to support \(partnerName)") { withAnimation { cycle.setUserHasCycle(false) } }
+                    .font(.subheadline).foregroundStyle(Theme.rose)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 
-    // MARK: She has a cycle → track + share
+    // MARK: She has a cycle → ring, note, share
 
     @ViewBuilder
-    private var selfSections: some View {
-        Section("Your cycle") {
-            if !HealthKitManager.shared.isAvailable {
-                Text("Apple Health isn't available on this device.")
+    private var selfContent: some View {
+        if !HealthKitManager.shared.isAvailable {
+            infoCard("Apple Health isn't available on this device.")
+        } else if let i = cycle.insights {
+            VStack(spacing: 12) {
+                PhaseRing(phase: i.phase, cycleDay: i.cycleDay, cycleLength: i.cycleLength)
+                    .padding(.top, 10)
+                Text("Next period \(i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted)) · ~\(i.cycleLength)-day cycle")
                     .font(.footnote).foregroundStyle(.secondary)
-            } else if let i = cycle.insights {
-                Label(i.phase.title, systemImage: i.phase.symbol)
-                LabeledContent("Cycle day", value: "\(i.cycleDay)")
-                LabeledContent("Next period", value: i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted))
-                LabeledContent("Cycle length", value: "~\(i.cycleLength) days")
-                Text(i.phase.detail + (i.isEstimated ? " Estimate improves as Apple Health learns your cycle." : ""))
-                    .font(.footnote).foregroundStyle(.secondary)
-            } else {
+            }
+            .padding(.bottom, 4)
+            thoughtsCard
+            sharingCard
+        } else {
+            connectCard
+        }
+    }
+
+    private var connectCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Your cycle").font(.headline)
+                Text("Us reads your cycle from Apple Health — whatever you track in Flo, Clue, or Health syncs here. It stays on your phone until you choose to share.")
+                    .font(.subheadline).foregroundStyle(.secondary)
                 Button {
                     Task { connecting = true; await cycle.connectHealth(); level = cycle.shareLevel; connecting = false }
                 } label: {
-                    HStack {
-                        Label("Connect Apple Health", systemImage: "heart.text.square")
-                        if connecting { Spacer(); ProgressView() }
-                    }
+                    if connecting { ProgressView().tint(.white).frame(maxWidth: .infinity) }
+                    else { Label("Connect Apple Health", systemImage: "heart.text.square.fill") }
                 }
+                .buttonStyle(PrimaryButtonStyle())
                 .disabled(connecting)
-                Text("Us reads your cycle from Apple Health — whatever you track in Flo, Clue, or Health syncs here. It stays on your phone until you choose to share below.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-        }
-
-        if cycle.insights != nil {
-            Section {
-                Picker("Share with \(partnerName)", selection: $level) {
-                    ForEach(CycleShareLevel.allCases, id: \.self) { Text($0.title).tag($0) }
-                }
-                Text(level.explanation(partnerName: partnerName))
-                    .font(.footnote).foregroundStyle(.secondary)
-            } header: {
-                Text("Sharing")
-            } footer: {
-                Text("Only a coarse phase\(level == .full ? " and day count" : "") is ever shared — never your symptoms. Turn it off anytime.")
-            }
-            .onChange(of: level) { newValue in
-                Task { await cycle.setShareLevel(newValue) }
             }
         }
     }
 
-    // MARK: He supports her → her phase + a checklist of tips
+    private var thoughtsCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Today's thoughts").font(.headline)
+                    Spacer()
+                    Text(Date().formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                ZStack(alignment: .topLeading) {
+                    if noteText.isEmpty {
+                        Text("How are you feeling today? Jot down a thought…")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                            .padding(.top, 8).padding(.leading, 6)
+                    }
+                    TextEditor(text: $noteText)
+                        .font(.subheadline)
+                        .frame(minHeight: 96)
+                        .scrollContentBackground(.hidden)
+                        .padding(2)
+                }
+                .background(Theme.rose.opacity(0.07), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+    }
+
+    private var sharingCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Sharing").font(.headline)
+                HStack {
+                    Text("Share with \(partnerName)").font(.subheadline)
+                    Spacer()
+                    Picker("", selection: $level) {
+                        ForEach(CycleShareLevel.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }
+                    .labelsHidden()
+                    .tint(Theme.rose)
+                }
+                Text(level.explanation(partnerName: partnerName))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .onChange(of: level) { newValue in Task { await cycle.setShareLevel(newValue) } }
+        }
+    }
+
+    // MARK: He supports her → her ring, the explainer, tips, her note
 
     @ViewBuilder
-    private var partnerSections: some View {
-        if let partner = cycle.partner, partner.sharing,
-           let phase = CyclePhase(rawValue: partner.phase ?? "") {
-            Section("\(partnerName)'s cycle") {
-                Label(phase.title, systemImage: phase.symbol)
-                if let day = partner.cycleDay { LabeledContent("Cycle day", value: "\(day)") }
-                if let days = partner.periodInDays {
-                    LabeledContent("Next period", value: days <= 0 ? "around now" : "~\(days) days")
-                }
-                Text(phase.detail).font(.footnote).foregroundStyle(.secondary)
+    private var partnerContent: some View {
+        if let p = cycle.partner, p.sharing, let phase = CyclePhase(rawValue: p.phase ?? "") {
+            if let day = p.cycleDay {
+                PhaseRing(phase: phase, cycleDay: day, cycleLength: estimatedLength(day, p.periodInDays))
+                    .padding(.top, 10).padding(.bottom, 4)
             }
-            Section("How to support her now") {
-                ForEach(phase.partnerTips, id: \.self) { tip in
-                    Label {
-                        Text(tip).font(.subheadline)
-                    } icon: {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.rose)
+
+            Card {
+                VStack(alignment: .leading, spacing: 14) {
+                    Label(phase.title, systemImage: phase.symbol)
+                        .font(.headline).foregroundStyle(phase.color)
+                    explainerRow("What's happening", phase.about)
+                    explainerRow("What she may feel", phase.symptoms)
+                }
+            }
+
+            Card {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("How to support her now").font(.headline)
+                    ForEach(phase.partnerTips, id: \.self) { tip in
+                        Label {
+                            Text(tip).font(.subheadline)
+                        } icon: {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(phase.color)
+                        }
+                    }
+                }
+            }
+
+            if let note = p.note, !note.isEmpty {
+                Card {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("\(partnerName)'s thoughts today").font(.headline)
+                        Text(note).font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
             }
         } else {
-            Section("\(partnerName)'s cycle") {
-                Text("When \(partnerName) turns on cycle sharing in her Us., you'll see her current phase here — plus simple, kind things you can do to support her.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
+            infoCard("When \(partnerName) turns on cycle sharing in her Us., you'll see her current phase here — plus what it means and simple, kind ways to support her.")
+        }
+
+        Button("I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
+            .font(.footnote).foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 4)
+    }
+
+    // MARK: Building blocks
+
+    private func explainerRow(_ label: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label).font(.subheadline.weight(.semibold))
+            Text(text).font(.subheadline).foregroundStyle(.secondary)
         }
     }
 
-    // MARK: About / mode switch
-
-    private var aboutSection: some View {
-        Section {
-            Text("Predictions are estimates, not medical advice. Us never stores health data — it reads from Apple Health on the device, and only the phase she chooses ever leaves it.")
-                .font(.caption).foregroundStyle(.secondary)
-            if let has = cycle.userHasCycle {
-                Button(has ? "I don't have a cycle" : "I have a cycle") {
-                    cycle.setUserHasCycle(!has)
-                }
-                .font(.footnote)
-            }
+    private func infoCard(_ text: String) -> some View {
+        Card {
+            Text(text)
+                .font(.subheadline).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// His ring has only what she shares — estimate her cycle length from her
+    /// cycle day plus the days-to-next-period she shared (fallback 28).
+    private func estimatedLength(_ cycleDay: Int, _ periodInDays: Int?) -> Int {
+        guard let periodInDays else { return CycleEngine.defaultCycleLength }
+        return min(40, max(21, cycleDay + periodInDays))
+    }
+
+    private var privacyNote: some View {
+        Text("Predictions are estimates, not medical advice. Us never stores your health data — it reads from Apple Health on your device, and only what you choose ever leaves it.")
+            .font(.caption).foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 8)
+            .padding(.top, 4)
     }
 
     private var partnerName: String {

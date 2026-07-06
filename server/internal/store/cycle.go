@@ -14,17 +14,18 @@ type CycleShare struct {
 	Phase        string
 	CycleDay     *int
 	PeriodInDays *int
+	Note         *string
 	UpdatedAt    time.Time
 }
 
 // UpsertCycleShare stores the user's currently-shared cycle summary.
-func (s *Store) UpsertCycleShare(ctx context.Context, userID, phase string, cycleDay, periodInDays *int) error {
+func (s *Store) UpsertCycleShare(ctx context.Context, userID, phase string, cycleDay, periodInDays *int, note *string) error {
 	_, err := s.pool.Exec(ctx,
-		`INSERT INTO cycle_shares (user_id, phase, cycle_day, period_in_days, updated_at)
-		 VALUES ($1, $2, $3, $4, now())
+		`INSERT INTO cycle_shares (user_id, phase, cycle_day, period_in_days, note, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, now())
 		 ON CONFLICT (user_id)
-		 DO UPDATE SET phase = $2, cycle_day = $3, period_in_days = $4, updated_at = now()`,
-		userID, phase, cycleDay, periodInDays)
+		 DO UPDATE SET phase = $2, cycle_day = $3, period_in_days = $4, note = $5, updated_at = now()`,
+		userID, phase, cycleDay, periodInDays, note)
 	return err
 }
 
@@ -32,8 +33,8 @@ func (s *Store) UpsertCycleShare(ctx context.Context, userID, phase string, cycl
 func (s *Store) GetCycleShare(ctx context.Context, userID string) (CycleShare, error) {
 	var c CycleShare
 	err := s.pool.QueryRow(ctx,
-		`SELECT user_id, phase, cycle_day, period_in_days, updated_at FROM cycle_shares WHERE user_id = $1`, userID).
-		Scan(&c.UserID, &c.Phase, &c.CycleDay, &c.PeriodInDays, &c.UpdatedAt)
+		`SELECT user_id, phase, cycle_day, period_in_days, note, updated_at FROM cycle_shares WHERE user_id = $1`, userID).
+		Scan(&c.UserID, &c.Phase, &c.CycleDay, &c.PeriodInDays, &c.Note, &c.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return CycleShare{}, ErrNotFound
 	}

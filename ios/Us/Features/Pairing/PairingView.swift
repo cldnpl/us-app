@@ -41,10 +41,6 @@ struct PairingView: View {
                                 ShareLink(item: "Join me on Us. 💜 Use my pairing code: \(code)") {
                                     Label("Share code", systemImage: "square.and.arrow.up")
                                 }
-                                Button("I'm connected — continue") {
-                                    Task { await session.loadCouple() }
-                                }
-                                .font(.footnote)
                             } else {
                                 ProgressView()
                                     .padding(.vertical, 10)
@@ -90,6 +86,22 @@ struct PairingView: View {
         }
         .task {
             if generatedCode == nil { await generate() }
+            await pollForPairing()
+        }
+    }
+
+    /// While this partner is showing the invite code, watch the backend and
+    /// advance automatically the moment the other partner redeems it — so this
+    /// screen disappears on its own, no manual "continue" needed.
+    private func pollForPairing() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if Task.isCancelled { return }
+            if let resp = try? await APIClient.shared.getCouple(), resp.paired {
+                Haptics.success()
+                await session.loadCouple() // flips state to .ready → view goes away
+                return
+            }
         }
     }
 
