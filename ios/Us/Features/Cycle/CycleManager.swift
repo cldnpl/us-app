@@ -120,6 +120,10 @@ final class CycleManager: ObservableObject {
     /// Called when a screen appears: refresh the partner card, load today's note,
     /// and (if Health is available) my own cycle, keeping my summary current.
     func refreshOnAppear() async {
+        #if DEBUG
+        // Keep seeded state intact inside Xcode Previews (no live network).
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" { return }
+        #endif
         await refreshPartner()
         partnerPregnancy = try? await APIClient.shared.partnerPregnancy()
         loadTodayNote()
@@ -202,3 +206,27 @@ final class CycleManager: ObservableObject {
             note: note)
     }
 }
+
+#if DEBUG
+extension CycleManager {
+    /// A fresh manager for a supporter (male) whose partner is sharing.
+    static func previewSupporter() -> CycleManager {
+        let m = CycleManager()
+        m.userHasCycle = false
+        m.partner = PartnerCycle(
+            sharing: true, phase: CyclePhase.ovulation.rawValue, cycleDay: 14,
+            periodInDays: 14, note: "I miss youuu 💛",
+            partnerName: "Claudia", updatedAt: nil)
+        return m
+    }
+
+    /// A fresh manager for someone tracking their own cycle.
+    static func previewSelf() -> CycleManager {
+        let m = CycleManager()
+        m.userHasCycle = true
+        m.insights = CycleEngine.insights(
+            fromPeriodStarts: [Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date()])
+        return m
+    }
+}
+#endif

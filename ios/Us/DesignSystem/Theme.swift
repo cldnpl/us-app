@@ -43,16 +43,15 @@ enum Theme {
 struct BrandLogo: View {
     var color: Color = Theme.rose
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "heart.fill")
-                .font(.system(size: 15, weight: .bold))
-            Text("Us.")
-                .font(.system(size: 24, weight: .heavy, design: .rounded))
-        }
-        .foregroundStyle(color)
-        .fixedSize()
-        .accessibilityAddTraits(.isHeader)
-        .accessibilityLabel("Us.")
+        Image("UsLogo")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(height: 30)
+            .foregroundStyle(color)
+            .fixedSize()
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityLabel("Us.")
     }
 }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var session: Session
+    @StateObject private var cycle = CycleManager.shared
     @State private var startDate = Date()
     @State private var pronoun: PartnerPronoun = PartnerPrefs.pronoun ?? .they
     @State private var showUnpairConfirm = false
@@ -10,11 +11,19 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("You") {
+                Section {
                     LabeledContent("Name", value: session.user?.displayName ?? "—")
                     if let email = session.user?.email {
                         LabeledContent("Email", value: email)
                     }
+                    Toggle("I have a menstrual cycle", isOn: Binding(
+                        get: { cycle.userHasCycle == true },
+                        set: { cycle.setUserHasCycle($0) }
+                    ))
+                } header: {
+                    Text("You")
+                } footer: {
+                    Text("Turn this off if you're supporting a partner who has one — you'll see her cycle and how to support her, not a tracker of your own.")
                 }
 
                 Section("Your relationship") {

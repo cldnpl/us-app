@@ -14,13 +14,13 @@ struct WelcomeView: View {
 
                 VStack(spacing: 16) {
                     Spacer()
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 68))
+                    Image("UsLogo")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 210)
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
-                    Text("Us.")
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
                     Text("Two people, one little world.")
                         .font(.title3)
                         .foregroundStyle(.white.opacity(0.95))
