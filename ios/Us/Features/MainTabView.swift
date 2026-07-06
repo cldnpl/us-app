@@ -10,7 +10,7 @@ struct MainTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
             TogetherView()
-                .tabItem { Label("Utility", systemImage: "sparkles") }
+                .tabItem { Label("Games", systemImage: "sparkles") }
 
             JournalView()
                 .tabItem { Label("Journal", systemImage: "book.closed.fill") }

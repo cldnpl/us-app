@@ -431,15 +431,24 @@ struct CycleDetailView: View {
     private var sharingCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Sharing").font(.headline)
-                HStack {
-                    Text("Share with \(partnerName)").font(.subheadline)
-                    Spacer()
+                Text("Share with \(partnerName)").font(.headline)
+                Menu {
                     Picker("", selection: $level) {
                         ForEach(CycleShareLevel.allCases, id: \.self) { Text($0.title).tag($0) }
                     }
-                    .labelsHidden()
-                    .tint(Theme.rose)
+                } label: {
+                    HStack {
+                        Text(level.title)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Theme.rose)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption).foregroundStyle(Theme.rose)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .background(Theme.rose.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 Text(level.explanation(partnerName: partnerName))
                     .font(.footnote).foregroundStyle(.secondary)
