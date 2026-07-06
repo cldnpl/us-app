@@ -3,21 +3,24 @@ import SwiftUI
 
 /// How much of your cycle you share with your partner. Off by default.
 enum CycleShareLevel: String, CaseIterable {
-    case off, mood, full
+    case off, cycle, cycleAndThoughts
 
     var title: String {
         switch self {
-        case .off:  return "Not sharing"
-        case .mood: return "Just how I feel"
-        case .full: return "Feelings + days"
+        case .off:             return "Not sharing"
+        case .cycle:           return "Cycle only"
+        case .cycleAndThoughts: return "Cycle + thoughts"
         }
     }
 
     func explanation(partnerName: String) -> String {
         switch self {
-        case .off:  return "\(partnerName) sees nothing about your cycle."
-        case .mood: return "\(partnerName) sees only your current phase — a gentle heads-up, no numbers."
-        case .full: return "\(partnerName) also sees your cycle day and a rough countdown to your next period."
+        case .off:
+            return "\(partnerName) sees nothing about your cycle."
+        case .cycle:
+            return "\(partnerName) sees your phase, cycle day, and a rough countdown to your next period."
+        case .cycleAndThoughts:
+            return "\(partnerName) also sees the thoughts you write for the day."
         }
     }
 }
@@ -37,15 +40,16 @@ enum CyclePrefs {
 }
 
 /// Owns the cycle state for the UI: your own insights (read from Apple Health),
-/// your partner's shared summary (read from the backend), and your sharing choice.
-/// The share level is the only cycle setting persisted locally; health data is
-/// never cached by us.
+/// your partner's shared summary (read from the backend), your sharing choice,
+/// and the free-text note for the day. Only the sharing level, the flag, and the
+/// note are persisted locally; health data is never cached by us.
 @MainActor
 final class CycleManager: ObservableObject {
     static let shared = CycleManager()
 
     @Published private(set) var insights: CycleInsights?
     @Published private(set) var partner: PartnerCycle?
+    @Published var todayNote: String = ""
     @Published var lastError: String?
 
     /// Whether *this user* has a menstrual cycle (set in onboarding). nil = not
@@ -61,13 +65,19 @@ final class CycleManager: ObservableObject {
     private let shareLevelKey = "cycleShareLevel"
 
     var shareLevel: CycleShareLevel {
-        CycleShareLevel(rawValue: UserDefaults.standard.string(forKey: shareLevelKey) ?? "") ?? .off
+        switch UserDefaults.standard.string(forKey: shareLevelKey) {
+        // Legacy values ("mood"/"full") map to sharing the cycle, never thoughts.
+        case CycleShareLevel.cycle.rawValue, "mood", "full": return .cycle
+        case CycleShareLevel.cycleAndThoughts.rawValue: return .cycleAndThoughts
+        default: return .off
+        }
     }
 
-    /// Called when a screen appears: refresh the partner card, and (if Health is
-    /// available) my own cycle, keeping my shared summary current if sharing is on.
+    /// Called when a screen appears: refresh the partner card, load today's note,
+    /// and (if Health is available) my own cycle, keeping my summary current.
     func refreshOnAppear() async {
         await refreshPartner()
+        loadTodayNote()
         // People without a cycle have nothing to read from Apple Health.
         guard userHasCycle != false, HealthKitManager.shared.isAvailable else { return }
         await refreshInsights()
@@ -105,16 +115,43 @@ final class CycleManager: ObservableObject {
         await pushShare()
     }
 
+    // MARK: Today's note
+
+    private var noteKey: String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return "cycleNote." + f.string(from: Date())
+    }
+
+    func loadTodayNote() {
+        todayNote = UserDefaults.standard.string(forKey: noteKey) ?? ""
+    }
+
+    /// Persist the day's note locally (no network).
+    func saveNote(_ text: String) {
+        todayNote = text
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { UserDefaults.standard.removeObject(forKey: noteKey) }
+        else { UserDefaults.standard.set(text, forKey: noteKey) }
+    }
+
+    /// Push the latest note to the partner if sharing includes thoughts.
+    func syncNoteIfSharing() async {
+        if shareLevel == .cycleAndThoughts { await pushShare() }
+    }
+
     /// Upload the summary the current level allows, or clear it when off.
     private func pushShare() async {
         guard shareLevel != .off, let insights else {
             try? await APIClient.shared.stopSharingCycle()
             return
         }
-        let shareDays = shareLevel == .full
+        let trimmedNote = todayNote.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = shareLevel == .cycleAndThoughts && !trimmedNote.isEmpty ? trimmedNote : nil
         try? await APIClient.shared.putCycle(
             phase: insights.phase.rawValue,
-            cycleDay: shareDays ? insights.cycleDay : nil,
-            periodInDays: shareDays ? insights.daysUntilNextPeriod : nil)
+            cycleDay: insights.cycleDay,
+            periodInDays: insights.daysUntilNextPeriod,
+            note: note)
     }
 }

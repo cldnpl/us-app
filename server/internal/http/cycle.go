@@ -9,9 +9,10 @@ import (
 )
 
 type updateCycleRequest struct {
-	Phase        string `json:"phase"`
-	CycleDay     *int   `json:"cycleDay"`
-	PeriodInDays *int   `json:"periodInDays"`
+	Phase        string  `json:"phase"`
+	CycleDay     *int    `json:"cycleDay"`
+	PeriodInDays *int    `json:"periodInDays"`
+	Note         *string `json:"note"`
 }
 
 // Coarse phases only — never raw symptoms. Kept in sync with the iOS CyclePhase.
@@ -38,7 +39,7 @@ func (d Deps) handleUpdateCycle(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid_phase", "unknown cycle phase")
 		return
 	}
-	if err := d.Store.UpsertCycleShare(r.Context(), userID, req.Phase, req.CycleDay, req.PeriodInDays); err != nil {
+	if err := d.Store.UpsertCycleShare(r.Context(), userID, req.Phase, req.CycleDay, req.PeriodInDays, req.Note); err != nil {
 		d.serverError(w, "cycle: upsert", err)
 		return
 	}
@@ -71,6 +72,7 @@ func (d Deps) handleGetPartnerCycle(w http.ResponseWriter, r *http.Request) {
 		Phase:        &share.Phase,
 		CycleDay:     share.CycleDay,
 		PeriodInDays: share.PeriodInDays,
+		Note:         share.Note,
 		PartnerName:  &name,
 		UpdatedAt:    &share.UpdatedAt,
 	})

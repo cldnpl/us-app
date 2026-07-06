@@ -97,6 +97,7 @@ struct PartnerCycle: Codable {
     let phase: String?
     let cycleDay: Int?
     let periodInDays: Int?
+    let note: String?
     let partnerName: String?
     let updatedAt: Date?
 }

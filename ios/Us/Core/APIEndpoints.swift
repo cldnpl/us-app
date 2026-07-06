@@ -132,12 +132,12 @@ extension APIClient {
 
     // MARK: - Cycle sharing
 
-    /// Upload the caller's opt-in cycle summary. Pass nil day/period for a
-    /// phase-only ("just how I feel") share.
-    func putCycle(phase: String, cycleDay: Int?, periodInDays: Int?) async throws {
-        struct Body: Encodable { let phase: String; let cycleDay: Int?; let periodInDays: Int? }
+    /// Upload the caller's opt-in cycle summary. `note` carries the day's
+    /// thoughts when sharing at the "cycle + thoughts" level (nil otherwise).
+    func putCycle(phase: String, cycleDay: Int?, periodInDays: Int?, note: String?) async throws {
+        struct Body: Encodable { let phase: String; let cycleDay: Int?; let periodInDays: Int?; let note: String? }
         try await sendVoid("/v1/cycle", method: "PUT",
-                           body: Body(phase: phase, cycleDay: cycleDay, periodInDays: periodInDays))
+                           body: Body(phase: phase, cycleDay: cycleDay, periodInDays: periodInDays, note: note))
     }
 
     func partnerCycle() async throws -> PartnerCycle {

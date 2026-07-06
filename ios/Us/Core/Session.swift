@@ -25,6 +25,23 @@ final class Session: ObservableObject {
     /// backend definitively rejecting the refresh token (a real 401). A network
     /// blip, a server error, or a slow launch must NOT throw the session away.
     func bootstrap() async {
+        // The iOS Keychain survives app uninstall, but UserDefaults does not. On
+        // the first launch after a fresh (re)install, wipe any stale tokens so the
+        // user starts at sign-in — not stranded mid-onboarding with a ghost
+        // session left behind in the Keychain.
+        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            // Only a true fresh install has an empty UserDefaults; an existing
+            // install updating to this build still carries its prior keys, so we
+            // must not sign those users out just for adding this flag.
+            let hadPriorUse = UserDefaults.standard.bool(forKey: "didCompletePersonalOnboarding")
+                || UserDefaults.standard.bool(forKey: "testPaired")
+                || UserDefaults.standard.object(forKey: "userHasCycle") != nil
+            if !hadPriorUse {
+                TokenStore.clear()
+                SessionCache.clear()
+            }
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+        }
         guard TokenStore.accessToken != nil || TokenStore.refreshToken != nil else {
             state = .signedOut
             return

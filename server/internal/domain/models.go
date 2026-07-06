@@ -81,6 +81,7 @@ type PartnerCycle struct {
 	Phase        *string    `json:"phase,omitempty"`
 	CycleDay     *int       `json:"cycleDay,omitempty"`
 	PeriodInDays *int       `json:"periodInDays,omitempty"`
+	Note         *string    `json:"note,omitempty"`
 	PartnerName  *string    `json:"partnerName,omitempty"`
 	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
 }
