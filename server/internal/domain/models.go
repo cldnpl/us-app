@@ -4,12 +4,13 @@ import "time"
 
 // User is a single account. Email/AvatarPath/Birthday are optional.
 type User struct {
-	ID          string     `json:"id"`
-	Email       *string    `json:"email,omitempty"`
-	DisplayName string     `json:"displayName"`
-	AvatarPath  *string    `json:"avatarPath,omitempty"`
-	Birthday    *time.Time `json:"birthday,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt"`
+	ID             string     `json:"id"`
+	Email          *string    `json:"email,omitempty"`
+	DisplayName    string     `json:"displayName"`
+	AvatarPath     *string    `json:"avatarPath,omitempty"`
+	Birthday       *time.Time `json:"birthday,omitempty"`
+	PartnerPronoun *string    `json:"partnerPronoun,omitempty"`
+	CreatedAt      time.Time  `json:"createdAt"`
 }
 
 // Couple links exactly two users together.

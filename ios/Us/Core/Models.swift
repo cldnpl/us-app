@@ -6,6 +6,7 @@ struct User: Codable, Identifiable, Equatable {
     let displayName: String
     let avatarPath: String?
     let birthday: Date?
+    let partnerPronoun: String?
     let createdAt: Date
 }
 

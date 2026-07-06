@@ -62,7 +62,12 @@ struct SetupFlowView: View {
 
             Button {
                 if let selectedPronoun { session.setPartnerPronoun(selectedPronoun) }
-                withAnimation { step = .startDate }
+                // Don't re-ask the start date if the couple already has one.
+                if session.couple?.startDate != nil {
+                    withAnimation { isPresented = false }
+                } else {
+                    withAnimation { step = .startDate }
+                }
             } label: { Text("Continue") }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(selectedPronoun == nil)
