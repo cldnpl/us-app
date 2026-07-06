@@ -63,6 +63,18 @@ func (s *Store) GetMilestone(ctx context.Context, id string) (Milestone, error) 
 	return m, err
 }
 
+func (s *Store) UpdateMilestone(ctx context.Context, id, title string, date time.Time) (Milestone, error) {
+	var m Milestone
+	err := s.pool.QueryRow(ctx,
+		`UPDATE milestones SET title = $2, date = $3 WHERE id = $1
+		 RETURNING id, couple_id, title, date, kind, created_at`,
+		id, title, date).Scan(&m.ID, &m.CoupleID, &m.Title, &m.Date, &m.Kind, &m.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Milestone{}, ErrNotFound
+	}
+	return m, err
+}
+
 func (s *Store) DeleteMilestone(ctx context.Context, id string) error {
 	_, err := s.pool.Exec(ctx, `DELETE FROM milestones WHERE id = $1`, id)
 	return err

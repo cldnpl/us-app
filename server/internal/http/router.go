@@ -97,7 +97,13 @@ func NewRouter(d Deps) http.Handler {
 
 			r.Get("/milestones", d.handleListMilestones)
 			r.Post("/milestones", d.handleCreateMilestone)
+			r.Patch("/milestones/{id}", d.handleUpdateMilestone)
 			r.Delete("/milestones/{id}", d.handleDeleteMilestone)
+
+			r.Get("/journal", d.handleListJournal)
+			r.Post("/journal", d.handleCreateJournalEntry)
+			r.Post("/journal/{id}/photos", d.handleUploadJournalPhoto)
+			r.Delete("/journal/{id}", d.handleDeleteJournalEntry)
 			r.Get("/reunions", d.handleListReunions)
 			r.Post("/reunions", d.handleCreateReunion)
 			r.Delete("/reunions/{id}", d.handleDeleteReunion)

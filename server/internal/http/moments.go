@@ -76,6 +76,45 @@ func (d Deps) handleCreateMilestone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toDomainMilestone(m))
 }
 
+func (d Deps) handleUpdateMilestone(w http.ResponseWriter, r *http.Request) {
+	c, _, ok := d.coupleForRequest(w, r)
+	if !ok {
+		return
+	}
+	m, err := d.Store.GetMilestone(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "not_found", "not found")
+		return
+	} else if err != nil {
+		d.serverError(w, "milestones: get", err)
+		return
+	}
+	if m.CoupleID != c.ID {
+		writeError(w, http.StatusForbidden, "forbidden", "not allowed")
+		return
+	}
+	var req milestoneRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	title := strings.TrimSpace(req.Title)
+	if title == "" {
+		writeError(w, http.StatusBadRequest, "missing_title", "a title is required")
+		return
+	}
+	date, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_date", "date must be YYYY-MM-DD")
+		return
+	}
+	updated, err := d.Store.UpdateMilestone(r.Context(), m.ID, title, date)
+	if err != nil {
+		d.serverError(w, "milestones: update", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toDomainMilestone(updated))
+}
+
 func (d Deps) handleDeleteMilestone(w http.ResponseWriter, r *http.Request) {
 	c, _, ok := d.coupleForRequest(w, r)
 	if !ok {

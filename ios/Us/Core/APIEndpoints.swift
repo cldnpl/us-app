@@ -102,8 +102,35 @@ extension APIClient {
                        body: ["title": title, "date": date, "kind": kind])
     }
 
+    @discardableResult
+    func updateMilestone(id: String, title: String, date: String) async throws -> Milestone {
+        try await send("/v1/milestones/\(id)", method: "PATCH", body: ["title": title, "date": date])
+    }
+
     func deleteMilestone(id: String) async throws {
         try await sendVoid("/v1/milestones/\(id)", method: "DELETE")
+    }
+
+    // MARK: - Journal
+
+    func listJournal() async throws -> [JournalEntry] {
+        let list: JournalList = try await send("/v1/journal")
+        return list.entries
+    }
+
+    @discardableResult
+    func createJournalEntry(date: String, body: String) async throws -> JournalEntry {
+        try await send("/v1/journal", method: "POST", body: ["date": date, "body": body])
+    }
+
+    @discardableResult
+    func uploadJournalPhoto(entryId: String, _ jpeg: Data) async throws -> MediaItem {
+        let data = try await uploadImage("/v1/journal/\(entryId)/photos", imageData: jpeg, filename: "photo.jpg", caption: nil)
+        return try decoder.decode(MediaItem.self, from: data)
+    }
+
+    func deleteJournalEntry(id: String) async throws {
+        try await sendVoid("/v1/journal/\(id)", method: "DELETE")
     }
 
     func listReunions() async throws -> [Reunion] {
