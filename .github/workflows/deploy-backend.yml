@@ -1,0 +1,63 @@
+name: Deploy backend
+
+# Auto-deploys the Go API to usapi.islamov.online on every push to main that
+# touches the backend. Builds the linux/amd64 binary in CI (the server is too
+# small to compile), ships it, and restarts the prod stack. DB migrations are
+# embedded in the binary and apply themselves on boot (goose).
+#
+# One-time setup (GitHub → Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST     server hostname or IP
+#   DEPLOY_USER     ssh user
+#   DEPLOY_SSH_KEY  private ssh key with access to that user
+#   DEPLOY_PATH     absolute path of the prod deploy dir on the server
+#                   (the one holding .env + AuthKey.p8 + docker-compose.prod.yml)
+# See server/deploy/DEPLOY.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: Build linux/amd64 binary
+        working-directory: server
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o deploy/api ./cmd/api
+
+      - name: Ship deploy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "server/deploy/api,server/deploy/Dockerfile.prod,server/deploy/docker-compose.prod.yml"
+          target: ${{ secrets.DEPLOY_PATH }}
+          strip_components: 2
+
+      - name: Rebuild and restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            docker compose -f docker-compose.prod.yml up --build -d
+            docker image prune -f
