@@ -72,6 +72,22 @@ struct MilestoneList: Codable {
     let milestones: [Milestone]
 }
 
+/// One partner's diary entry for a day: free text and/or photos. Both partners'
+/// entries for the same date are grouped under a shared day card on the client.
+struct JournalEntry: Codable, Identifiable {
+    let id: String
+    let authorId: String
+    let date: Date
+    let body: String
+    let photos: [MediaItem]
+    let createdAt: Date
+    let updatedAt: Date
+}
+
+struct JournalList: Codable {
+    let entries: [JournalEntry]
+}
+
 struct Reunion: Codable, Identifiable {
     let id: String
     let title: String

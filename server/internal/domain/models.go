@@ -58,6 +58,18 @@ type Milestone struct {
 	Kind  string    `json:"kind"`
 }
 
+// JournalEntry is one partner's diary entry for a day: free text and/or a set
+// of photos. Both partners' entries for the same date are grouped by the client.
+type JournalEntry struct {
+	ID        string    `json:"id"`
+	AuthorID  string    `json:"authorId"`
+	Date      time.Time `json:"date"`
+	Body      string    `json:"body"`
+	Photos    []Media   `json:"photos"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 // Reunion is a future date to count down to (great for long distance).
 type Reunion struct {
 	ID         string    `json:"id"`
