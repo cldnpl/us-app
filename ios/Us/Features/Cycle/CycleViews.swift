@@ -50,6 +50,38 @@ struct PhaseRing: View {
     }
 }
 
+/// The pregnancy wheel: progress toward 40 weeks, with the current week and a
+/// countdown to the due date centered inside.
+struct PregnancyRing: View {
+    let week: Int
+    let daysToDue: Int
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Theme.rose.opacity(0.16), lineWidth: 18)
+            Circle()
+                .trim(from: 0, to: min(1, max(0.02, Double(week) / 40.0)))
+                .stroke(Theme.rose, style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 4) {
+                Text("Week \(week)")
+                    .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                    .foregroundStyle(Theme.rose)
+                Text("of 40")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(daysToDue <= 0 ? "due any day now 💛" : "\(daysToDue) days to go")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(38)
+        }
+        .frame(width: 236, height: 236)
+        .animation(.easeInOut(duration: 0.5), value: week)
+    }
+}
+
 // MARK: - Home cards
 
 /// Compact card showing *your own* cycle (people who have one). Tapping opens
@@ -142,6 +174,30 @@ struct CycleSetupCard: View {
     }
 }
 
+/// Home card shown while a pregnancy is active/shared — week + due countdown.
+struct PregnancyHomeCard: View {
+    let insights: PregnancyInsights
+    let title: String
+
+    var body: some View {
+        Card {
+            HStack(spacing: 16) {
+                Image(systemName: "figure.child.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Theme.rose)
+                    .frame(width: 40)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).font(.headline)
+                    Text("Week \(insights.week) · \(insights.daysToDue <= 0 ? "due any day 💛" : "\(insights.daysToDue) days to go")")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
+            }
+        }
+    }
+}
+
 // MARK: - Detail / settings screen
 
 struct CycleDetailView: View {
@@ -150,6 +206,8 @@ struct CycleDetailView: View {
     @State private var level: CycleShareLevel = .off
     @State private var noteText = ""
     @State private var connecting = false
+    @State private var showDuePicker = false
+    @State private var pickedDue = Calendar.current.date(byAdding: .month, value: 7, to: Date()) ?? Date()
 
     var body: some View {
         ZStack {
@@ -176,6 +234,36 @@ struct CycleDetailView: View {
         }
         .onChange(of: noteText) { cycle.saveNote($0) }
         .onDisappear { Task { await cycle.syncNoteIfSharing() } }
+        .sheet(isPresented: $showDuePicker) { dueDateSheet }
+    }
+
+    private var dueDateSheet: some View {
+        NavigationStack {
+            ZStack {
+                Theme.softBackground.ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Text("When's your due date?")
+                        .font(.title2.bold())
+                        .padding(.top, 12)
+                    DatePicker("Due date", selection: $pickedDue, in: Date()..., displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .tint(Theme.rose)
+                        .padding(.horizontal, 6)
+                    Button("Start tracking") {
+                        Task { await cycle.startPregnancy(dueDate: pickedDue) }
+                        showDuePicker = false
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    Spacer()
+                }
+                .padding(24)
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showDuePicker = false }
+                }
+            }
+        }
     }
 
     // MARK: Not answered yet → ask
@@ -195,10 +283,20 @@ struct CycleDetailView: View {
         }
     }
 
-    // MARK: She has a cycle → ring, note, share
+    // MARK: She has a cycle → cycle tracking, or pregnancy mode
 
     @ViewBuilder
     private var selfContent: some View {
+        if cycle.isPregnant {
+            pregnancyContent
+        } else {
+            cycleContent
+            pregnancyEntry
+        }
+    }
+
+    @ViewBuilder
+    private var cycleContent: some View {
         if !HealthKitManager.shared.isAvailable {
             infoCard("Apple Health isn't available on this device.")
         } else if let i = cycle.insights {
@@ -214,6 +312,69 @@ struct CycleDetailView: View {
         } else {
             connectCard
         }
+    }
+
+    // MARK: Pregnancy (her side)
+
+    @ViewBuilder
+    private var pregnancyContent: some View {
+        if let pg = cycle.pregnancyInsights {
+            VStack(spacing: 12) {
+                PregnancyRing(week: pg.week, daysToDue: pg.daysToDue)
+                    .padding(.top, 10)
+                Text("Due \(pg.dueDate.formatted(date: .abbreviated, time: .omitted)) · \(PregnancyEngine.trimesterTitle(pg.trimester))")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 4)
+
+            Card {
+                HStack(spacing: 14) {
+                    Image(systemName: "carrot.fill")
+                        .font(.system(size: 24)).foregroundStyle(Theme.rose).frame(width: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("This week").font(.headline)
+                        Text("Your baby is about the size of \(pg.babySize).")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Card {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(PregnancyEngine.trimesterTitle(pg.trimester)).font(.headline)
+                    Text(PregnancyEngine.trimesterAbout(pg.trimester))
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+
+            Text("\(partnerName) can see your progress.")
+                .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity)
+            Button("End pregnancy tracking") { Task { await cycle.endPregnancy() } }
+                .font(.footnote).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity).padding(.top, 2)
+        }
+    }
+
+    private var pregnancyEntry: some View {
+        Button {
+            pickedDue = Calendar.current.date(byAdding: .month, value: 7, to: Date()) ?? Date()
+            showDuePicker = true
+        } label: {
+            Card {
+                HStack(spacing: 14) {
+                    Image(systemName: "figure.child.circle.fill")
+                        .font(.system(size: 26)).foregroundStyle(Theme.rose).frame(width: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Expecting a baby?").font(.headline)
+                        Text("Switch to pregnancy tracking.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private var connectCard: some View {
@@ -284,42 +445,10 @@ struct CycleDetailView: View {
 
     @ViewBuilder
     private var partnerContent: some View {
-        if let p = cycle.partner, p.sharing, let phase = CyclePhase(rawValue: p.phase ?? "") {
-            if let day = p.cycleDay {
-                PhaseRing(phase: phase, cycleDay: day, cycleLength: estimatedLength(day, p.periodInDays))
-                    .padding(.top, 10).padding(.bottom, 4)
-            }
-
-            Card {
-                VStack(alignment: .leading, spacing: 14) {
-                    Label(phase.title, systemImage: phase.symbol)
-                        .font(.headline).foregroundStyle(phase.color)
-                    explainerRow("What's happening", phase.about)
-                    explainerRow("What she may feel", phase.symptoms)
-                }
-            }
-
-            Card {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("How to support her now").font(.headline)
-                    ForEach(phase.partnerTips, id: \.self) { tip in
-                        Label {
-                            Text(tip).font(.subheadline)
-                        } icon: {
-                            Image(systemName: "checkmark.circle.fill").foregroundStyle(phase.color)
-                        }
-                    }
-                }
-            }
-
-            if let note = p.note, !note.isEmpty {
-                Card {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("\(partnerName)'s thoughts today").font(.headline)
-                        Text(note).font(.subheadline).foregroundStyle(.secondary)
-                    }
-                }
-            }
+        if let pg = cycle.partnerPregnancy, pg.sharing, let due = pg.dueDate {
+            partnerPregnancyView(due: due)
+        } else if let p = cycle.partner, p.sharing, let phase = CyclePhase(rawValue: p.phase ?? "") {
+            partnerCycleView(p, phase)
         } else {
             infoCard("When \(partnerName) turns on cycle sharing in her Us., you'll see her current phase here — plus what it means and simple, kind ways to support her.")
         }
@@ -328,6 +457,72 @@ struct CycleDetailView: View {
             .font(.footnote).foregroundStyle(.secondary)
             .frame(maxWidth: .infinity)
             .padding(.top, 4)
+    }
+
+    @ViewBuilder
+    private func partnerCycleView(_ p: PartnerCycle, _ phase: CyclePhase) -> some View {
+        if let day = p.cycleDay {
+            PhaseRing(phase: phase, cycleDay: day, cycleLength: estimatedLength(day, p.periodInDays))
+                .padding(.top, 10).padding(.bottom, 4)
+        }
+        Card {
+            VStack(alignment: .leading, spacing: 14) {
+                Label(phase.title, systemImage: phase.symbol)
+                    .font(.headline).foregroundStyle(phase.color)
+                explainerRow("What's happening", phase.about)
+                explainerRow("What she may feel", phase.symptoms)
+            }
+        }
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How to support her now").font(.headline)
+                ForEach(phase.partnerTips, id: \.self) { tip in
+                    Label {
+                        Text(tip).font(.subheadline)
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(phase.color)
+                    }
+                }
+            }
+        }
+        if let note = p.note, !note.isEmpty {
+            Card {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(partnerName)'s thoughts today").font(.headline)
+                    Text(note).font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func partnerPregnancyView(due: Date) -> some View {
+        let pg = PregnancyEngine.insights(dueDate: due)
+        PregnancyRing(week: pg.week, daysToDue: pg.daysToDue)
+            .padding(.top, 10).padding(.bottom, 4)
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("\(partnerName) is expecting 💛", systemImage: "figure.child.circle.fill")
+                    .font(.headline).foregroundStyle(Theme.rose)
+                Text("Week \(pg.week) · the baby is about the size of \(pg.babySize).")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Divider()
+                Text(PregnancyEngine.trimesterAbout(pg.trimester))
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How to support her now").font(.headline)
+                ForEach(PregnancyEngine.trimesterSupport(pg.trimester), id: \.self) { tip in
+                    Label {
+                        Text(tip).font(.subheadline)
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.rose)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: Building blocks

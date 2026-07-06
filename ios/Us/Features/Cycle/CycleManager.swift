@@ -28,6 +28,8 @@ enum CycleShareLevel: String, CaseIterable {
 /// Local persistence for the cycle feature's personal flags.
 enum CyclePrefs {
     private static let hasCycleKey = "userHasCycle"
+    private static let pregnantKey = "isPregnant"
+    private static let dueDateKey = "pregnancyDueDate"
 
     /// nil until the user answers (in onboarding or from the cycle screen).
     static var userHasCycle: Bool? {
@@ -35,6 +37,19 @@ enum CyclePrefs {
         set {
             if let newValue { UserDefaults.standard.set(newValue, forKey: hasCycleKey) }
             else { UserDefaults.standard.removeObject(forKey: hasCycleKey) }
+        }
+    }
+
+    static var isPregnant: Bool {
+        get { UserDefaults.standard.bool(forKey: pregnantKey) }
+        set { UserDefaults.standard.set(newValue, forKey: pregnantKey) }
+    }
+
+    static var dueDate: Date? {
+        get { UserDefaults.standard.object(forKey: dueDateKey) as? Date }
+        set {
+            if let newValue { UserDefaults.standard.set(newValue, forKey: dueDateKey) }
+            else { UserDefaults.standard.removeObject(forKey: dueDateKey) }
         }
     }
 }
@@ -62,6 +77,35 @@ final class CycleManager: ObservableObject {
         userHasCycle = value
     }
 
+    // MARK: Pregnancy
+
+    @Published var isPregnant: Bool = CyclePrefs.isPregnant
+    @Published var dueDate: Date? = CyclePrefs.dueDate
+    @Published var partnerPregnancy: PartnerPregnancy?
+
+    var pregnancyInsights: PregnancyInsights? {
+        guard isPregnant, let dueDate else { return nil }
+        return PregnancyEngine.insights(dueDate: dueDate)
+    }
+
+    /// Enter pregnancy mode with a due date and share it with the partner.
+    func startPregnancy(dueDate: Date) async {
+        CyclePrefs.isPregnant = true
+        CyclePrefs.dueDate = dueDate
+        isPregnant = true
+        self.dueDate = dueDate
+        try? await APIClient.shared.putPregnancy(dueDate: dueDate)
+    }
+
+    /// Leave pregnancy mode and stop sharing the due date.
+    func endPregnancy() async {
+        CyclePrefs.isPregnant = false
+        CyclePrefs.dueDate = nil
+        isPregnant = false
+        dueDate = nil
+        try? await APIClient.shared.stopSharingPregnancy()
+    }
+
     private let shareLevelKey = "cycleShareLevel"
 
     var shareLevel: CycleShareLevel {
@@ -77,6 +121,7 @@ final class CycleManager: ObservableObject {
     /// and (if Health is available) my own cycle, keeping my summary current.
     func refreshOnAppear() async {
         await refreshPartner()
+        partnerPregnancy = try? await APIClient.shared.partnerPregnancy()
         loadTodayNote()
         // People without a cycle have nothing to read from Apple Health.
         guard userHasCycle != false, HealthKitManager.shared.isAvailable else { return }

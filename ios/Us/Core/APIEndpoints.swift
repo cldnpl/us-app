@@ -147,4 +147,20 @@ extension APIClient {
     func stopSharingCycle() async throws {
         try await sendVoid("/v1/cycle", method: "DELETE")
     }
+
+    // MARK: - Pregnancy sharing
+
+    func putPregnancy(dueDate: Date) async throws {
+        let iso = dueDate.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+        struct Body: Encodable { let dueDate: String }
+        try await sendVoid("/v1/pregnancy", method: "PUT", body: Body(dueDate: iso))
+    }
+
+    func partnerPregnancy() async throws -> PartnerPregnancy {
+        try await send("/v1/pregnancy")
+    }
+
+    func stopSharingPregnancy() async throws {
+        try await sendVoid("/v1/pregnancy", method: "DELETE")
+    }
 }

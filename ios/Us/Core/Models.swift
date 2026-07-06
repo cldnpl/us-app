@@ -102,6 +102,15 @@ struct PartnerCycle: Codable {
     let updatedAt: Date?
 }
 
+/// The partner's opt-in shared due date, or `{sharing:false}`. Week, trimester,
+/// and countdown are derived on the client.
+struct PartnerPregnancy: Codable {
+    let sharing: Bool
+    let dueDate: Date?
+    let partnerName: String?
+    let updatedAt: Date?
+}
+
 /// Error payload returned by the API ({"error": "...", "code": "..."}).
 struct APIErrorResponse: Codable, Error {
     let error: String

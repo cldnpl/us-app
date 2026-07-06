@@ -74,6 +74,15 @@ type PartnerLocation struct {
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 }
 
+// PartnerPregnancy is the partner's opt-in shared due date, or {sharing:false}.
+// Week, trimester, and countdown are derived on the client.
+type PartnerPregnancy struct {
+	Sharing     bool       `json:"sharing"`
+	DueDate     *time.Time `json:"dueDate,omitempty"`
+	PartnerName *string    `json:"partnerName,omitempty"`
+	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+}
+
 // PartnerCycle is the partner's opt-in shared cycle summary, or {sharing:false}.
 // Deliberately coarse: a phase, and optionally a day count — never symptoms.
 type PartnerCycle struct {
