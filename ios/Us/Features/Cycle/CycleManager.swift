@@ -150,6 +150,8 @@ final class CycleManager: ObservableObject {
     }
 
     func refreshPartner() async {
+        // The partner's phase can only come from the backend — his device has no
+        // access to her Apple Health. Real shared data only; no fake fallback.
         partner = try? await APIClient.shared.partnerCycle()
     }
 

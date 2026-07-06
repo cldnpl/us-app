@@ -462,8 +462,14 @@ struct CycleDetailView: View {
     @ViewBuilder
     private func partnerCycleView(_ p: PartnerCycle, _ phase: CyclePhase) -> some View {
         if let day = p.cycleDay {
-            PhaseRing(phase: phase, cycleDay: day, cycleLength: estimatedLength(day, p.periodInDays))
-                .padding(.top, 10).padding(.bottom, 4)
+            VStack(spacing: 10) {
+                PhaseRing(phase: phase, cycleDay: day, cycleLength: estimatedLength(day, p.periodInDays))
+                if let pid = p.periodInDays {
+                    Text(pid <= 0 ? "Her period may start any day" : "Her next period in about \(pid) days")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.top, 10).padding(.bottom, 4)
         }
         Card {
             VStack(alignment: .leading, spacing: 14) {
