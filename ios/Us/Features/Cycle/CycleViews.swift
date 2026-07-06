@@ -71,7 +71,7 @@ struct PregnancyRing: View {
                 Text("of 40")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
-                Text(daysToDue <= 0 ? "due any day now 💛" : "\(daysToDue) days to go")
+                Text(daysToDue <= 0 ? "due any day now" : "\(daysToDue) days to go")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -100,6 +100,7 @@ struct SelfCycleCard: View {
                     Text(insights.phase.title).font(.headline)
                     Text("Day \(insights.cycleDay) · next period \(nextPeriodText)")
                         .font(.subheadline).foregroundStyle(.secondary)
+                    
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
@@ -202,12 +203,16 @@ struct PregnancyHomeCard: View {
 
 struct CycleDetailView: View {
     @EnvironmentObject var session: Session
-    @StateObject private var cycle = CycleManager.shared
+    @StateObject private var cycle: CycleManager
     @State private var level: CycleShareLevel = .off
     @State private var noteText = ""
     @State private var connecting = false
     @State private var showDuePicker = false
     @State private var pickedDue = Calendar.current.date(byAdding: .month, value: 7, to: Date()) ?? Date()
+
+    init(cycle: CycleManager = .shared) {
+        _cycle = StateObject(wrappedValue: cycle)
+    }
 
     var body: some View {
         ZStack {
@@ -305,6 +310,8 @@ struct CycleDetailView: View {
                     .padding(.top, 10)
                 Text("Next period \(i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted)) · ~\(i.cycleLength)-day cycle")
                     .font(.footnote).foregroundStyle(.secondary)
+                    .padding(.top, 20)
+
             }
             .padding(.bottom, 4)
             thoughtsCard
@@ -452,11 +459,8 @@ struct CycleDetailView: View {
         } else {
             infoCard("When \(partnerName) turns on cycle sharing in her Us., you'll see her current phase here — plus what it means and simple, kind ways to support her.")
         }
-
-        Button("I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
-            .font(.footnote).foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .padding(.top, 4)
+        // No cycle-tracking controls here — a supporter never tracks or shares a
+        // cycle of their own. Correcting the answer lives in Settings ▸ You.
     }
 
     @ViewBuilder
@@ -467,6 +471,7 @@ struct CycleDetailView: View {
                 if let pid = p.periodInDays {
                     Text(pid <= 0 ? "Her period may start any day" : "Her next period in about \(pid) days")
                         .font(.footnote).foregroundStyle(.secondary)
+                        .padding(.top, 20)
                 }
             }
             .padding(.top, 10).padding(.bottom, 4)
@@ -508,7 +513,7 @@ struct CycleDetailView: View {
             .padding(.top, 10).padding(.bottom, 4)
         Card {
             VStack(alignment: .leading, spacing: 10) {
-                Label("\(partnerName) is expecting 💛", systemImage: "figure.child.circle.fill")
+                Label("\(partnerName) is expecting", systemImage: "figure.child.circle.fill")
                     .font(.headline).foregroundStyle(Theme.rose)
                 Text("Week \(pg.week) · the baby is about the size of \(pg.babySize).")
                     .font(.subheadline).foregroundStyle(.secondary)
@@ -567,3 +572,42 @@ struct CycleDetailView: View {
         (session.partner?.displayName).flatMap { $0.isEmpty ? nil : $0 } ?? "your partner"
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+@MainActor
+private func cyclePreviewSession() -> Session {
+    let s = Session()
+    s.partner = User(id: "p", email: nil, displayName: "Claudia",
+                     avatarPath: nil, birthday: nil, createdAt: Date())
+    return s
+}
+
+#Preview("Supporter — his view") {
+    NavigationStack {
+        CycleDetailView(cycle: .previewSupporter())
+    }
+    .environmentObject(cyclePreviewSession())
+}
+
+#Preview("Own cycle — her view") {
+    NavigationStack {
+        CycleDetailView(cycle: .previewSelf())
+    }
+    .environmentObject(cyclePreviewSession())
+}
+
+#Preview("Rings") {
+    ScrollView {
+        VStack(spacing: 24) {
+            PhaseRing(phase: .menstrual, cycleDay: 3, cycleLength: 28)
+            PhaseRing(phase: .ovulation, cycleDay: 14, cycleLength: 28)
+            PhaseRing(phase: .luteal, cycleDay: 22, cycleLength: 28)
+            PregnancyRing(week: 24, daysToDue: 112)
+        }
+        .padding(.vertical, 24)
+    }
+    .background(Theme.softBackground)
+}
+#endif
