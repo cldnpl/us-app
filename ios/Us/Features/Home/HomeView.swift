@@ -72,7 +72,7 @@ struct HomeView: View {
             VStack(spacing: 14) {
                 Image(systemName: missYouSent ? "heart.fill" : "heart")
                     .font(.system(size: 40, weight: .semibold))
-                Text(missYouSent ? "Sent 💜" : heroTitle)
+                Text(missYouSent ? "Sent!" : heroTitle)
                     .font(.system(.title3, design: .rounded).weight(.bold))
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
@@ -122,7 +122,7 @@ struct HomeView: View {
             // His partner is expecting and sharing it.
             NavigationLink { CycleDetailView() } label: {
                 PregnancyHomeCard(insights: PregnancyEngine.insights(dueDate: due),
-                                  title: "\(partnerName) is expecting 💛")
+                                  title: "\(partnerName) is expecting")
             }
             .buttonStyle(.plain)
         } else {
