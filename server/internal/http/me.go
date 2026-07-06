@@ -23,9 +23,12 @@ func (d Deps) handleGetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 type patchMeRequest struct {
-	DisplayName *string `json:"displayName"`
-	Birthday    *string `json:"birthday"` // ISO date, YYYY-MM-DD
+	DisplayName    *string `json:"displayName"`
+	Birthday       *string `json:"birthday"`       // ISO date, YYYY-MM-DD
+	PartnerPronoun *string `json:"partnerPronoun"` // she | he | they
 }
+
+var validPronouns = map[string]bool{"she": true, "he": true, "they": true}
 
 func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserID(r.Context())
@@ -58,7 +61,16 @@ func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 		bday = &t
 	}
 
-	u, err := d.Store.UpdateUserProfile(r.Context(), userID, name, bday)
+	var pronoun *string
+	if req.PartnerPronoun != nil && *req.PartnerPronoun != "" {
+		if !validPronouns[*req.PartnerPronoun] {
+			writeError(w, http.StatusBadRequest, "invalid_pronoun", "partnerPronoun must be she, he, or they")
+			return
+		}
+		pronoun = req.PartnerPronoun
+	}
+
+	u, err := d.Store.UpdateUserProfile(r.Context(), userID, name, bday, pronoun)
 	if err != nil {
 		d.serverError(w, "me: update", err)
 		return

@@ -31,6 +31,12 @@ extension APIClient {
         try await send("/v1/me", method: "PATCH", body: ["displayName": displayName])
     }
 
+    /// Persist how this user refers to their partner (she | he | they).
+    @discardableResult
+    func updatePartnerPronoun(_ pronoun: String) async throws -> User {
+        try await send("/v1/me", method: "PATCH", body: ["partnerPronoun": pronoun])
+    }
+
     func getCouple() async throws -> CoupleResponse {
         try await send("/v1/couple")
     }

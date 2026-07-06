@@ -50,6 +50,7 @@ final class Session: ObservableObject {
         TokenStore.syncToSharedStore()
         do {
             user = try await APIClient.shared.me()
+            syncPronounFromServer()
             try await refreshCouple()
             await PushManager.shared.onAuthenticated()
         } catch APIClientError.unauthorized {
@@ -151,6 +152,7 @@ final class Session: ObservableObject {
         TokenStore.accessToken = resp.accessToken
         TokenStore.refreshToken = resp.refreshToken
         user = resp.user
+        syncPronounFromServer()
         await loadCouple()
         await PushManager.shared.onAuthenticated()
     }
@@ -183,6 +185,19 @@ final class Session: ObservableObject {
     func setPartnerPronoun(_ pronoun: PartnerPronoun) {
         PartnerPrefs.pronoun = pronoun
         objectWillChange.send()
+        Task { try? await APIClient.shared.updatePartnerPronoun(pronoun.rawValue) }
+    }
+
+    /// Reconcile the partner pronoun with the server after login, so it survives
+    /// re-login and reinstalls without asking for it again.
+    private func syncPronounFromServer() {
+        if let raw = user?.partnerPronoun, let p = PartnerPronoun(rawValue: raw) {
+            // Server knows it → mirror into local prefs (+ widget App Group).
+            if PartnerPrefs.pronoun != p { PartnerPrefs.pronoun = p }
+        } else if let local = PartnerPrefs.pronoun {
+            // Existing user: server doesn't have it yet, but we do → back it up.
+            Task { try? await APIClient.shared.updatePartnerPronoun(local.rawValue) }
+        }
     }
 
     /// Saves the couple's start date and refreshes the couple + widget.
@@ -209,7 +224,7 @@ final class Session: ObservableObject {
         let start = (UserDefaults.standard.object(forKey: "testStartDate") as? Date)
             ?? Calendar.current.date(byAdding: .day, value: -100, to: Date())
         partner = User(id: "test-partner", email: nil, displayName: "Partner",
-                       avatarPath: nil, birthday: nil, createdAt: Date())
+                       avatarPath: nil, birthday: nil, partnerPronoun: nil, createdAt: Date())
         couple = Couple(id: "test-couple", startDate: start, status: "active", createdAt: Date())
         state = .ready
         updateWidget()
