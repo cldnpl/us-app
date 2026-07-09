@@ -15,7 +15,7 @@ import (
 type quizCategorySummary struct {
 	ID             string  `json:"id"`
 	Title          string  `json:"title"`
-	Emoji          string  `json:"emoji"`
+	Icon           string  `json:"icon"`
 	ColorKey       string  `json:"colorKey"`
 	QuizCount      int     `json:"quizCount"`
 	CompletedCount int     `json:"completedCount"` // quizzes I've finished
@@ -25,7 +25,7 @@ type quizCategorySummary struct {
 type quizSummary struct {
 	ID            string `json:"id"`
 	Title         string `json:"title"`
-	Emoji         string `json:"emoji"`
+	Icon          string `json:"icon"`
 	Format        string `json:"format"`
 	Tag           string `json:"tag,omitempty"`
 	QuestionCount int    `json:"questionCount"`
@@ -36,25 +36,31 @@ type quizSummary struct {
 type quizCategoryDetail struct {
 	ID       string        `json:"id"`
 	Title    string        `json:"title"`
-	Emoji    string        `json:"emoji"`
+	Icon     string        `json:"icon"`
 	ColorKey string        `json:"colorKey"`
 	Quizzes  []quizSummary `json:"quizzes"`
 }
 
+type quizOptionView struct {
+	Label string `json:"label"`
+	Icon  string `json:"icon,omitempty"`  // SF Symbol
+	Image string `json:"image,omitempty"` // photo keyword
+}
+
 type quizQuestionView struct {
-	ID            string   `json:"id"`
-	Prompt        string   `json:"prompt"`
-	Type          string   `json:"type"`
-	Options       []string `json:"options,omitempty"`
-	MyAnswer      *string  `json:"myAnswer"`
-	PartnerAnswer *string  `json:"partnerAnswer"` // revealed only after I answer this question
-	BothAnswered  bool     `json:"bothAnswered"`
+	ID            string           `json:"id"`
+	Prompt        string           `json:"prompt"`
+	Type          string           `json:"type"`
+	Options       []quizOptionView `json:"options,omitempty"`
+	MyAnswer      *string          `json:"myAnswer"`
+	PartnerAnswer *string          `json:"partnerAnswer"` // revealed only after I answer this question
+	BothAnswered  bool             `json:"bothAnswered"`
 }
 
 type quizDetail struct {
 	ID        string             `json:"id"`
 	Title     string             `json:"title"`
-	Emoji     string             `json:"emoji"`
+	Icon      string             `json:"icon"`
 	Format    string             `json:"format"`
 	Tag       string             `json:"tag,omitempty"`
 	Questions []quizQuestionView `json:"questions"`
@@ -108,7 +114,7 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 			progress = float64(done) / float64(len(cat.Quizzes))
 		}
 		out = append(out, quizCategorySummary{
-			ID: cat.ID, Title: cat.Title, Emoji: cat.Emoji, ColorKey: cat.ColorKey,
+			ID: cat.ID, Title: cat.Title, Icon: cat.Icon, ColorKey: cat.ColorKey,
 			QuizCount: len(cat.Quizzes), CompletedCount: done, Progress: progress,
 		})
 	}
@@ -151,14 +157,14 @@ func (d Deps) handleGetQuizCategory(w http.ResponseWriter, r *http.Request) {
 	for _, q := range cat.Quizzes {
 		total := len(q.Questions)
 		quizzes = append(quizzes, quizSummary{
-			ID: q.ID, Title: q.Title, Emoji: q.Emoji, Format: string(q.Format), Tag: q.Tag,
+			ID: q.ID, Title: q.Title, Icon: q.Icon, Format: string(q.Format), Tag: q.Tag,
 			QuestionCount: total,
 			MyDone:        quizDone(counts, q.ID, userID, total),
 			PartnerDone:   partner.ID != "" && quizDone(counts, q.ID, partner.ID, total),
 		})
 	}
 	writeJSON(w, http.StatusOK, quizCategoryDetail{
-		ID: cat.ID, Title: cat.Title, Emoji: cat.Emoji, ColorKey: cat.ColorKey, Quizzes: quizzes,
+		ID: cat.ID, Title: cat.Title, Icon: cat.Icon, ColorKey: cat.ColorKey, Quizzes: quizzes,
 	})
 }
 
@@ -197,7 +203,11 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 
 	views := make([]quizQuestionView, 0, len(quiz.Questions))
 	for _, q := range quiz.Questions {
-		v := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: q.Options}
+		opts := make([]quizOptionView, 0, len(q.Options))
+		for _, o := range q.Options {
+			opts = append(opts, quizOptionView{Label: o.Label, Icon: o.Icon, Image: o.Image})
+		}
+		v := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: opts}
 		myAns, iAnswered := mine[q.ID]
 		partnerAns, theyAnswered := theirs[q.ID]
 		if iAnswered {
@@ -211,7 +221,7 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 		views = append(views, v)
 	}
 	writeJSON(w, http.StatusOK, quizDetail{
-		ID: quiz.ID, Title: quiz.Title, Emoji: quiz.Emoji, Format: string(quiz.Format), Tag: quiz.Tag, Questions: views,
+		ID: quiz.ID, Title: quiz.Title, Icon: quiz.Icon, Format: string(quiz.Format), Tag: quiz.Tag, Questions: views,
 	})
 }
 
@@ -255,7 +265,7 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 	}
 	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
 		return push.Notification{
-			Title: quiz.Emoji + " " + quiz.Title,
+			Title: quiz.Title,
 			Body:  name + " answered — see how you compare",
 			Data:  map[string]string{"type": "quiz_answer", "quizId": quizID},
 		}
