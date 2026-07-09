@@ -133,6 +133,10 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/quiz/categories/{id}", d.handleGetQuizCategory)
 			r.Get("/quiz/{quizId}", d.handleGetQuiz)
 			r.Post("/quiz/{quizId}/answer", d.handleAnswerQuiz)
+
+			r.Get("/games/hwdykm/packs", d.handleListHwdykmPacks)
+			r.Get("/games/hwdykm/packs/{id}", d.handleGetHwdykmPack)
+			r.Post("/games/hwdykm/packs/{id}/answer", d.handleAnswerHwdykmPack)
 		})
 	})
 
