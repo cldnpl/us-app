@@ -127,6 +127,8 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/question", d.handleGetQuestion)
 			r.Post("/question", d.handleAnswerQuestion)
 
+			r.Get("/quiz/daily", d.handleGetDailyQuiz)
+			r.Post("/quiz/daily/answer", d.handleAnswerDailyQuiz)
 			r.Get("/quiz/categories", d.handleListQuizCategories)
 			r.Get("/quiz/categories/{id}", d.handleGetQuizCategory)
 			r.Get("/quiz/{quizId}", d.handleGetQuiz)
