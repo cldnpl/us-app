@@ -3,12 +3,30 @@ package httpapi
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
+
+// resolveOptions maps catalog options to the wire shape, turning photo keywords
+// into concrete image URLs (curated in photoURL). Unknown keywords drop the
+// image so the app falls back to the icon rather than showing a wrong photo.
+func resolveOptions(opts []catalogOption) []quizOptionView {
+	out := make([]quizOptionView, 0, len(opts))
+	for _, o := range opts {
+		v := quizOptionView{Label: o.Label, Icon: o.Icon}
+		if o.Image != "" {
+			if url, ok := photoURL[o.Image]; ok {
+				v.Image = url
+			}
+		}
+		out = append(out, v)
+	}
+	return out
+}
 
 // ---- response shapes ----
 
@@ -203,11 +221,7 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 
 	views := make([]quizQuestionView, 0, len(quiz.Questions))
 	for _, q := range quiz.Questions {
-		opts := make([]quizOptionView, 0, len(q.Options))
-		for _, o := range q.Options {
-			opts = append(opts, quizOptionView{Label: o.Label, Icon: o.Icon, Image: o.Image})
-		}
-		v := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: opts}
+		v := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: resolveOptions(q.Options)}
 		myAns, iAnswered := mine[q.ID]
 		partnerAns, theyAnswered := theirs[q.ID]
 		if iAnswered {
@@ -268,6 +282,124 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 			Title: quiz.Title,
 			Body:  name + " answered — see how you compare",
 			Data:  map[string]string{"type": "quiz_answer", "quizId": quizID},
+		}
+	})
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ---- Question of the Day ----
+//
+// A single question that rotates every day: the category advances by one each
+// day (so a different colour/topic daily), and the question within cycles over
+// time. Deterministic from the date, so both partners get the same one.
+
+type dailyQuestionResponse struct {
+	Date          string           `json:"date"`
+	CategoryID    string           `json:"categoryId"`
+	CategoryTitle string           `json:"categoryTitle"`
+	ColorKey      string           `json:"colorKey"`
+	Icon          string           `json:"icon"`
+	QuizTitle     string           `json:"quizTitle"`
+	Question      quizQuestionView `json:"question"`
+}
+
+// dailyPick returns the category, quiz and question for a given day.
+func dailyPick(t time.Time) (catalogCategory, catalogQuiz, catalogQuestion) {
+	day := int(t.Unix() / 86400) // days since epoch (UTC)
+	cat := quizCatalog[((day%len(quizCatalog))+len(quizCatalog))%len(quizCatalog)]
+	type qp struct {
+		quiz catalogQuiz
+		q    catalogQuestion
+	}
+	var all []qp
+	for _, quiz := range cat.Quizzes {
+		for _, q := range quiz.Questions {
+			all = append(all, qp{quiz, q})
+		}
+	}
+	pick := all[(day/len(quizCatalog))%len(all)]
+	return cat, pick.quiz, pick.q
+}
+
+// dailyKey namespaces daily answers in quiz_answers so they never collide with
+// real quizzes (whose ids never start with "daily:") or with each other.
+func dailyKey(t time.Time) string { return "daily:" + t.UTC().Format("2006-01-02") }
+
+// GET /v1/quiz/daily — today's question with the category colour, plus answers.
+func (d Deps) handleGetDailyQuiz(w http.ResponseWriter, r *http.Request) {
+	userID, ok := d.authedUser(w, r)
+	if !ok {
+		return
+	}
+	c, ok := d.gameCouple(w, r, userID)
+	if !ok {
+		return
+	}
+	now := time.Now().UTC()
+	cat, quiz, q := dailyPick(now)
+	key := dailyKey(now)
+
+	answers, err := d.Store.GetQuizAnswers(r.Context(), c.ID, key)
+	if err != nil {
+		d.serverError(w, "daily: answers", err)
+		return
+	}
+	qv := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: resolveOptions(q.Options)}
+	var partner *string
+	for i := range answers {
+		if answers[i].QuestionID != q.ID {
+			continue
+		}
+		ans := answers[i].Answer
+		if answers[i].UserID == userID {
+			qv.MyAnswer = &ans
+		} else {
+			partner = &ans
+		}
+	}
+	if qv.MyAnswer != nil { // reveal partner only after I answer
+		qv.PartnerAnswer = partner
+	}
+	qv.BothAnswered = qv.MyAnswer != nil && partner != nil
+
+	writeJSON(w, http.StatusOK, dailyQuestionResponse{
+		Date: now.Format("2006-01-02"), CategoryID: cat.ID, CategoryTitle: cat.Title,
+		ColorKey: cat.ColorKey, Icon: cat.Icon, QuizTitle: quiz.Title, Question: qv,
+	})
+}
+
+// POST /v1/quiz/daily/answer — answer today's question, notify partner.
+func (d Deps) handleAnswerDailyQuiz(w http.ResponseWriter, r *http.Request) {
+	userID, ok := d.authedUser(w, r)
+	if !ok {
+		return
+	}
+	c, ok := d.gameCouple(w, r, userID)
+	if !ok {
+		return
+	}
+	var req struct {
+		Answer string `json:"answer"`
+	}
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	answer := strings.TrimSpace(req.Answer)
+	if answer == "" {
+		writeError(w, http.StatusBadRequest, "empty", "pick or write an answer first")
+		return
+	}
+	now := time.Now().UTC()
+	_, _, q := dailyPick(now)
+	if err := d.Store.UpsertQuizAnswer(r.Context(), c.ID, dailyKey(now), q.ID, userID, answer); err != nil {
+		d.serverError(w, "daily: save", err)
+		return
+	}
+	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
+		return push.Notification{
+			Title: "Question of the Day",
+			Body:  name + " answered today's question",
+			Data:  map[string]string{"type": "daily_quiz"},
 		}
 	})
 	w.WriteHeader(http.StatusNoContent)
