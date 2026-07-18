@@ -141,6 +141,11 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/games/debate/packs", d.handleListDebatePacks)
 			r.Get("/games/debate/packs/{id}", d.handleGetDebatePack)
 			r.Post("/games/debate/packs/{id}/argue", d.handleArgueDebate)
+
+			r.Get("/games/draw", d.handleGetDraw)
+			r.Post("/games/draw/submit", d.handleSubmitDraw)
+			r.Post("/games/draw/new", d.handleNewDraw)
+			r.Get("/games/draw/submissions/{id}/file", d.handleServeDrawing)
 		})
 	})
 

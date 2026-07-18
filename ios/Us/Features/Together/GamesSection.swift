@@ -2,7 +2,7 @@ import SwiftUI
 
 /// One of the couple games shown in the Games section.
 struct GameDef: Identifiable {
-    enum Kind { case hwdykm, debate, comingSoon }
+    enum Kind { case hwdykm, debate, draw, comingSoon }
     let id: String
     let title: String
     let subtitle: String
@@ -24,7 +24,7 @@ struct GameDef: Identifiable {
         GameDef(id: "draw", title: "Draw Together",
                 subtitle: "Get the same prompt, draw it on your own half of a split canvas, and reveal both when the timer's up — no scores, just yours.",
                 icon: "pencil.tip.crop.circle", colorKey: "purple", badge: nil,
-                cta: "Start drawing", kind: .comingSoon),
+                cta: "Start drawing", kind: .draw),
         GameDef(id: "snap", title: "Snap Hunt",
                 subtitle: "The app calls a loose clue, you both race around the house to find it, snap a photo — and a judge crowns the cleverest find.",
                 icon: "camera.viewfinder", colorKey: "green", badge: nil,

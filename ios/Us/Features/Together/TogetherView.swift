@@ -74,6 +74,7 @@ struct TogetherView: View {
                     switch game.kind {
                     case .hwdykm: HwdykmPackListView()
                     case .debate: DebatePackListView()
+                    case .draw: DrawTogetherView()
                     case .comingSoon: ComingSoonGameView(game: game)
                     }
                 } label: {
