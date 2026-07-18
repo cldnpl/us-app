@@ -146,6 +146,11 @@ func NewRouter(d Deps) http.Handler {
 			r.Post("/games/draw/submit", d.handleSubmitDraw)
 			r.Post("/games/draw/new", d.handleNewDraw)
 			r.Get("/games/draw/submissions/{id}/file", d.handleServeDrawing)
+
+			r.Get("/games/snap", d.handleGetSnap)
+			r.Post("/games/snap/submit", d.handleSubmitSnap)
+			r.Post("/games/snap/new", d.handleNewSnap)
+			r.Get("/games/snap/submissions/{id}/file", d.handleServeSnap)
 		})
 	})
 

@@ -95,14 +95,28 @@ func (j *Judge) scoreWithClaude(ctx context.Context, motion, forArg, againstArg 
 			"format": map[string]any{"type": "json_schema", "schema": verdictSchema},
 		},
 	}
-	raw, err := json.Marshal(body)
-	if err != nil {
+	text, ok := j.requestText(ctx, body)
+	if !ok {
 		return Verdict{}, false
 	}
+	var v Verdict
+	if err := json.Unmarshal([]byte(text), &v); err != nil {
+		return Verdict{}, false
+	}
+	return clamp(v), true
+}
 
+// requestText POSTs a Messages API request and returns the first text block.
+// ok is false on any transport, status, refusal, or parse problem — callers
+// then fall back to their offline path.
+func (j *Judge) requestText(ctx context.Context, body map[string]any) (string, bool) {
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return "", false
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, anthropicURL, bytes.NewReader(raw))
 	if err != nil {
-		return Verdict{}, false
+		return "", false
 	}
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("x-api-key", j.apiKey)
@@ -110,13 +124,12 @@ func (j *Judge) scoreWithClaude(ctx context.Context, motion, forArg, againstArg 
 
 	resp, err := j.client.Do(req)
 	if err != nil {
-		return Verdict{}, false
+		return "", false
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Verdict{}, false
+		return "", false
 	}
-
 	var out struct {
 		StopReason string `json:"stop_reason"`
 		Content    []struct {
@@ -125,23 +138,17 @@ func (j *Judge) scoreWithClaude(ctx context.Context, motion, forArg, againstArg 
 		} `json:"content"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return Verdict{}, false
+		return "", false
 	}
 	if out.StopReason == "refusal" {
-		return Verdict{}, false
+		return "", false
 	}
-
 	for _, c := range out.Content {
-		if c.Type != "text" || c.Text == "" {
-			continue
+		if c.Type == "text" && c.Text != "" {
+			return c.Text, true
 		}
-		var v Verdict
-		if err := json.Unmarshal([]byte(c.Text), &v); err != nil {
-			return Verdict{}, false
-		}
-		return clamp(v), true
 	}
-	return Verdict{}, false
+	return "", false
 }
 
 // ---- Heuristic fallback ----
