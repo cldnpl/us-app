@@ -75,6 +75,7 @@ struct TogetherView: View {
                     case .hwdykm: HwdykmPackListView()
                     case .debate: DebatePackListView()
                     case .draw: DrawTogetherView()
+                    case .snap: SnapHuntView()
                     case .comingSoon: ComingSoonGameView(game: game)
                     }
                 } label: {
