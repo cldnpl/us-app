@@ -7,6 +7,7 @@
 *.p12
 *.mobileprovision
 deploy/*.local
+*.local.md
 id_rsa*
 *.pem
 
@@ -16,6 +17,7 @@ id_rsa*
 # ---- Go ----
 server/bin/
 server/tmp/
+server/deploy/api
 *.test
 *.out
 
