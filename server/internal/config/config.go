@@ -23,6 +23,11 @@ type Config struct {
 
 	FreeStorageBytes    int64
 	PremiumStorageBytes int64
+
+	// AnthropicAPIKey enables the Couples Debate AI judge. When empty, the judge
+	// falls back to an offline heuristic so the game still works.
+	AnthropicAPIKey string
+	AnthropicModel  string
 }
 
 // APNSConfig holds Apple Push Notification service credentials.
@@ -56,6 +61,9 @@ func Load() (*Config, error) {
 		MediaDir:            env("MEDIA_DIR", "./media-data"),
 		FreeStorageBytes:    envInt64("FREE_STORAGE_BYTES", 2<<30),   // 2 GiB
 		PremiumStorageBytes: envInt64("PREMIUM_STORAGE_BYTES", 30<<30), // 30 GiB
+
+		AnthropicAPIKey: env("ANTHROPIC_API_KEY", ""),
+		AnthropicModel:  env("ANTHROPIC_MODEL", "claude-opus-4-8"),
 	}
 
 	if cfg.DatabaseURL == "" {
