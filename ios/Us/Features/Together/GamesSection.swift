@@ -13,7 +13,7 @@ struct GameDef: Identifiable {
     let kind: Kind
 
     static let all: [GameDef] = [
-        GameDef(id: "hwdykm", title: "How Well Do You Know Me",
+        GameDef(id: "hwdykm", title: "How Well Do You Know Me?",
                 subtitle: "Both lock in your answers privately, reveal at the same time, and see your compatibility score — 14 packs from cute to spicy.",
                 icon: "questionmark.circle.fill", colorKey: "pink", badge: "MOST PLAYED",
                 cta: "Start the quiz", kind: .hwdykm),
@@ -41,14 +41,15 @@ struct GameCard: View {
         VStack(alignment: .leading, spacing: 14) {
             QuizIconTile(systemName: game.icon, colorKey: game.colorKey, size: 52)
 
-            HStack(spacing: 8) {
-                Text(game.title).font(.title3.bold()).foregroundStyle(Theme.ink)
+            VStack(alignment: .leading, spacing: 6) {
                 if let badge = game.badge {
                     Text(badge)
                         .font(.caption2.bold()).foregroundStyle(.white)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Theme.warmGradient, in: Capsule())
                 }
+                Text(game.title).font(.title3.bold()).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text(game.subtitle)
                 .font(.subheadline).foregroundStyle(.secondary)

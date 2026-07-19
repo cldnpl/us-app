@@ -69,7 +69,7 @@ struct JournalDayCard: View {
 
     @ViewBuilder
     private func block(_ entry: JournalEntry) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let body = VStack(alignment: .leading, spacing: 8) {
             Text("\(authorName(entry.authorId)):")
                 .font(.subheadline.bold())
                 .foregroundStyle(isMine(entry.authorId) ? Theme.coral : Theme.ink)
@@ -89,13 +89,21 @@ struct JournalDayCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .contextMenu {
-            if isMine(entry.authorId) {
+
+        // Only your own entry can be edited or removed — swipe it left for the
+        // actions (long-press still works too). The partner's block is static.
+        if isMine(entry.authorId) {
+            SwipeToDelete(onDelete: { onDelete(entry) }, onEdit: { onEdit(entry) }) {
+                body
+            }
+            .contextMenu {
                 Button { onEdit(entry) } label: { Label("Edit", systemImage: "pencil") }
                 Button(role: .destructive) { onDelete(entry) } label: {
                     Label("Delete", systemImage: "trash")
                 }
             }
+        } else {
+            body
         }
     }
 }

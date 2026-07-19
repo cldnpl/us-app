@@ -42,27 +42,27 @@ struct SnapHuntView: View {
 
     @ViewBuilder
     private func huntScreen(_ round: SnapRound) -> some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            VStack(spacing: 22) {
                 VStack(spacing: 8) {
                     Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
                     Text("“\(round.clue)”")
                         .font(.title.bold()).multilineTextAlignment(.center)
-                        .foregroundStyle(Theme.ink).padding(.horizontal, 16)
+                        .foregroundStyle(Theme.ink)
                     Text(round.partnerSubmitted
                          ? "\(partnerName) already found theirs — quick!"
                          : "Race around the house and snap your cleverest find.")
                         .font(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 12)
 
                 if let picked {
                     Image(uiImage: picked)
                         .resizable().aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.white.opacity(0.4)))
 
                     VStack(spacing: 10) {
                         Button { Task { await submit(picked) } } label: {
@@ -85,7 +85,7 @@ struct SnapHuntView: View {
                             Text("Snap a photo").font(.headline)
                         }
                         .foregroundStyle(accent)
-                        .frame(maxWidth: .infinity).padding(.vertical, 40)
+                        .frame(maxWidth: .infinity).padding(.vertical, 36)
                         .background(QuizPalette.gradient("green").opacity(0.4),
                                     in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                     }
@@ -94,7 +94,14 @@ struct SnapHuntView: View {
 
                 if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
             }
-            .padding(20)
+            .padding(24)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1))
+            .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
+            .padding(.horizontal, 20)
+
+            Spacer(minLength: 0)
         }
     }
 

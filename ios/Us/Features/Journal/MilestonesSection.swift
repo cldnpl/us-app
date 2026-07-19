@@ -61,21 +61,23 @@ struct MilestonesSection: View {
     // MARK: - Rows
 
     private func row(_ m: Milestone) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Circle().fill(Theme.rose).frame(width: 7, height: 7)
-                .padding(.top, 8) // aligns the bullet with the title's center
-            VStack(alignment: .leading, spacing: 3) {
-                Text(m.title).font(.headline).foregroundStyle(Theme.ink)
-                Text(dayString(m.date))
-                    .font(.subheadline).foregroundStyle(Theme.coral)
+        SwipeToDelete(onDelete: { Task { await onDelete(m.id) } }) {
+            HStack(alignment: .top, spacing: 12) {
+                Circle().fill(Theme.rose).frame(width: 7, height: 7)
+                    .padding(.top, 8) // aligns the bullet with the title's center
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(m.title).font(.headline).foregroundStyle(Theme.ink)
+                    Text(dayString(m.date))
+                        .font(.subheadline).foregroundStyle(Theme.coral)
+                }
+                Spacer()
+                Image(systemName: "pencil").font(.footnote).foregroundStyle(.tertiary)
+                    .padding(.top, 4)
             }
-            Spacer()
-            Image(systemName: "pencil").font(.footnote).foregroundStyle(.tertiary)
-                .padding(.top, 4)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+            .onTapGesture { beginEdit(m) }
         }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .onTapGesture { beginEdit(m) }
         .contextMenu {
             Button(role: .destructive) { Task { await onDelete(m.id) } } label: {
                 Label("Delete", systemImage: "trash")
@@ -151,7 +153,9 @@ struct MilestonesSection: View {
     }
 
     private func beginEdit(_ m: Milestone) {
-        draftTitle = m.title; draftDate = m.date
+        // Seed the picker at local midnight of the stored (UTC) day so the wheel
+        // shows the right date and edits round-trip without an off-by-one.
+        draftTitle = m.title; draftDate = pickerDay(m.date)
         withAnimation { editingID = m.id }
     }
 

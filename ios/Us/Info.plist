@@ -38,6 +38,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Snap a photo for Snap Hunt so your partner and the judge can see your find.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner.</string>
 	<key>NSHealthUpdateUsageDescription</key>
