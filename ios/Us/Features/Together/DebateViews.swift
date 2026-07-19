@@ -15,7 +15,16 @@ struct DebatePackListView: View {
                 } else if let errorMessage, packs.isEmpty {
                     Text(errorMessage).font(.footnote).foregroundStyle(.secondary).padding(.top, 60)
                 } else {
-                    LazyVStack(spacing: 14) {
+                    LazyVStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Choose a topic to debate!")
+                                .font(.title2.bold()).foregroundStyle(Theme.ink)
+                            Text("Pick a pack — you'll each argue a side and an AI judge crowns a winner.")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 2)
+
                         ForEach(packs) { pack in
                             NavigationLink {
                                 DebatePlayView(packId: pack.id, colorKey: pack.colorKey)

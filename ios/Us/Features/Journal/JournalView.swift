@@ -217,10 +217,27 @@ enum JournalDates {
     }
 }
 
-/// Formats a Date as `YYYY-MM-DD` (UTC calendar day) for the API.
+/// Formats a Date as `YYYY-MM-DD` for the API, read in the **local** calendar.
+///
+/// A `DatePicker` snaps its selection to *local* midnight of the chosen day, so
+/// the day the user sees is only recovered by reading local components. Reading
+/// UTC components here caused an off-by-one east of GMT (local midnight is the
+/// previous day in UTC): nudging a date forward by one landed back on the
+/// original day, so edits appeared not to save. When seeding a picker from a
+/// stored date (decoded as UTC midnight), pass it through `pickerDay(_:)` first.
 func isoDay(_ date: Date) -> String {
-    let c = JournalDates.utc.dateComponents([.year, .month, .day], from: date)
+    let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
     return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+}
+
+/// Converts a stored calendar date (decoded as UTC midnight) into a local-midnight
+/// Date suitable for seeding a `DatePicker`, so it shows the intended day in every
+/// timezone and round-trips cleanly back through `isoDay(_:)`.
+func pickerDay(_ storedUTCMidnight: Date) -> Date {
+    let c = JournalDates.utc.dateComponents([.year, .month, .day], from: storedUTCMidnight)
+    var local = DateComponents()
+    local.year = c.year; local.month = c.month; local.day = c.day
+    return Calendar.current.date(from: local) ?? storedUTCMidnight
 }
 
 /// A human-readable calendar day (UTC), e.g. "Feb 12, 2026".

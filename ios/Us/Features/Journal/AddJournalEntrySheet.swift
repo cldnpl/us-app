@@ -22,7 +22,7 @@ struct AddJournalEntrySheet: View {
     init(existing: JournalEntry?, onDone: @escaping () async -> Void) {
         self.existing = existing
         self.onDone = onDone
-        _date = State(initialValue: existing?.date ?? Date())
+        _date = State(initialValue: existing.map { pickerDay($0.date) } ?? Date())
         _text = State(initialValue: existing?.body ?? "")
         _existingPhotos = State(initialValue: existing?.photos ?? [])
     }

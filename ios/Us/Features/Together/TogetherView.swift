@@ -1,10 +1,7 @@
 import SwiftUI
 
 struct TogetherView: View {
-    @State private var categories: [QuizCategorySummary] = []
     @State private var daily: QuizDaily?
-    @State private var loading = true
-    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -41,26 +38,12 @@ struct TogetherView: View {
     // MARK: Quiz
 
     private var quizSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader("Quiz", subtitle: "Answer on your own, then compare")
-
-            if loading && categories.isEmpty {
-                ProgressView().frame(maxWidth: .infinity).padding(.vertical, 30)
-            } else if let errorMessage, categories.isEmpty {
-                Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
-            } else {
-                ForEach(categories) { category in
-                    NavigationLink {
-                        QuizCategoryDetailView(categoryId: category.id,
-                                               categoryTitle: category.title,
-                                               categoryIcon: category.icon)
-                    } label: {
-                        CategoryCard(category: category)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+        NavigationLink {
+            QuizCategoriesView()
+        } label: {
+            QuizEntryCard()
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: Games
@@ -94,20 +77,7 @@ struct TogetherView: View {
     }
 
     private func load() async {
-        async let cats: () = loadCategories()
-        async let day: () = loadDaily()
-        _ = await (cats, day)
-    }
-
-    private func loadCategories() async {
-        loading = true
-        defer { loading = false }
-        do {
-            categories = try await APIClient.shared.getQuizCategories()
-            errorMessage = nil
-        } catch {
-            errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
-        }
+        await loadDaily()
     }
 
     private func loadDaily() async {
@@ -180,6 +150,34 @@ struct CategoryCard: View {
         .frame(maxWidth: .infinity)
         .background(QuizPalette.gradient(category.colorKey), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
+    }
+}
+
+/// Single card that stands in for the whole Quiz section, matching the game
+/// cards. Tapping it opens the full list of quiz topic packs.
+struct QuizEntryCard: View {
+    var body: some View {
+        let accent = QuizPalette.accent("purple")
+        VStack(alignment: .leading, spacing: 14) {
+            QuizIconTile(systemName: "square.grid.2x2.fill", colorKey: "purple", size: 52)
+
+            Text("Quiz").font(.title3.bold()).foregroundStyle(Theme.ink)
+
+            Text("Answer privately, then compare — topic packs from cute to deep, plus a daily question.")
+                .font(.subheadline).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 6) {
+                Text("Browse quizzes").font(.subheadline.bold()).foregroundStyle(accent)
+                Image(systemName: "chevron.right").font(.caption2.bold()).foregroundStyle(accent)
+            }
+            .padding(.top, 2)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.35), lineWidth: 1))
+        .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
     }
 }
 
