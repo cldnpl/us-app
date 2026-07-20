@@ -13,6 +13,7 @@ import (
 	"github.com/sharepact/us/internal/auth"
 	"github.com/sharepact/us/internal/config"
 	"github.com/sharepact/us/internal/http/middleware"
+	"github.com/sharepact/us/internal/mail"
 	"github.com/sharepact/us/internal/media"
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
@@ -26,15 +27,20 @@ type Deps struct {
 	Store  *store.Store
 	Apple  *auth.AppleVerifier
 	Push   push.Sender
+	Mail   mail.Sender
 	Media  *media.Storage
 
-	MissYouLimiter *middleware.RateLimiter
+	MissYouLimiter   *middleware.RateLimiter
+	EmailCodeLimiter *middleware.RateLimiter
 }
 
 // NewRouter builds the top-level HTTP handler with global middleware and routes.
 func NewRouter(d Deps) http.Handler {
 	// Per-user throttle for the Miss You button (~1 every 2s, burst 10).
 	d.MissYouLimiter = middleware.NewRateLimiter(0.5, 10)
+	// Email codes cost real money to send and are a spam vector: ~1 per minute,
+	// burst 3, per user.
+	d.EmailCodeLimiter = middleware.NewRateLimiter(1.0/60.0, 3)
 
 	r := chi.NewRouter()
 
@@ -76,6 +82,8 @@ func NewRouter(d Deps) http.Handler {
 
 			r.Get("/me", d.handleGetMe)
 			r.Patch("/me", d.handlePatchMe)
+			r.Post("/me/email/request", d.handleRequestEmailChange)
+			r.Post("/me/email/confirm", d.handleConfirmEmailChange)
 
 			r.Post("/pairing/code", d.handleCreatePairingCode)
 			r.Post("/pairing/redeem", d.handleRedeemPairing)

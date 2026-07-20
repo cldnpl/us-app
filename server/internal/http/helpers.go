@@ -60,6 +60,23 @@ func (d Deps) sendPartnerPush(ctx context.Context, coupleID, senderID string, bu
 	}()
 }
 
+// notifyPartnerProfileChanged tells the partner's device that this user's
+// profile (name or email) changed, so it can refetch instead of showing stale
+// details until its next natural refresh.
+//
+// Silent by design: no title or body, just the data payload. It is best-effort —
+// the app also refetches whenever it comes to the foreground, which is what
+// makes this safe to drop.
+func (d Deps) notifyPartnerProfileChanged(ctx context.Context, userID string) {
+	c, err := d.Store.GetCoupleForUser(ctx, userID)
+	if err != nil {
+		return // not paired: nobody to tell
+	}
+	d.sendPartnerPush(ctx, c.ID, userID, func(string) push.Notification {
+		return push.Notification{Data: map[string]string{"type": "profile_updated"}}
+	})
+}
+
 // authedUser returns the authenticated user id, writing a 401 if absent. Routes
 // behind the Authenticator middleware will always have it set.
 func (d Deps) authedUser(w http.ResponseWriter, r *http.Request) (string, bool) {

@@ -14,6 +14,7 @@ import (
 	"github.com/sharepact/us/internal/config"
 	"github.com/sharepact/us/internal/db"
 	httpapi "github.com/sharepact/us/internal/http"
+	"github.com/sharepact/us/internal/mail"
 	"github.com/sharepact/us/internal/media"
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
@@ -58,6 +59,16 @@ func run(logger *slog.Logger) error {
 		}
 	}
 
+	// Mail: real SMTP when credentials are configured, else log-only (the code
+	// is written to the log so the flow still works in development).
+	var mailer mail.Sender = mail.NewLogSender(logger)
+	if cfg.SMTP.Configured() {
+		mailer = mail.NewSMTPSender(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.User, cfg.SMTP.Pass, cfg.SMTP.From)
+		logger.Info("smtp mail enabled", "host", cfg.SMTP.Host, "from", cfg.SMTP.From)
+	} else {
+		logger.Warn("no SMTP configured — verification codes will be logged, not emailed")
+	}
+
 	mediaStore, err := media.NewStorage(cfg.MediaDir)
 	if err != nil {
 		return err
@@ -70,6 +81,7 @@ func run(logger *slog.Logger) error {
 		Store:  store.New(pool),
 		Apple:  auth.NewAppleVerifier(cfg.AppleClientIDs),
 		Push:   sender,
+		Mail:   mailer,
 		Media:  mediaStore,
 	})
 

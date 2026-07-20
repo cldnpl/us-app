@@ -20,6 +20,7 @@ type Config struct {
 	APNS            APNSConfig
 	AllowedOrigins  []string
 	MediaDir        string
+	SMTP            SMTPConfig
 
 	FreeStorageBytes    int64
 	PremiumStorageBytes int64
@@ -29,6 +30,19 @@ type Config struct {
 	AnthropicAPIKey string
 	AnthropicModel  string
 }
+
+// SMTPConfig holds outgoing-mail credentials. When Host is empty the server
+// falls back to a log-only mailer and no mail is actually sent.
+type SMTPConfig struct {
+	Host string
+	Port string
+	User string
+	Pass string
+	From string
+}
+
+// Configured reports whether real mail delivery is possible.
+func (s SMTPConfig) Configured() bool { return s.Host != "" && s.From != "" }
 
 // APNSConfig holds Apple Push Notification service credentials.
 type APNSConfig struct {
@@ -57,9 +71,16 @@ func Load() (*Config, error) {
 			Topic:      env("APNS_TOPIC", "us.elbek.com"),
 			Production: envBool("APNS_PRODUCTION", false),
 		},
-		AllowedOrigins:      envList("CORS_ALLOWED_ORIGINS", "*"),
-		MediaDir:            env("MEDIA_DIR", "./media-data"),
-		FreeStorageBytes:    envInt64("FREE_STORAGE_BYTES", 2<<30),   // 2 GiB
+		AllowedOrigins: envList("CORS_ALLOWED_ORIGINS", "*"),
+		MediaDir:       env("MEDIA_DIR", "./media-data"),
+		SMTP: SMTPConfig{
+			Host: env("SMTP_HOST", ""),
+			Port: env("SMTP_PORT", "587"),
+			User: env("SMTP_USER", ""),
+			Pass: env("SMTP_PASS", ""),
+			From: env("SMTP_FROM", ""),
+		},
+		FreeStorageBytes:    envInt64("FREE_STORAGE_BYTES", 2<<30),     // 2 GiB
 		PremiumStorageBytes: envInt64("PREMIUM_STORAGE_BYTES", 30<<30), // 30 GiB
 
 		AnthropicAPIKey: env("ANTHROPIC_API_KEY", ""),
