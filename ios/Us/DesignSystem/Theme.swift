@@ -1,16 +1,37 @@
 import SwiftUI
+import UIKit
 
 /// Shared visual language for Us. — warm blush→coral→peach gradients, rounded cards.
+///
+/// The brand hues (blush/coral/peach/rose) are fixed: they are the identity, and
+/// they read fine against both a light and a dark backdrop. Anything used as
+/// *text* or as a *surface* adapts to the colour scheme instead, because those
+/// are the pairings that decide legibility.
 enum Theme {
     static let blush = Color(red: 1.0, green: 0.71, blue: 0.76)
     static let coral = Color(red: 1.0, green: 0.42, blue: 0.42)
     static let peach = Color(red: 1.0, green: 0.85, blue: 0.73)
-    static let ink = Color(red: 0.18, green: 0.16, blue: 0.20)
+
+    /// Primary text colour. Near-black on light, warm off-white on dark — it is
+    /// drawn on `.regularMaterial` cards and on `softBackground`, both of which
+    /// invert with the colour scheme, so a fixed near-black would disappear.
+    static let ink = Color(dynamic: UIColor(red: 0.18, green: 0.16, blue: 0.20, alpha: 1),
+                           dark: UIColor(red: 0.96, green: 0.94, blue: 0.95, alpha: 1))
 
     /// Brand rose used across the app (chrome, hero, accents). This is the soft
     /// warm pink sampled straight from the app icon's gradient (its mid-tone),
     /// so the whole app matches the icon instead of the old darker magenta.
     static let rose = Color(red: 1.0, green: 0.55, blue: 0.57)
+
+    /// Translucent plate for pills and tiles that sit on `softBackground`.
+    /// Replaces hardcoded `.white.opacity(…)`, which turned into a bright hole
+    /// in dark mode.
+    static let surface = Color(dynamic: UIColor.white.withAlphaComponent(0.55),
+                               dark: UIColor.white.withAlphaComponent(0.10))
+
+    /// Hairline rim used on cards/tiles. White-ish on light, barely-there on dark.
+    static let hairline = Color(dynamic: UIColor.white.withAlphaComponent(0.35),
+                                dark: UIColor.white.withAlphaComponent(0.12))
 
     static var warmGradient: LinearGradient {
         LinearGradient(
@@ -29,12 +50,27 @@ enum Theme {
         )
     }
 
+    /// Full-screen app backdrop. In light mode it's the warm peach/blush wash;
+    /// in dark mode it's a deep warm plum, so it still reads as *ours* without
+    /// washing out to muddy maroon over black.
     static var softBackground: LinearGradient {
         LinearGradient(
-            colors: [peach.opacity(0.35), blush.opacity(0.25)],
+            colors: [
+                Color(dynamic: UIColor(red: 1.0, green: 0.85, blue: 0.73, alpha: 0.35),
+                      dark: UIColor(red: 0.13, green: 0.09, blue: 0.13, alpha: 1.0)),
+                Color(dynamic: UIColor(red: 1.0, green: 0.71, blue: 0.76, alpha: 0.25),
+                      dark: UIColor(red: 0.09, green: 0.07, blue: 0.10, alpha: 1.0)),
+            ],
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+}
+
+extension Color {
+    /// Builds a colour that resolves differently in light and dark mode.
+    init(dynamic light: UIColor, dark: UIColor) {
+        self.init(UIColor { $0.userInterfaceStyle == .dark ? dark : light })
     }
 }
 

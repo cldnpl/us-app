@@ -44,12 +44,15 @@ struct DistanceMapCard: View {
                 VStack(spacing: 2) {
                     Image(systemName: "heart.circle.fill")
                         .font(.title2).foregroundStyle(Theme.rose)
-                        .background(Circle().fill(.white).padding(2))
+                        .background(Circle().fill(.background).padding(2))
                     Text(pin.name)
                         .font(.caption2).bold()
                         .lineLimit(1)
                         .padding(.horizontal, 5).padding(.vertical, 1)
-                        .background(.white, in: Capsule())
+                        // Material, not white: the map itself goes dark in dark
+                        // mode, and the label's text is `.primary` — on a fixed
+                        // white capsule that would be white-on-white.
+                        .background(.thickMaterial, in: Capsule())
                 }
             }
         }

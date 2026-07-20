@@ -327,7 +327,7 @@ struct PhotoChoiceCard: View {
         .frame(height: 150).frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .strokeBorder(selected ? accent : .white.opacity(0.4), lineWidth: selected ? 4 : 1))
+            .strokeBorder(selected ? accent : Theme.hairline, lineWidth: selected ? 4 : 1))
         .shadow(color: .black.opacity(selected ? 0.15 : 0.08), radius: 8, y: 4)
     }
 }
