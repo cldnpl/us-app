@@ -2,7 +2,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var session: Session
+    @EnvironmentObject private var premium: PremiumStore
     @StateObject private var cycle = CycleManager.shared
+    @State private var showPaywall = false
     @State private var startDate = Date()
     @State private var pronoun: PartnerPronoun = PartnerPrefs.pronoun ?? .they
     @State private var showUnpairConfirm = false
@@ -44,14 +46,40 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Premium") {
-                    HStack {
-                        Label("Us. Premium", systemImage: "sparkles")
-                        Spacer()
-                        Text("€0.99 / mo").foregroundStyle(.secondary)
+                Section {
+                    if premium.isPremium {
+                        HStack {
+                            Label("Us. Premium", systemImage: "sparkles")
+                            Spacer()
+                            Text("Active").foregroundStyle(.secondary)
+                        }
+                        Link("Manage subscription",
+                             destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
+                    } else {
+                        Button {
+                            showPaywall = true
+                        } label: {
+                            HStack {
+                                Label("Unlock Us. Premium", systemImage: "sparkles")
+                                Spacer()
+                                Text(premium.priceLine).foregroundStyle(.secondary)
+                            }
+                        }
+                        Button("Restore purchase") { Task { await premium.restore() } }
+                            .disabled(premium.isRestoring)
                     }
-                    Text("Everything is free — Premium just raises the limits.")
-                        .font(.footnote).foregroundStyle(.secondary)
+                    #if DEBUG
+                    Toggle("Dev: unlock Premium", isOn: Binding(
+                        get: { PremiumStore.devUnlock },
+                        set: { premium.setDevUnlock($0) }
+                    ))
+                    #endif
+                } header: {
+                    Text("Premium")
+                } footer: {
+                    Text(premium.isPremium
+                         ? "Every quiz pack and game is unlocked for both of you."
+                         : "Starters, Relationship and How Well Do You Know Me? are free. Premium unlocks every other pack and game, for both of you.")
                 }
 
                 Section {
@@ -77,6 +105,7 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
+            .sheet(isPresented: $showPaywall) { PaywallView() }
             .confirmationDialog("Unpair from your partner?", isPresented: $showUnpairConfirm, titleVisibility: .visible) {
                 Button("Unpair", role: .destructive) { Task { await unpair() } }
                 Button("Cancel", role: .cancel) {}

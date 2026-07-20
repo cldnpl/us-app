@@ -83,6 +83,8 @@ schemes:
         Us: all
     run:
       config: Debug
+      # Lets the paywall buy/restore in the simulator without App Store Connect.
+      storeKitConfiguration: Products.storekit
     test:
       config: Debug
     profile:

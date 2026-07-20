@@ -148,79 +148,23 @@ struct DrawingPad: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
+            DrawPromptHeader(prompt: prompt, remaining: remaining, accent: accent)
             PencilCanvas(canvas: $canvas, tool: tool)
                 .background(.white)
                 .overlay(RoundedRectangle(cornerRadius: 0).strokeBorder(.black.opacity(0.05)))
-            toolbar
+            DrawToolbar(palette: palette, color: color, isEraser: isEraser,
+                        accent: accent, submitting: submitting,
+                        onColor: { color = $0; isEraser = false; Haptics.tap(.light) },
+                        onEraser: { isEraser = true; Haptics.tap(.light) },
+                        onUndo: { canvas.undoManager?.undo() },
+                        onClear: { canvas.drawing = PKDrawing() },
+                        onDone: { doSubmit() })
         }
         .onReceive(timer) { _ in
             guard !submitting else { return }
             if remaining > 0 { remaining -= 1 }
             if remaining == 0 { doSubmit() }
         }
-    }
-
-    private var header: some View {
-        VStack(spacing: 8) {
-            Text("DRAW").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
-            Text("“\(prompt)”")
-                .font(.title3.bold()).multilineTextAlignment(.center)
-                .foregroundStyle(Theme.ink).padding(.horizontal, 20)
-            HStack(spacing: 6) {
-                Image(systemName: "clock.fill").font(.caption2)
-                Text(timeString).font(.subheadline.bold().monospacedDigit())
-            }
-            .foregroundStyle(remaining <= 15 ? Theme.coral : .secondary)
-        }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-    }
-
-    private var toolbar: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 14) {
-                ForEach(palette, id: \.self) { c in
-                    Button {
-                        color = c; isEraser = false; Haptics.tap(.light)
-                    } label: {
-                        Circle().fill(c)
-                            .frame(width: 26, height: 26)
-                            .overlay(Circle().strokeBorder(.white, lineWidth: (!isEraser && color == c) ? 3 : 0))
-                            .overlay(Circle().strokeBorder(.black.opacity(0.1), lineWidth: 1))
-                    }
-                }
-                Spacer()
-                Button { isEraser = true; Haptics.tap(.light) } label: {
-                    Image(systemName: "eraser.fill")
-                        .foregroundStyle(isEraser ? .white : Theme.ink)
-                        .padding(8)
-                        .background(isEraser ? accent : Color(.secondarySystemBackground), in: Circle())
-                }
-                Button { canvas.undoManager?.undo() } label: {
-                    Image(systemName: "arrow.uturn.backward").foregroundStyle(Theme.ink)
-                        .padding(8).background(Color(.secondarySystemBackground), in: Circle())
-                }
-                Button { canvas.drawing = PKDrawing() } label: {
-                    Image(systemName: "trash").foregroundStyle(Theme.ink)
-                        .padding(8).background(Color(.secondarySystemBackground), in: Circle())
-                }
-            }
-
-            Button { doSubmit() } label: {
-                if submitting { ProgressView() }
-                else { Label("Done", systemImage: "checkmark").font(.subheadline.bold()) }
-            }
-            .buttonStyle(PillButtonStyle(color: accent))
-            .frame(maxWidth: .infinity)
-            .disabled(submitting)
-        }
-        .padding(.horizontal, 20).padding(.vertical, 14)
-        .background(.thinMaterial)
-    }
-
-    private var timeString: String {
-        String(format: "%d:%02d", remaining / 60, remaining % 60)
     }
 
     private func doSubmit() {
@@ -241,6 +185,89 @@ struct DrawingPad: View {
             strokes.draw(in: CGRect(origin: .zero, size: bounds.size))
         }
         return composed.jpegData(compressionQuality: 0.9)
+    }
+}
+
+// MARK: - Pad chrome
+
+/// "DRAW — <prompt>" header with the countdown above the canvas.
+struct DrawPromptHeader: View {
+    let prompt: String
+    let remaining: Int
+    let accent: Color
+
+    private var timeString: String {
+        String(format: "%d:%02d", remaining / 60, remaining % 60)
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("DRAW").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+            Text("“\(prompt)”")
+                .font(.title3.bold()).multilineTextAlignment(.center)
+                .foregroundStyle(Theme.ink).padding(.horizontal, 20)
+            HStack(spacing: 6) {
+                Image(systemName: "clock.fill").font(.caption2)
+                Text(timeString).font(.subheadline.bold().monospacedDigit())
+            }
+            .foregroundStyle(remaining <= 15 ? Theme.coral : .secondary)
+        }
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// Colour palette, eraser/undo/clear, and the Done button below the canvas.
+struct DrawToolbar: View {
+    let palette: [Color]
+    let color: Color
+    let isEraser: Bool
+    let accent: Color
+    var submitting = false
+    var onColor: (Color) -> Void = { _ in }
+    var onEraser: () -> Void = {}
+    var onUndo: () -> Void = {}
+    var onClear: () -> Void = {}
+    var onDone: () -> Void = {}
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 14) {
+                ForEach(palette, id: \.self) { c in
+                    Button { onColor(c) } label: {
+                        Circle().fill(c)
+                            .frame(width: 26, height: 26)
+                            .overlay(Circle().strokeBorder(.white, lineWidth: (!isEraser && color == c) ? 3 : 0))
+                            .overlay(Circle().strokeBorder(.black.opacity(0.1), lineWidth: 1))
+                    }
+                }
+                Spacer()
+                Button(action: onEraser) {
+                    Image(systemName: "eraser.fill")
+                        .foregroundStyle(isEraser ? .white : Theme.ink)
+                        .padding(8)
+                        .background(isEraser ? accent : Color(.secondarySystemBackground), in: Circle())
+                }
+                Button(action: onUndo) {
+                    Image(systemName: "arrow.uturn.backward").foregroundStyle(Theme.ink)
+                        .padding(8).background(Color(.secondarySystemBackground), in: Circle())
+                }
+                Button(action: onClear) {
+                    Image(systemName: "trash").foregroundStyle(Theme.ink)
+                        .padding(8).background(Color(.secondarySystemBackground), in: Circle())
+                }
+            }
+
+            Button(action: onDone) {
+                if submitting { ProgressView() }
+                else { Label("Done", systemImage: "checkmark").font(.subheadline.bold()) }
+            }
+            .buttonStyle(PillButtonStyle(color: accent))
+            .frame(maxWidth: .infinity)
+            .disabled(submitting)
+        }
+        .padding(.horizontal, 20).padding(.vertical, 14)
+        .background(.thinMaterial)
     }
 }
 

@@ -45,18 +45,12 @@ struct SnapHuntView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            VStack(spacing: 22) {
-                VStack(spacing: 8) {
-                    Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
-                    Text("“\(round.clue)”")
-                        .font(.title.bold()).multilineTextAlignment(.center)
-                        .foregroundStyle(Theme.ink)
-                    Text(round.partnerSubmitted
-                         ? "\(partnerName) already found theirs — quick!"
-                         : "Race around the house and snap your cleverest find.")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
+            SnapHuntCard {
+                SnapClueHeader(clue: round.clue,
+                               subtitle: round.partnerSubmitted
+                                   ? "\(partnerName) already found theirs — quick!"
+                                   : "Race around the house and snap your cleverest find.",
+                               accent: accent)
 
                 if let picked {
                     Image(uiImage: picked)
@@ -79,26 +73,12 @@ struct SnapHuntView: View {
                         .foregroundStyle(accent)
                     }
                 } else {
-                    Button { showPicker = true } label: {
-                        VStack(spacing: 10) {
-                            Image(systemName: "camera.viewfinder").font(.system(size: 44))
-                            Text("Snap a photo").font(.headline)
-                        }
-                        .foregroundStyle(accent)
-                        .frame(maxWidth: .infinity).padding(.vertical, 36)
-                        .background(QuizPalette.gradient("green").opacity(0.4),
-                                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
+                    Button { showPicker = true } label: { SnapCameraTarget(accent: accent) }
+                        .buttonStyle(.plain)
                 }
 
                 if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
             }
-            .padding(24)
-            .frame(maxWidth: .infinity)
-            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1))
-            .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
             .padding(.horizontal, 20)
 
             Spacer(minLength: 0)
@@ -227,6 +207,57 @@ struct SnapHuntView: View {
         } catch {
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
         }
+    }
+}
+
+// MARK: - Hunt pieces
+
+/// The white sheet the whole hunt sits on.
+struct SnapHuntCard<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(spacing: 22) { content }
+            .padding(24)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1))
+            .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
+    }
+}
+
+/// "FIND — <clue>" header at the top of the hunt card.
+struct SnapClueHeader: View {
+    let clue: String
+    let subtitle: String
+    let accent: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+            Text("“\(clue)”")
+                .font(.title.bold()).multilineTextAlignment(.center)
+                .foregroundStyle(Theme.ink)
+            Text(subtitle)
+                .font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+/// The big tinted "Snap a photo" target that opens the camera.
+struct SnapCameraTarget: View {
+    let accent: Color
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "camera.viewfinder").font(.system(size: 44))
+            Text("Snap a photo").font(.headline)
+        }
+        .foregroundStyle(accent)
+        .frame(maxWidth: .infinity).padding(.vertical, 36)
+        .background(QuizPalette.gradient("green").opacity(0.4),
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
 

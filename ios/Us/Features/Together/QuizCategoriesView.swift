@@ -2,8 +2,10 @@ import SwiftUI
 
 /// Full list of quiz topic packs, opened from the "Quiz" card on the Games tab.
 struct QuizCategoriesView: View {
+    @EnvironmentObject private var premium: PremiumStore
     @State private var categories: [QuizCategorySummary] = []
     @State private var errorMessage: String?
+    @State private var lockedCategory: QuizCategorySummary?
 
     var body: some View {
         ZStack {
@@ -15,20 +17,32 @@ struct QuizCategoriesView: View {
                     Text(errorMessage).font(.footnote).foregroundStyle(.secondary).padding(.top, 60)
                 } else {
                     LazyVStack(alignment: .leading, spacing: 14) {
-                        Text("Answer on your own, then compare your answers.")
+                        Text(premium.isPremium
+                             ? "Answer on your own, then compare your answers."
+                             : "Answer on your own, then compare your answers. Two packs are free — Premium opens the rest.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.bottom, 2)
 
                         ForEach(categories) { category in
-                            NavigationLink {
-                                QuizCategoryDetailView(categoryId: category.id,
-                                                       categoryTitle: category.title,
-                                                       categoryIcon: category.icon)
-                            } label: {
-                                CategoryCard(category: category)
+                            if premium.isQuizCategoryLocked(category.id) {
+                                Button {
+                                    Haptics.tap()
+                                    lockedCategory = category
+                                } label: {
+                                    CategoryCard(category: category, locked: true)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    QuizCategoryDetailView(categoryId: category.id,
+                                                           categoryTitle: category.title,
+                                                           categoryIcon: category.icon)
+                                } label: {
+                                    CategoryCard(category: category)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                     .padding(20)
@@ -39,6 +53,9 @@ struct QuizCategoriesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
+        .sheet(item: $lockedCategory) { category in
+            PaywallView(trigger: .quizCategory(category.title))
+        }
     }
 
     private func load() async {

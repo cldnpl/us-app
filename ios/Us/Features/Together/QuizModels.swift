@@ -103,6 +103,27 @@ enum QuizFormat: String {
     }
 }
 
+/// The row of capsule step indicators shared by every multi-step play flow
+/// (quiz, know-me, debate): current step is a wide capsule, already-answered
+/// steps are tinted, the rest are grey.
+struct StepDots: View {
+    let total: Int
+    let index: Int
+    let accent: Color
+    /// Whether step `i` already has an answer saved.
+    var isDone: (Int) -> Bool = { _ in false }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<max(total, 1), id: \.self) { i in
+                Capsule()
+                    .fill(i == index ? accent : (isDone(i) ? accent.opacity(0.4) : Color.secondary.opacity(0.2)))
+                    .frame(width: i == index ? 22 : 8, height: 8)
+            }
+        }
+    }
+}
+
 /// A rounded, tinted tile holding a category/quiz SF Symbol.
 struct QuizIconTile: View {
     let systemName: String
