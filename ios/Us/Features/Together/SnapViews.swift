@@ -97,7 +97,7 @@ struct SnapHuntView: View {
             .padding(24)
             .frame(maxWidth: .infinity)
             .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
             .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
             .padding(.horizontal, 20)
 

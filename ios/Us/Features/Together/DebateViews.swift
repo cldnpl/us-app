@@ -267,7 +267,7 @@ struct DebatePlayView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.white.opacity(highlight ? 0.6 : 0.3), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Theme.surface.opacity(highlight ? 1.0 : 0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func pendingRow(_ round: DebateRound) -> some View {

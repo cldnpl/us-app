@@ -120,6 +120,10 @@ struct SetupFlowView: View {
                 .tint(Theme.rose)
                 .padding(8)
                 .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                // The plate is deliberately white (this screen is a fixed pink
+                // gradient), so pin the picker to light or its system-coloured
+                // day numbers turn white-on-white in dark mode.
+                .environment(\.colorScheme, .light)
 
             Text("\(daysTogether) days together 💜")
                 .font(.headline)
