@@ -18,9 +18,9 @@ enum CycleShareLevel: String, CaseIterable {
         case .off:
             return "\(partnerName) sees nothing about your cycle."
         case .cycle:
-            return "\(partnerName) sees your phase, cycle day, and a rough countdown to your next period."
+            return "Phase, cycle day, and next-period countdown."
         case .cycleAndThoughts:
-            return "\(partnerName) also sees the thoughts you write for the day."
+            return "Also the thoughts you write for the day."
         }
     }
 }
@@ -70,11 +70,43 @@ final class CycleManager: ObservableObject {
     /// Whether *this user* has a menstrual cycle (set in onboarding). nil = not
     /// asked yet (existing users) → we offer the choice from the cycle screen.
     /// true → she tracks her own cycle; false → he sees his partner's + tips.
+    ///
+    /// The account is the source of truth; the local copy is a cache so the UI
+    /// renders correctly before the first response and while offline.
     @Published var userHasCycle: Bool? = CyclePrefs.userHasCycle
 
     func setUserHasCycle(_ value: Bool) {
         CyclePrefs.userHasCycle = value
         userHasCycle = value
+        Task { try? await APIClient.shared.updateCycleSettings(hasCycle: value) }
+    }
+
+    /// Reconciles the cycle settings with the account after login/refresh.
+    ///
+    /// The server wins when it has an answer. When it doesn't but this device
+    /// does — a user upgrading from a build that only stored these locally —
+    /// the local answer is pushed up so it isn't silently lost.
+    func adoptServerSettings(from user: User) {
+        if let serverHasCycle = user.hasCycle {
+            if userHasCycle != serverHasCycle {
+                CyclePrefs.userHasCycle = serverHasCycle
+                userHasCycle = serverHasCycle
+            }
+        } else if let local = userHasCycle {
+            Task { try? await APIClient.shared.updateCycleSettings(hasCycle: local) }
+        }
+
+        if let raw = user.cycleShareLevel, let serverLevel = CycleShareLevel(rawValue: raw) {
+            // "off" is also the server's default for accounts that never set a
+            // level, so a local non-off choice from an older build still wins
+            // and gets pushed up rather than being reset to off.
+            if serverLevel == .off, shareLevel != .off {
+                Task { try? await APIClient.shared.updateCycleSettings(shareLevel: shareLevel.rawValue) }
+            } else if serverLevel != shareLevel {
+                UserDefaults.standard.set(serverLevel.rawValue, forKey: shareLevelKey)
+                objectWillChange.send()
+            }
+        }
     }
 
     // MARK: Pregnancy
@@ -160,9 +192,11 @@ final class CycleManager: ObservableObject {
     }
 
     /// Change the sharing level and immediately push (or clear) my summary.
+    /// The level itself is stored on the account so it survives a reinstall.
     func setShareLevel(_ level: CycleShareLevel) async {
         UserDefaults.standard.set(level.rawValue, forKey: shareLevelKey)
         objectWillChange.send()
+        _ = try? await APIClient.shared.updateCycleSettings(shareLevel: level.rawValue)
         await pushShare()
     }
 

@@ -37,6 +37,27 @@ extension APIClient {
         try await send("/v1/me", method: "PATCH", body: ["partnerPronoun": pronoun])
     }
 
+    /// Persist the account-level cycle settings so they survive a reinstall.
+    @discardableResult
+    func updateCycleSettings(hasCycle: Bool? = nil, shareLevel: String? = nil) async throws -> User {
+        struct Body: Encodable { let hasCycle: Bool?; let cycleShareLevel: String? }
+        return try await send("/v1/me", method: "PATCH",
+                              body: Body(hasCycle: hasCycle, cycleShareLevel: shareLevel))
+    }
+
+    // MARK: - Changing the account email
+
+    /// Starts an email change: the server mails a one-time code to `newEmail`.
+    /// Nothing changes on the account until `confirmEmailChange` succeeds.
+    func requestEmailChange(newEmail: String) async throws -> EmailChangeRequestResponse {
+        try await send("/v1/me/email/request", method: "POST", body: ["newEmail": newEmail])
+    }
+
+    /// Completes an email change with the code from the message.
+    func confirmEmailChange(code: String) async throws -> User {
+        try await send("/v1/me/email/confirm", method: "POST", body: ["code": code])
+    }
+
     func getCouple() async throws -> CoupleResponse {
         try await send("/v1/couple")
     }
