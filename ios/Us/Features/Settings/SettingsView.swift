@@ -51,10 +51,13 @@ struct SettingsView: View {
                         HStack {
                             Label("Us. Premium", systemImage: "sparkles")
                             Spacer()
-                            Text("Active").foregroundStyle(.secondary)
+                            Text(PremiumStore.isTestFlightBuild ? "Beta" : "Active")
+                                .foregroundStyle(.secondary)
                         }
-                        Link("Manage subscription",
-                             destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
+                        if !PremiumStore.isTestFlightBuild {
+                            Link("Manage subscription",
+                                 destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
+                        }
                     } else {
                         Button {
                             showPaywall = true
@@ -77,9 +80,13 @@ struct SettingsView: View {
                 } header: {
                     Text("Premium")
                 } footer: {
-                    Text(premium.isPremium
-                         ? "Every quiz pack and game is unlocked for both of you."
-                         : "Starters, Relationship and How Well Do You Know Me? are free. Premium unlocks every other pack and game, for both of you.")
+                    if PremiumStore.isTestFlightBuild {
+                        Text("Thanks for testing Us. — every quiz pack and game is unlocked for you while the app is in beta.")
+                    } else if premium.isPremium {
+                        Text("Every quiz pack and game is unlocked for both of you.")
+                    } else {
+                        Text("Starters, Relationship and How Well Do You Know Me? are free. Premium unlocks every other pack and game, for both of you.")
+                    }
                 }
 
                 Section {
