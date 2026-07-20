@@ -26,7 +26,7 @@ final class PremiumStore: ObservableObject {
     private var updatesTask: Task<Void, Never>?
 
     private init() {
-        isPremium = Self.devUnlock
+        isPremium = Self.unlockedWithoutPurchase
         updatesTask = Task { [weak self] in
             for await update in Transaction.updates {
                 guard let self else { return }
@@ -124,7 +124,7 @@ final class PremiumStore: ObservableObject {
     }
 
     func refreshEntitlement() async {
-        if Self.devUnlock { isPremium = true; return }
+        if Self.unlockedWithoutPurchase { isPremium = true; return }
         var entitled = false
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result,
@@ -136,7 +136,28 @@ final class PremiumStore: ObservableObject {
         isPremium = entitled
     }
 
-    // MARK: - Dev override
+    // MARK: - Unlocks that aren't a purchase
+
+    /// Everything is unlocked without paying, either because this is a beta
+    /// build or because a developer flipped the debug switch.
+    static var unlockedWithoutPurchase: Bool { isTestFlightBuild || devUnlock }
+
+    /// True when the app was installed through TestFlight rather than the App
+    /// Store — beta testers get all of Premium for free.
+    ///
+    /// TestFlight and the App Store ship the same binary; the only thing that
+    /// differs at runtime is the receipt Apple drops in the bundle, which is
+    /// named `sandboxReceipt` for TestFlight and `receipt` for the App Store.
+    /// Debug builds also carry a sandbox receipt, so they're excluded on
+    /// purpose — otherwise the paywall could never be tested during
+    /// development (use the "Dev: unlock Premium" toggle in Settings instead).
+    static let isTestFlightBuild: Bool = {
+        #if DEBUG
+        return false
+        #else
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
+    }()
 
     /// Debug-only switch (Settings → Premium) so the locked flows can be walked
     /// through without a sandbox purchase. Never consulted in release builds.
