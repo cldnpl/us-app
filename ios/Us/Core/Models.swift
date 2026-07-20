@@ -8,6 +8,37 @@ struct User: Codable, Identifiable, Equatable {
     let birthday: Date?
     let partnerPronoun: String?
     let createdAt: Date
+
+    /// Whether the address was confirmed with a code we emailed to it.
+    /// Optional so sessions cached by older builds still decode.
+    let emailVerified: Bool?
+    /// Account-level cycle settings, kept server-side so they survive a
+    /// reinstall. `hasCycle` is nil when the question was never answered.
+    let hasCycle: Bool?
+    let cycleShareLevel: String?
+
+    init(id: String, email: String?, displayName: String, avatarPath: String?,
+         birthday: Date?, partnerPronoun: String?, createdAt: Date,
+         emailVerified: Bool? = nil, hasCycle: Bool? = nil, cycleShareLevel: String? = nil) {
+        self.id = id
+        self.email = email
+        self.displayName = displayName
+        self.avatarPath = avatarPath
+        self.birthday = birthday
+        self.partnerPronoun = partnerPronoun
+        self.createdAt = createdAt
+        self.emailVerified = emailVerified
+        self.hasCycle = hasCycle
+        self.cycleShareLevel = cycleShareLevel
+    }
+}
+
+/// Server acknowledgement that an email-change code was issued. `devCode` is
+/// only ever populated by a dev server with no mail provider configured.
+struct EmailChangeRequestResponse: Codable {
+    let sentTo: String
+    let expiresAt: Date
+    let devCode: String?
 }
 
 struct Couple: Codable, Equatable {
