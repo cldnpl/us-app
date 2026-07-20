@@ -50,12 +50,8 @@ struct QuizPlayView: View {
                 VStack(spacing: 22) {
                     QuizIconTile(systemName: quiz.icon, colorKey: colorKey, size: 60).padding(.top, 8)
 
-                    HStack(spacing: 6) {
-                        ForEach(quiz.questions.indices, id: \.self) { i in
-                            Capsule()
-                                .fill(i == index ? accent : (quiz.questions[i].myAnswer != nil ? accent.opacity(0.4) : Color.secondary.opacity(0.2)))
-                                .frame(width: i == index ? 22 : 8, height: 8)
-                        }
+                    StepDots(total: quiz.questions.count, index: index, accent: accent) {
+                        quiz.questions[$0].myAnswer != nil
                     }
                     Text("Question \(index + 1) of \(quiz.questions.count)")
                         .font(.caption.bold()).foregroundStyle(.secondary)

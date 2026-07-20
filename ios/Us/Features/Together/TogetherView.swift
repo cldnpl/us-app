@@ -1,24 +1,31 @@
 import SwiftUI
 
 struct TogetherView: View {
+    @EnvironmentObject private var premium: PremiumStore
     @State private var daily: QuizDaily?
+    @State private var lockedGame: GameDef?
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Theme.softBackground.ignoresSafeArea()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
-                        dailySection
-                        quizSection
-                        gamesSection
-                    }
-                    .padding(20)
+            // The gradient goes *behind* the ScrollView rather than beside it in
+            // a ZStack: as a ZStack sibling its ignoresSafeArea() stretched the
+            // stack past the tab bar, the ScrollView inherited that height, and
+            // the last cards ended up off-screen with nothing left to scroll.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    dailySection
+                    quizSection
+                    gamesSection
                 }
+                .padding(20)
             }
+            .background(Theme.softBackground.ignoresSafeArea())
             .navigationTitle("Games")
             .task { await load() }
             .refreshable { await load() }
+            .sheet(item: $lockedGame) { game in
+                PaywallView(trigger: .game(game.title))
+            }
         }
     }
 
@@ -53,18 +60,28 @@ struct TogetherView: View {
             sectionHeader("Games", subtitle: "Play together, at your own pace")
 
             ForEach(GameDef.all) { game in
-                NavigationLink {
-                    switch game.kind {
-                    case .hwdykm: HwdykmPackListView()
-                    case .debate: DebatePackListView()
-                    case .draw: DrawTogetherView()
-                    case .snap: SnapHuntView()
-                    case .comingSoon: ComingSoonGameView(game: game)
+                if premium.isGameLocked(game.id) {
+                    Button {
+                        Haptics.tap()
+                        lockedGame = game
+                    } label: {
+                        GameCard(game: game, locked: true)
                     }
-                } label: {
-                    GameCard(game: game)
+                    .buttonStyle(.plain)
+                } else {
+                    NavigationLink {
+                        switch game.kind {
+                        case .hwdykm: HwdykmPackListView()
+                        case .debate: DebatePackListView()
+                        case .draw: DrawTogetherView()
+                        case .snap: SnapHuntView()
+                        case .comingSoon: ComingSoonGameView(game: game)
+                        }
+                    } label: {
+                        GameCard(game: game)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -127,20 +144,29 @@ struct DailyQuestionCard: View {
 /// Topic card with emoji, title, and a colored progress bar (Couple Joy style).
 struct CategoryCard: View {
     let category: QuizCategorySummary
+    var locked = false
 
     var body: some View {
         let accent = QuizPalette.accent(category.colorKey)
         HStack(spacing: 16) {
-            QuizIconTile(systemName: category.icon, colorKey: category.colorKey)
+            QuizIconTile(systemName: locked ? "lock.fill" : category.icon, colorKey: category.colorKey)
             VStack(alignment: .leading, spacing: 8) {
                 Text(category.title).font(.headline).foregroundStyle(Theme.ink)
-                HStack(spacing: 10) {
-                    ProgressBar(value: category.progress, accent: accent)
-                    Text("\(Int((category.progress * 100).rounded()))%")
+                if locked {
+                    Text("\(category.quizCount) quizzes · Premium")
                         .font(.caption.bold()).foregroundStyle(accent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: 10) {
+                        ProgressBar(value: category.progress, accent: accent)
+                        Text("\(Int((category.progress * 100).rounded()))%")
+                            .font(.caption.bold()).foregroundStyle(accent)
+                    }
                 }
             }
-            if category.progress >= 1 {
+            if locked {
+                PremiumLockBadge(compact: true)
+            } else if category.progress >= 1 {
                 Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(accent)
             } else {
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.secondary)

@@ -35,14 +35,20 @@ struct GameDef: Identifiable {
 /// getangie-style game card: icon tile, title + badge, description, CTA.
 struct GameCard: View {
     let game: GameDef
+    /// Premium-locked: padlock tile, muted icon, "Unlock with Premium" CTA.
+    var locked = false
 
     var body: some View {
         let accent = QuizPalette.accent(game.colorKey)
         VStack(alignment: .leading, spacing: 14) {
-            QuizIconTile(systemName: game.icon, colorKey: game.colorKey, size: 52)
+            HStack(alignment: .top) {
+                QuizIconTile(systemName: locked ? "lock.fill" : game.icon, colorKey: game.colorKey, size: 52)
+                Spacer()
+                if locked { PremiumLockBadge() }
+            }
 
             VStack(alignment: .leading, spacing: 6) {
-                if let badge = game.badge {
+                if let badge = game.badge, !locked {
                     Text(badge)
                         .font(.caption2.bold()).foregroundStyle(.white)
                         .padding(.horizontal, 8).padding(.vertical, 3)
@@ -56,8 +62,10 @@ struct GameCard: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 6) {
-                Text(game.cta).font(.subheadline.bold()).foregroundStyle(accent)
-                Image(systemName: game.kind == .comingSoon ? "clock.fill" : "play.fill")
+                Text(locked ? "Unlock with Premium" : game.cta)
+                    .font(.subheadline.bold()).foregroundStyle(accent)
+                Image(systemName: locked ? "sparkles"
+                                         : (game.kind == .comingSoon ? "clock.fill" : "play.fill"))
                     .font(.caption2).foregroundStyle(accent)
             }
             .padding(.top, 2)

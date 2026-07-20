@@ -1,0 +1,60 @@
+{
+  "identifier" : "9F2A61C4-3B7D-4E85-9A11-6C0D2E7F4B10",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "988N3YY62P",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "it_IT",
+    "_storefront" : "ITA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "20240001",
+      "localizations" : [
+
+      ],
+      "name" : "Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "20240002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Every quiz pack, every game, no limits — for both of you.",
+              "displayName" : "Us. Premium",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "us.premium.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Us Premium Monthly",
+          "subscriptionGroupID" : "20240001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

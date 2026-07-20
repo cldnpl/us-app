@@ -112,21 +112,12 @@ struct HwdykmPlayView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 20) {
-                    HStack(spacing: 6) {
-                        ForEach(pack.questions.indices, id: \.self) { i in
-                            Capsule()
-                                .fill(i == index ? accent : (pack.questions[i].myAnswer != nil ? accent.opacity(0.4) : Color.secondary.opacity(0.2)))
-                                .frame(width: i == index ? 22 : 8, height: 8)
-                        }
+                    StepDots(total: pack.questions.count, index: index, accent: accent) {
+                        pack.questions[$0].myAnswer != nil
                     }
                     .padding(.top, 12)
 
-                    // role banner
-                    Text(q.subjectIsMe ? "ANSWER HONESTLY" : "GUESS \(partnerName.uppercased())'S ANSWER")
-                        .font(.caption.bold()).tracking(1)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(q.subjectIsMe ? Theme.coral : Theme.rose, in: Capsule())
+                    HwdykmRolePill(subjectIsMe: q.subjectIsMe, partnerName: partnerName)
 
                     Text(q.prompt)
                         .font(.title2.bold()).multilineTextAlignment(.center)
@@ -259,6 +250,20 @@ struct HwdykmPlayView: View {
 }
 
 // MARK: - Small pieces
+
+/// "ANSWER HONESTLY" / "GUESS <partner>'S ANSWER" banner above the prompt.
+struct HwdykmRolePill: View {
+    let subjectIsMe: Bool
+    let partnerName: String
+
+    var body: some View {
+        Text(subjectIsMe ? "ANSWER HONESTLY" : "GUESS \(partnerName.uppercased())'S ANSWER")
+            .font(.caption.bold()).tracking(1)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(subjectIsMe ? Theme.coral : Theme.rose, in: Capsule())
+    }
+}
 
 struct HwdykmOptionRow: View {
     let text: String
