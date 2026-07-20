@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sharepact/us/internal/http/middleware"
+	"github.com/sharepact/us/internal/store"
 )
 
 func (d Deps) handleGetMe(w http.ResponseWriter, r *http.Request) {
@@ -23,12 +24,16 @@ func (d Deps) handleGetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 type patchMeRequest struct {
-	DisplayName    *string `json:"displayName"`
-	Birthday       *string `json:"birthday"`       // ISO date, YYYY-MM-DD
-	PartnerPronoun *string `json:"partnerPronoun"` // she | he | they
+	DisplayName     *string `json:"displayName"`
+	Birthday        *string `json:"birthday"`        // ISO date, YYYY-MM-DD
+	PartnerPronoun  *string `json:"partnerPronoun"`  // she | he | they
+	HasCycle        *bool   `json:"hasCycle"`        // whether this user has a cycle
+	CycleShareLevel *string `json:"cycleShareLevel"` // off | cycle | cycleAndThoughts
 }
 
 var validPronouns = map[string]bool{"she": true, "he": true, "they": true}
+
+var validShareLevels = map[string]bool{"off": true, "cycle": true, "cycleAndThoughts": true}
 
 func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserID(r.Context())
@@ -70,10 +75,30 @@ func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 		pronoun = req.PartnerPronoun
 	}
 
-	u, err := d.Store.UpdateUserProfile(r.Context(), userID, name, bday, pronoun)
+	var shareLevel *string
+	if req.CycleShareLevel != nil && *req.CycleShareLevel != "" {
+		if !validShareLevels[*req.CycleShareLevel] {
+			writeError(w, http.StatusBadRequest, "invalid_share_level",
+				"cycleShareLevel must be off, cycle, or cycleAndThoughts")
+			return
+		}
+		shareLevel = req.CycleShareLevel
+	}
+
+	u, err := d.Store.UpdateUserProfile(r.Context(), userID, store.UpdateUserProfileParams{
+		DisplayName:     name,
+		Birthday:        bday,
+		PartnerPronoun:  pronoun,
+		HasCycle:        req.HasCycle,
+		CycleShareLevel: shareLevel,
+	})
 	if err != nil {
 		d.serverError(w, "me: update", err)
 		return
+	}
+	// A renamed user shows up all over their partner's app; nudge that device.
+	if name != nil {
+		d.notifyPartnerProfileChanged(r.Context(), userID)
 	}
 	writeJSON(w, http.StatusOK, toDomainUser(u))
 }

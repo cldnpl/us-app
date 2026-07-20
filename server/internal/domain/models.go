@@ -3,14 +3,21 @@ package domain
 import "time"
 
 // User is a single account. Email/AvatarPath/Birthday are optional.
+//
+// HasCycle and CycleShareLevel are account-level settings the app used to keep
+// only on-device; they live here so they survive a reinstall. HasCycle is nil
+// when the question has never been answered.
 type User struct {
-	ID             string     `json:"id"`
-	Email          *string    `json:"email,omitempty"`
-	DisplayName    string     `json:"displayName"`
-	AvatarPath     *string    `json:"avatarPath,omitempty"`
-	Birthday       *time.Time `json:"birthday,omitempty"`
-	PartnerPronoun *string    `json:"partnerPronoun,omitempty"`
-	CreatedAt      time.Time  `json:"createdAt"`
+	ID              string     `json:"id"`
+	Email           *string    `json:"email,omitempty"`
+	EmailVerified   bool       `json:"emailVerified"`
+	DisplayName     string     `json:"displayName"`
+	AvatarPath      *string    `json:"avatarPath,omitempty"`
+	Birthday        *time.Time `json:"birthday,omitempty"`
+	PartnerPronoun  *string    `json:"partnerPronoun,omitempty"`
+	HasCycle        *bool      `json:"hasCycle,omitempty"`
+	CycleShareLevel string     `json:"cycleShareLevel"`
+	CreatedAt       time.Time  `json:"createdAt"`
 }
 
 // Couple links exactly two users together.
