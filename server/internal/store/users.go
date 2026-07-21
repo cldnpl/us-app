@@ -18,6 +18,7 @@ type User struct {
 	AvatarPath     *string
 	Birthday       *time.Time
 	PartnerPronoun *string
+	HasCycle       *bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -29,12 +30,12 @@ type CreateUserParams struct {
 	DisplayName  string
 }
 
-const userCols = `id, email, password_hash, apple_user_id, display_name, avatar_path, birthday, partner_pronoun, created_at, updated_at`
+const userCols = `id, email, password_hash, apple_user_id, display_name, avatar_path, birthday, partner_pronoun, has_cycle, created_at, updated_at`
 
 func scanUser(row pgx.Row) (User, error) {
 	var u User
 	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.AppleUserID, &u.DisplayName,
-		&u.AvatarPath, &u.Birthday, &u.PartnerPronoun, &u.CreatedAt, &u.UpdatedAt)
+		&u.AvatarPath, &u.Birthday, &u.PartnerPronoun, &u.HasCycle, &u.CreatedAt, &u.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
@@ -62,14 +63,15 @@ func (s *Store) GetUserByAppleID(ctx context.Context, appleID string) (User, err
 }
 
 // UpdateUserProfile updates only the non-nil fields (COALESCE keeps existing values).
-func (s *Store) UpdateUserProfile(ctx context.Context, id string, displayName *string, birthday *time.Time, partnerPronoun *string) (User, error) {
+func (s *Store) UpdateUserProfile(ctx context.Context, id string, displayName *string, birthday *time.Time, partnerPronoun *string, hasCycle *bool) (User, error) {
 	return scanUser(s.pool.QueryRow(ctx,
 		`UPDATE users SET
 		   display_name    = COALESCE($2, display_name),
 		   birthday        = COALESCE($3, birthday),
 		   partner_pronoun = COALESCE($4, partner_pronoun),
+		   has_cycle       = COALESCE($5, has_cycle),
 		   updated_at      = now()
 		 WHERE id = $1
 		 RETURNING `+userCols,
-		id, displayName, birthday, partnerPronoun))
+		id, displayName, birthday, partnerPronoun, hasCycle))
 }

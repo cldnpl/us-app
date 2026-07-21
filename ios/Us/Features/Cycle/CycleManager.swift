@@ -72,7 +72,16 @@ final class CycleManager: ObservableObject {
     /// true → she tracks her own cycle; false → he sees his partner's + tips.
     @Published var userHasCycle: Bool? = CyclePrefs.userHasCycle
 
+    /// The user made the choice: keep it locally *and* on the account, so a
+    /// reinstall or a re-login doesn't silently switch cycle tracking back off.
     func setUserHasCycle(_ value: Bool) {
+        CyclePrefs.userHasCycle = value
+        userHasCycle = value
+        Task { try? await APIClient.shared.updateHasCycle(value) }
+    }
+
+    /// Mirror a value the server already knows, without echoing it straight back.
+    func adoptUserHasCycle(_ value: Bool) {
         CyclePrefs.userHasCycle = value
         userHasCycle = value
     }

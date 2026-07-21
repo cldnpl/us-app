@@ -7,6 +7,8 @@ struct User: Codable, Identifiable, Equatable {
     let avatarPath: String?
     let birthday: Date?
     let partnerPronoun: String?
+    /// nil = never answered. Server-side so it survives reinstall/re-login.
+    let hasCycle: Bool?
     let createdAt: Date
 }
 
