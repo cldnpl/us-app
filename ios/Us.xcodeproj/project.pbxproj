@@ -508,6 +508,7 @@
 				Base,
 				ar,
 				bn,
+				da,
 				de,
 				en,
 				es,

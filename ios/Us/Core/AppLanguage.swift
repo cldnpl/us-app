@@ -57,6 +57,7 @@ struct AppLanguage: Identifiable, Hashable {
         AppLanguage("sw",      "Kiswahili",          "Swahili"),
         AppLanguage("fil",     "Filipino",           "Filipino"),
         AppLanguage("uz",      "Oʻzbekcha",          "Uzbek"),
+        AppLanguage("da",      "Dansk",              "Danish"),
     ]
 
     static func named(_ code: String) -> AppLanguage? {
