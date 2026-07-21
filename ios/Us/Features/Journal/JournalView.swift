@@ -197,6 +197,7 @@ struct PhotoPagerContext: Identifiable {
 // The API carries calendar dates (milestone.date, journal entry_date) as
 // midnight UTC. We therefore build and read them in UTC so a user in a timezone
 // behind GMT doesn't see the day shift by one.
+@MainActor
 enum JournalDates {
     static let utc: Calendar = {
         var c = Calendar(identifier: .gregorian)
@@ -204,15 +205,31 @@ enum JournalDates {
         return c
     }()
 
-    static let medium = formatter("MMM d, yyyy")
-    static let dayNumber = formatter("d")
-    static let weekdayShort = formatter("EEE")
-    static let monthYear = formatter("MMMM yyyy")
+    // Computed, not `static let`: a stored formatter is built once per process
+    // and then keeps whatever language it was born with, so switching language
+    // in Settings left the feed showing the old one until the next launch.
+    static var medium: DateFormatter { formatter("MMM d, yyyy") }
+    static var dayNumber: DateFormatter { formatter("d") }
+    static var weekdayShort: DateFormatter { formatter("EEE") }
+    static var monthYear: DateFormatter { formatter("MMMM yyyy") }
+
+    /// Built formatters, keyed by template + language. `DateFormatter` is costly
+    /// to create and these are hit once per row while the feed scrolls.
+    private static var cache: [String: DateFormatter] = [:]
 
     private static func formatter(_ template: String) -> DateFormatter {
+        // The app's own language, *not* `Locale.current`: the system locale only
+        // catches up with an in-app switch on the next launch, which is how the
+        // feed ended up in Spanish under an English UI.
+        let locale = LanguageManager.shared.locale
+        let key = template + "|" + locale.identifier
+        if let cached = cache[key] { return cached }
+
         let f = DateFormatter()
+        f.locale = locale
         f.timeZone = TimeZone(identifier: "UTC")
         f.setLocalizedDateFormatFromTemplate(template)
+        cache[key] = f
         return f
     }
 }
@@ -240,5 +257,7 @@ func pickerDay(_ storedUTCMidnight: Date) -> Date {
     return Calendar.current.date(from: local) ?? storedUTCMidnight
 }
 
-/// A human-readable calendar day (UTC), e.g. "Feb 12, 2026".
+/// A human-readable calendar day (UTC), e.g. "Feb 12, 2026", in the language
+/// chosen in Settings. Main-actor because that choice lives on the main actor.
+@MainActor
 func dayString(_ date: Date) -> String { JournalDates.medium.string(from: date) }

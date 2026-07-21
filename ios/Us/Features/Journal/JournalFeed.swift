@@ -6,6 +6,7 @@ struct JournalDay: Identifiable {
     let date: Date
     let entries: [JournalEntry]
 
+    @MainActor
     var monthLabel: String { JournalDates.monthYear.string(from: date) }
 
     /// Groups server-ordered entries (already date DESC) into days, preserving
