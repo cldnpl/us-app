@@ -51,6 +51,7 @@ final class Session: ObservableObject {
         do {
             user = try await APIClient.shared.me()
             syncPronounFromServer()
+            syncHasCycleFromServer()
             try await refreshCouple()
             await PushManager.shared.onAuthenticated()
         } catch APIClientError.unauthorized {
@@ -153,6 +154,7 @@ final class Session: ObservableObject {
         TokenStore.refreshToken = resp.refreshToken
         user = resp.user
         syncPronounFromServer()
+        syncHasCycleFromServer()
         await loadCouple()
         await PushManager.shared.onAuthenticated()
     }
@@ -186,6 +188,18 @@ final class Session: ObservableObject {
         PartnerPrefs.pronoun = pronoun
         objectWillChange.send()
         Task { try? await APIClient.shared.updatePartnerPronoun(pronoun.rawValue) }
+    }
+
+    /// Reconcile the "do I have a cycle" flag with the server after login. Same
+    /// deal as the pronoun: a reinstall wipes UserDefaults, and without this the
+    /// user had to turn cycle tracking back on every time.
+    private func syncHasCycleFromServer() {
+        if let remote = user?.hasCycle {
+            if CyclePrefs.userHasCycle != remote { CycleManager.shared.adoptUserHasCycle(remote) }
+        } else if let local = CyclePrefs.userHasCycle {
+            // Existing user: server doesn't know yet, but we do → back it up.
+            Task { try? await APIClient.shared.updateHasCycle(local) }
+        }
     }
 
     /// Reconcile the partner pronoun with the server after login, so it survives
@@ -224,7 +238,8 @@ final class Session: ObservableObject {
         let start = (UserDefaults.standard.object(forKey: "testStartDate") as? Date)
             ?? Calendar.current.date(byAdding: .day, value: -100, to: Date())
         partner = User(id: "test-partner", email: nil, displayName: "Partner",
-                       avatarPath: nil, birthday: nil, partnerPronoun: nil, createdAt: Date())
+                       avatarPath: nil, birthday: nil, partnerPronoun: nil, hasCycle: nil,
+                       createdAt: Date())
         couple = Couple(id: "test-couple", startDate: start, status: "active", createdAt: Date())
         state = .ready
         updateWidget()

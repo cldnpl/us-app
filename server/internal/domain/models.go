@@ -10,6 +10,7 @@ type User struct {
 	AvatarPath     *string    `json:"avatarPath,omitempty"`
 	Birthday       *time.Time `json:"birthday,omitempty"`
 	PartnerPronoun *string    `json:"partnerPronoun,omitempty"`
+	HasCycle       *bool      `json:"hasCycle,omitempty"`
 	CreatedAt      time.Time  `json:"createdAt"`
 }
 

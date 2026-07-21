@@ -37,6 +37,13 @@ extension APIClient {
         try await send("/v1/me", method: "PATCH", body: ["partnerPronoun": pronoun])
     }
 
+    /// Persist whether this user tracks a menstrual cycle, so the choice sticks
+    /// across reinstalls instead of living only in local defaults.
+    @discardableResult
+    func updateHasCycle(_ hasCycle: Bool) async throws -> User {
+        try await send("/v1/me", method: "PATCH", body: ["hasCycle": hasCycle])
+    }
+
     func getCouple() async throws -> CoupleResponse {
         try await send("/v1/couple")
     }

@@ -26,6 +26,7 @@ type patchMeRequest struct {
 	DisplayName    *string `json:"displayName"`
 	Birthday       *string `json:"birthday"`       // ISO date, YYYY-MM-DD
 	PartnerPronoun *string `json:"partnerPronoun"` // she | he | they
+	HasCycle       *bool   `json:"hasCycle"`       // does this user track a cycle
 }
 
 var validPronouns = map[string]bool{"she": true, "he": true, "they": true}
@@ -70,7 +71,7 @@ func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 		pronoun = req.PartnerPronoun
 	}
 
-	u, err := d.Store.UpdateUserProfile(r.Context(), userID, name, bday, pronoun)
+	u, err := d.Store.UpdateUserProfile(r.Context(), userID, name, bday, pronoun, req.HasCycle)
 	if err != nil {
 		d.serverError(w, "me: update", err)
 		return

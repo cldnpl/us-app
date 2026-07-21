@@ -589,7 +589,8 @@ struct CycleDetailView: View {
 private func cyclePreviewSession() -> Session {
     let s = Session()
     s.partner = User(id: "p", email: nil, displayName: "Claudia",
-                     avatarPath: nil, birthday: nil, partnerPronoun: nil, createdAt: Date())
+                     avatarPath: nil, birthday: nil, partnerPronoun: nil, hasCycle: nil,
+                     createdAt: Date())
     return s
 }
 

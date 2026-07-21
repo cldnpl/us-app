@@ -34,6 +34,7 @@ func toDomainUser(u store.User) domain.User {
 		AvatarPath:     u.AvatarPath,
 		Birthday:       u.Birthday,
 		PartnerPronoun: u.PartnerPronoun,
+		HasCycle:       u.HasCycle,
 		CreatedAt:      u.CreatedAt,
 	}
 }
