@@ -45,12 +45,18 @@ struct SnapHuntView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            SnapHuntCard {
-                SnapClueHeader(clue: round.clue,
-                               subtitle: round.partnerSubmitted
-                                   ? "\(partnerName) already found theirs — quick!"
-                                   : "Race around the house and snap your cleverest find.",
-                               accent: accent)
+            VStack(spacing: 22) {
+                VStack(spacing: 8) {
+                    Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+                    Text("“\(round.clue)”")
+                        .font(.title.bold()).multilineTextAlignment(.center)
+                        .foregroundStyle(Theme.ink)
+                    Text(round.partnerSubmitted
+                         ? "\(partnerName) already found theirs — quick!"
+                         : "Race around the house and snap your cleverest find.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
                 if let picked {
                     Image(uiImage: picked)
@@ -73,12 +79,26 @@ struct SnapHuntView: View {
                         .foregroundStyle(accent)
                     }
                 } else {
-                    Button { showPicker = true } label: { SnapCameraTarget(accent: accent) }
-                        .buttonStyle(.plain)
+                    Button { showPicker = true } label: {
+                        VStack(spacing: 10) {
+                            Image(systemName: "camera.viewfinder").font(.system(size: 44))
+                            Text("Snap a photo").font(.headline)
+                        }
+                        .foregroundStyle(accent)
+                        .frame(maxWidth: .infinity).padding(.vertical, 36)
+                        .background(QuizPalette.gradient("green").opacity(0.4),
+                                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
             }
+            .padding(24)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
+            .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
             .padding(.horizontal, 20)
 
             Spacer(minLength: 0)
@@ -210,9 +230,44 @@ struct SnapHuntView: View {
     }
 }
 
-// MARK: - Hunt pieces
+// MARK: - Camera / photo picker
 
-/// The white sheet the whole hunt sits on.
+struct CameraPicker: UIViewControllerRepresentable {
+    var onImage: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPicker
+        init(_ parent: CameraPicker) { self.parent = parent }
+
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage { parent.onImage(image) }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Pieces shared with the paywall mockup
+//
+// The hunt screen above lays these out inline; the paywall renders a canned
+// Snap Hunt and reuses them, so they live here as their own views.
+
 struct SnapHuntCard<Content: View>: View {
     @ViewBuilder var content: Content
 
@@ -220,8 +275,8 @@ struct SnapHuntCard<Content: View>: View {
         VStack(spacing: 22) { content }
             .padding(24)
             .frame(maxWidth: .infinity)
-            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.5), lineWidth: 1))
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
             .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
     }
 }
@@ -258,38 +313,5 @@ struct SnapCameraTarget: View {
         .frame(maxWidth: .infinity).padding(.vertical, 36)
         .background(QuizPalette.gradient("green").opacity(0.4),
                     in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-}
-
-// MARK: - Camera / photo picker
-
-struct CameraPicker: UIViewControllerRepresentable {
-    var onImage: (UIImage) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraPicker
-        init(_ parent: CameraPicker) { self.parent = parent }
-
-        func imagePickerController(_ picker: UIImagePickerController,
-                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let image = info[.originalImage] as? UIImage { parent.onImage(image) }
-            parent.dismiss()
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
     }
 }

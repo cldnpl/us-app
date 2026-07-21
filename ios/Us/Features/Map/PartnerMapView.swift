@@ -24,11 +24,13 @@ struct PartnerMapView: View {
                     VStack(spacing: 2) {
                         Image(systemName: "heart.circle.fill")
                             .font(.title).foregroundStyle(Theme.rose)
-                            .background(Circle().fill(.white).padding(4))
+                            .background(Circle().fill(.background).padding(4))
                         Text(item.name)
                             .font(.caption2).bold()
                             .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.white, in: Capsule())
+                            // See DistanceViews: a fixed white capsule under
+                            // `.primary` text is invisible in dark mode.
+                            .background(.thickMaterial, in: Capsule())
                     }
                 }
             }
@@ -125,7 +127,7 @@ struct PartnerMapView: View {
                 Text("Enable location access in Settings to share.")
                     .font(.caption).foregroundStyle(.red)
             }
-            Text("Sharing is off unless you turn it on, and stops the moment you toggle it off.")
+            Text("Off unless you turn it on.")
                 .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .padding()

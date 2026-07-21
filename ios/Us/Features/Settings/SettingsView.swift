@@ -5,19 +5,35 @@ struct SettingsView: View {
     @EnvironmentObject private var premium: PremiumStore
     @StateObject private var cycle = CycleManager.shared
     @State private var showPaywall = false
+    @ObservedObject private var languages = LanguageManager.shared
     @State private var startDate = Date()
     @State private var pronoun: PartnerPronoun = PartnerPrefs.pronoun ?? .they
     @State private var showUnpairConfirm = false
     @State private var showAddWidget = false
+    @State private var showEmailChange = false
+
+    /// Draft of the display name. Committed on blur or return, not per
+    /// keystroke, so we don't PATCH the server on every letter typed.
+    @State private var nameDraft = ""
+    @FocusState private var nameFocused: Bool
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("Name", value: session.user?.displayName ?? "—")
-                    if let email = session.user?.email {
-                        LabeledContent("Email", value: email)
+                    LabeledContent("Name") {
+                        TextField("Your name", text: $nameDraft)
+                            .multilineTextAlignment(.trailing)
+                            .textContentType(.name)
+                            .submitLabel(.done)
+                            .focused($nameFocused)
+                            .onSubmit { commitName() }
                     }
+
+                    Button { showEmailChange = true } label: { emailRow }
+                        .tint(.primary)
+
                     Toggle("I have a menstrual cycle", isOn: Binding(
                         get: { cycle.userHasCycle == true },
                         set: { cycle.setUserHasCycle($0) }
@@ -25,7 +41,7 @@ struct SettingsView: View {
                 } header: {
                     Text("You")
                 } footer: {
-                    Text("Turn this off if you're supporting a partner who has one — you'll see her cycle and how to support her, not a tracker of your own.")
+                    Text("Off if you're supporting a partner who has one.")
                 }
 
                 Section("Your relationship") {
@@ -36,6 +52,16 @@ struct SettingsView: View {
                     DatePicker("Together since", selection: $startDate,
                                in: ...Date(), displayedComponents: .date)
                     LabeledContent("Days together", value: "\(liveDays)")
+                }
+
+                Section("App") {
+                    NavigationLink {
+                        LanguagePickerView()
+                    } label: {
+                        LabeledContent("Language") {
+                            Text(verbatim: languages.current.endonym)
+                        }
+                    }
                 }
 
                 Section("Home Screen") {
@@ -98,6 +124,22 @@ struct SettingsView: View {
             .onAppear {
                 if let existing = session.couple?.startDate { startDate = existing }
                 pronoun = PartnerPrefs.pronoun ?? .they
+                nameDraft = session.user?.displayName ?? ""
+            }
+            // Tapping an inert part of a Form doesn't drop focus, so blur alone
+            // would silently lose a typed name. Commit on every way out of the
+            // screen: blur, Return, leaving the tab, and backgrounding the app.
+            .onChange(of: nameFocused) { focused in
+                if !focused { commitName() }
+            }
+            .onDisappear { commitName() }
+            .onChange(of: scenePhase) { phase in
+                if phase != .active { commitName() }
+            }
+            .onChange(of: session.user?.displayName) { newName in
+                // Keep the field in step when the name changes elsewhere (a
+                // foreground refresh, say) and the user isn't mid-edit.
+                if !nameFocused, let newName { nameDraft = newName }
             }
             .onChange(of: pronoun) { new in session.setPartnerPronoun(new) }
             .onChange(of: startDate) { newDate in
@@ -113,6 +155,7 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .sheet(isPresented: $showPaywall) { PaywallView() }
+            .sheet(isPresented: $showEmailChange) { ChangeEmailView() }
             .confirmationDialog("Unpair from your partner?", isPresented: $showUnpairConfirm, titleVisibility: .visible) {
                 Button("Unpair", role: .destructive) { Task { await unpair() } }
                 Button("Cancel", role: .cancel) {}
@@ -120,6 +163,32 @@ struct SettingsView: View {
                 Text("You'll both need to pair again to reconnect.")
             }
         }
+    }
+
+    /// The email row: current address plus a disclosure chevron.
+    private var emailRow: some View {
+        HStack {
+            Text("Email")
+            Spacer()
+            Text(session.user?.email ?? "Add")
+                .foregroundStyle(.secondary)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    /// Saves the name if it actually changed, reverting an empty field rather
+    /// than sending a blank name the server would reject.
+    private func commitName() {
+        let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            nameDraft = session.user?.displayName ?? ""
+            return
+        }
+        guard trimmed != session.user?.displayName else { return }
+        nameDraft = trimmed
+        Task { await session.updateName(trimmed); Haptics.success() }
     }
 
     private var partnerFirstName: String {

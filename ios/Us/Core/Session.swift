@@ -51,7 +51,7 @@ final class Session: ObservableObject {
         do {
             user = try await APIClient.shared.me()
             syncPronounFromServer()
-            syncHasCycleFromServer()
+            syncCycleSettingsFromServer()
             try await refreshCouple()
             await PushManager.shared.onAuthenticated()
         } catch APIClientError.unauthorized {
@@ -145,8 +145,32 @@ final class Session: ObservableObject {
         let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         if let updated = try? await APIClient.shared.updateProfile(displayName: trimmed) {
-            user = updated
+            applyUpdatedUser(updated)
         }
+    }
+
+    /// Adopts a fresh copy of the signed-in user: republishes the cache and the
+    /// widget so a renamed user doesn't linger anywhere.
+    func applyUpdatedUser(_ updated: User) {
+        user = updated
+        CycleManager.shared.adoptServerSettings(from: updated)
+        if let couple { SessionCache.save(user: updated, partner: partner, couple: couple) }
+        updateWidget()
+    }
+
+    /// Re-reads the profile and couple from the backend. Called when the app
+    /// comes to the foreground so a change made on the partner's device (their
+    /// name, their email) shows up here without needing a relaunch.
+    ///
+    /// Deliberately silent: a failure leaves the current state untouched rather
+    /// than disturbing a working session.
+    func refreshFromServer() async {
+        guard state == .ready else { return }
+        if let fresh = try? await APIClient.shared.me() {
+            user = fresh
+            CycleManager.shared.adoptServerSettings(from: fresh)
+        }
+        try? await refreshCouple()
     }
 
     func handleAuth(_ resp: AuthResponse) async {
@@ -154,7 +178,7 @@ final class Session: ObservableObject {
         TokenStore.refreshToken = resp.refreshToken
         user = resp.user
         syncPronounFromServer()
-        syncHasCycleFromServer()
+        syncCycleSettingsFromServer()
         await loadCouple()
         await PushManager.shared.onAuthenticated()
     }
@@ -190,18 +214,6 @@ final class Session: ObservableObject {
         Task { try? await APIClient.shared.updatePartnerPronoun(pronoun.rawValue) }
     }
 
-    /// Reconcile the "do I have a cycle" flag with the server after login. Same
-    /// deal as the pronoun: a reinstall wipes UserDefaults, and without this the
-    /// user had to turn cycle tracking back on every time.
-    private func syncHasCycleFromServer() {
-        if let remote = user?.hasCycle {
-            if CyclePrefs.userHasCycle != remote { CycleManager.shared.adoptUserHasCycle(remote) }
-        } else if let local = CyclePrefs.userHasCycle {
-            // Existing user: server doesn't know yet, but we do → back it up.
-            Task { try? await APIClient.shared.updateHasCycle(local) }
-        }
-    }
-
     /// Reconcile the partner pronoun with the server after login, so it survives
     /// re-login and reinstalls without asking for it again.
     private func syncPronounFromServer() {
@@ -212,6 +224,14 @@ final class Session: ObservableObject {
             // Existing user: server doesn't have it yet, but we do → back it up.
             Task { try? await APIClient.shared.updatePartnerPronoun(local.rawValue) }
         }
+    }
+
+    /// Reconcile the cycle settings with the server after login. The server is
+    /// authoritative once it has an answer; a local-only answer from a build
+    /// that predates server storage is pushed up so it isn't lost.
+    private func syncCycleSettingsFromServer() {
+        guard let user else { return }
+        CycleManager.shared.adoptServerSettings(from: user)
     }
 
     /// Saves the couple's start date and refreshes the couple + widget.
@@ -238,8 +258,7 @@ final class Session: ObservableObject {
         let start = (UserDefaults.standard.object(forKey: "testStartDate") as? Date)
             ?? Calendar.current.date(byAdding: .day, value: -100, to: Date())
         partner = User(id: "test-partner", email: nil, displayName: "Partner",
-                       avatarPath: nil, birthday: nil, partnerPronoun: nil, hasCycle: nil,
-                       createdAt: Date())
+                       avatarPath: nil, birthday: nil, partnerPronoun: nil, createdAt: Date())
         couple = Couple(id: "test-couple", startDate: start, status: "active", createdAt: Date())
         state = .ready
         updateWidget()

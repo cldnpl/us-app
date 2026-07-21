@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Wire models (match the Go JSON, camelCase, no key conversion)
 
@@ -135,21 +136,26 @@ struct QuizIconTile: View {
             .font(.system(size: size * 0.42, weight: .semibold))
             .foregroundStyle(QuizPalette.accent(colorKey))
             .frame(width: size, height: size)
-            .background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous))
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous))
     }
 }
 
 /// Maps a catalog colorKey to the soft two-tone card gradient.
+///
+/// These cards carry `Theme.ink` text, which is near-black on light and
+/// off-white on dark — so the cards themselves have to flip with it. Each hue
+/// keeps its identity in both schemes: a pale wash on light, a deep saturated
+/// version of the same hue on dark.
 enum QuizPalette {
     static func colors(_ key: String) -> [Color] {
         switch key {
-        case "purple": return [c(0.83, 0.78, 0.98), c(0.90, 0.86, 1.0)]
-        case "pink":   return [c(1.0, 0.80, 0.88), c(1.0, 0.89, 0.93)]
-        case "red":    return [c(1.0, 0.78, 0.78), c(1.0, 0.87, 0.86)]
-        case "amber":  return [c(1.0, 0.88, 0.70), c(1.0, 0.93, 0.80)]
-        case "green":  return [c(0.80, 0.93, 0.83), c(0.89, 0.96, 0.90)]
-        case "blue":   return [c(0.80, 0.89, 1.0), c(0.89, 0.94, 1.0)]
-        default:       return [Theme.blush.opacity(0.5), Theme.peach.opacity(0.4)]
+        case "purple": return [d(0.83, 0.78, 0.98, 0.24, 0.19, 0.38), d(0.90, 0.86, 1.0, 0.17, 0.14, 0.28)]
+        case "pink":   return [d(1.0, 0.80, 0.88, 0.38, 0.18, 0.28), d(1.0, 0.89, 0.93, 0.28, 0.13, 0.21)]
+        case "red":    return [d(1.0, 0.78, 0.78, 0.38, 0.17, 0.17), d(1.0, 0.87, 0.86, 0.28, 0.12, 0.12)]
+        case "amber":  return [d(1.0, 0.88, 0.70, 0.36, 0.25, 0.10), d(1.0, 0.93, 0.80, 0.27, 0.19, 0.08)]
+        case "green":  return [d(0.80, 0.93, 0.83, 0.15, 0.32, 0.21), d(0.89, 0.96, 0.90, 0.11, 0.24, 0.16)]
+        case "blue":   return [d(0.80, 0.89, 1.0, 0.15, 0.26, 0.42), d(0.89, 0.94, 1.0, 0.11, 0.20, 0.32)]
+        default:       return [d(1.0, 0.85, 0.88, 0.34, 0.20, 0.24), d(1.0, 0.91, 0.85, 0.26, 0.16, 0.19)]
         }
     }
 
@@ -158,19 +164,23 @@ enum QuizPalette {
     }
 
     /// A stronger tint of the same hue for accents (progress bar, badge text).
+    /// Lifted in dark mode so it still separates from the deep card behind it.
     static func accent(_ key: String) -> Color {
         switch key {
-        case "purple": return c(0.55, 0.40, 0.90)
-        case "pink":   return c(0.93, 0.35, 0.60)
-        case "red":    return c(0.90, 0.30, 0.30)
-        case "amber":  return c(0.90, 0.60, 0.15)
-        case "green":  return c(0.20, 0.65, 0.40)
-        case "blue":   return c(0.25, 0.50, 0.90)
+        case "purple": return d(0.55, 0.40, 0.90, 0.72, 0.62, 1.0)
+        case "pink":   return d(0.93, 0.35, 0.60, 1.0, 0.55, 0.76)
+        case "red":    return d(0.90, 0.30, 0.30, 1.0, 0.52, 0.52)
+        case "amber":  return d(0.90, 0.60, 0.15, 1.0, 0.76, 0.35)
+        case "green":  return d(0.20, 0.65, 0.40, 0.42, 0.85, 0.60)
+        case "blue":   return d(0.25, 0.50, 0.90, 0.50, 0.72, 1.0)
         default:       return Theme.coral
         }
     }
 
-    private static func c(_ r: Double, _ g: Double, _ b: Double) -> Color {
-        Color(red: r, green: g, blue: b)
+    /// A colour with a light-mode and a dark-mode value.
+    private static func d(_ lr: Double, _ lg: Double, _ lb: Double,
+                          _ dr: Double, _ dg: Double, _ db: Double) -> Color {
+        Color(dynamic: UIColor(red: lr, green: lg, blue: lb, alpha: 1),
+              dark: UIColor(red: dr, green: dg, blue: db, alpha: 1))
     }
 }
