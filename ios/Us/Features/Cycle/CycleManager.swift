@@ -204,6 +204,11 @@ final class CycleManager: ObservableObject {
 
     private var noteKey: String {
         let f = DateFormatter()
+        // Fixed format for a storage key, so it must not follow the user's
+        // locale: a Thai or Persian locale would render a different calendar's
+        // year here and silently point at a different note every day.
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = "yyyy-MM-dd"
         return "cycleNote." + f.string(from: Date())
     }
