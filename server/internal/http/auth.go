@@ -28,14 +28,16 @@ func (d Deps) serverError(w http.ResponseWriter, context string, err error) {
 
 func toDomainUser(u store.User) domain.User {
 	return domain.User{
-		ID:             u.ID,
-		Email:          u.Email,
-		DisplayName:    u.DisplayName,
-		AvatarPath:     u.AvatarPath,
-		Birthday:       u.Birthday,
-		PartnerPronoun: u.PartnerPronoun,
-		HasCycle:       u.HasCycle,
-		CreatedAt:      u.CreatedAt,
+		ID:              u.ID,
+		Email:           u.Email,
+		EmailVerified:   u.EmailVerified,
+		DisplayName:     u.DisplayName,
+		AvatarPath:      u.AvatarPath,
+		Birthday:        u.Birthday,
+		PartnerPronoun:  u.PartnerPronoun,
+		HasCycle:        u.HasCycle,
+		CycleShareLevel: u.CycleShareLevel,
+		CreatedAt:       u.CreatedAt,
 	}
 }
 

@@ -142,7 +142,7 @@ struct DailyQuestionCard: View {
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(QuizPalette.gradient(daily.colorKey), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.35), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
         .shadow(color: .black.opacity(0.06), radius: 10, y: 5)
     }
 }
@@ -208,7 +208,7 @@ struct QuizEntryCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.35), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
         .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
     }
 }
@@ -220,7 +220,7 @@ struct ProgressBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.5)).frame(height: 8)
+                Capsule().fill(Theme.surface).frame(height: 8)
                 Capsule().fill(accent)
                     .frame(width: max(0, min(1, value)) * geo.size.width, height: 8)
             }

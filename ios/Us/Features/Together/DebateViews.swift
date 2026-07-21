@@ -35,7 +35,6 @@ struct DebatePackListView: View {
                         }
                     }
                     .padding(20)
-                    .padding(.bottom, 40)   // clear the floating tab bar
                 }
             }
         }
@@ -83,47 +82,6 @@ struct DebatePackCard: View {
     }
 }
 
-// MARK: - Round pieces
-
-/// "YOU'RE ARGUING FOR / AGAINST" banner above the motion.
-struct DebateSidePill: View {
-    let forSide: Bool
-
-    var body: some View {
-        Text("YOU'RE ARGUING \(forSide ? "FOR" : "AGAINST")")
-            .font(.caption.bold()).tracking(1)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12).padding(.vertical, 6)
-            .background(forSide ? Theme.coral : Theme.rose, in: Capsule())
-    }
-}
-
-/// One side's case in the results reveal: who argued, the judge's score, the text.
-struct DebateArgumentBlock: View {
-    let title: String
-    let text: String?
-    let score: Int?
-    let highlight: Bool
-    let accent: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title).font(.caption2.bold()).foregroundStyle(.secondary)
-                Spacer()
-                if let score {
-                    Text("\(score)/10").font(.caption2.bold())
-                        .foregroundStyle(highlight ? accent : .secondary)
-                }
-            }
-            Text(text ?? "—").font(.footnote).foregroundStyle(Theme.ink)
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.white.opacity(highlight ? 0.6 : 0.3), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-}
-
 // MARK: - Play
 
 struct DebatePlayView: View {
@@ -167,12 +125,20 @@ struct DebatePlayView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 20) {
-                    StepDots(total: pack.rounds.count, index: index, accent: accent) {
-                        pack.rounds[$0].myArgument != nil
+                    HStack(spacing: 6) {
+                        ForEach(pack.rounds.indices, id: \.self) { i in
+                            Capsule()
+                                .fill(i == index ? accent : (pack.rounds[i].myArgument != nil ? accent.opacity(0.4) : Color.secondary.opacity(0.2)))
+                                .frame(width: i == index ? 22 : 8, height: 8)
+                        }
                     }
                     .padding(.top, 12)
 
-                    DebateSidePill(forSide: forSide)
+                    Text("YOU'RE ARGUING \(forSide ? "FOR" : "AGAINST")")
+                        .font(.caption.bold()).tracking(1)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(forSide ? Theme.coral : Theme.rose, in: Capsule())
 
                     Text("“\(round.motion)”")
                         .font(.title2.bold()).multilineTextAlignment(.center)
@@ -287,6 +253,7 @@ struct DebatePlayView: View {
                     in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
+
     private func pendingRow(_ round: DebateRound) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
@@ -352,4 +319,31 @@ struct DebatePlayView: View {
     }
 
     private func reload() async { pack = try? await APIClient.shared.getDebatePack(packId) }
+}
+
+/// One side's case in the results reveal: who argued, the judge's score, the
+/// text. Shared with the paywall mockup, which renders a canned debate.
+struct DebateArgumentBlock: View {
+    let title: String
+    let text: String?
+    let score: Int?
+    let highlight: Bool
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title).font(.caption2.bold()).foregroundStyle(.secondary)
+                Spacer()
+                if let score {
+                    Text("\(score)/10").font(.caption2.bold())
+                        .foregroundStyle(highlight ? accent : .secondary)
+                }
+            }
+            Text(text ?? "—").font(.footnote).foregroundStyle(Theme.ink)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface.opacity(highlight ? 1.0 : 0.5), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
 }

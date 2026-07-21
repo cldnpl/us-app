@@ -277,7 +277,7 @@ struct CycleDetailView: View {
         Card {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Cycle & health").font(.headline)
-                Text("Do you have a menstrual cycle? This tailors Us. — track your own, or get gentle tips to support your partner's.")
+                Text("Track your own, or get tips to support your partner's.")
                     .font(.subheadline).foregroundStyle(.secondary)
                 Button("Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
                     .buttonStyle(PrimaryButtonStyle())
@@ -388,7 +388,7 @@ struct CycleDetailView: View {
         Card {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Your cycle").font(.headline)
-                Text("Us reads your cycle from Apple Health — whatever you track in Flo, Clue, or Health syncs here. It stays on your phone until you choose to share.")
+                Text("Reads from Apple Health. Stays on your phone until you share.")
                     .font(.subheadline).foregroundStyle(.secondary)
                 Button {
                     Task { connecting = true; await cycle.connectHealth(); level = cycle.shareLevel; connecting = false }
@@ -466,7 +466,7 @@ struct CycleDetailView: View {
         } else if let p = cycle.partner, p.sharing, let phase = CyclePhase(rawValue: p.phase ?? "") {
             partnerCycleView(p, phase)
         } else {
-            infoCard("When \(partnerName) turns on cycle sharing in her Us., you'll see her current phase here — plus what it means and simple, kind ways to support her.")
+            infoCard("Once \(partnerName) turns on sharing, her phase and support tips appear here.")
         }
         // No cycle-tracking controls here — a supporter never tracks or shares a
         // cycle of their own. Correcting the answer lives in Settings ▸ You.
@@ -570,7 +570,7 @@ struct CycleDetailView: View {
     }
 
     private var privacyNote: some View {
-        Text("Predictions are estimates, not medical advice. Us never stores your health data — it reads from Apple Health on your device, and only what you choose ever leaves it.")
+        Text("Estimates, not medical advice. Your health data stays on your phone.")
             .font(.caption).foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 8)
@@ -589,8 +589,7 @@ struct CycleDetailView: View {
 private func cyclePreviewSession() -> Session {
     let s = Session()
     s.partner = User(id: "p", email: nil, displayName: "Claudia",
-                     avatarPath: nil, birthday: nil, partnerPronoun: nil, hasCycle: nil,
-                     createdAt: Date())
+                     avatarPath: nil, birthday: nil, partnerPronoun: nil, createdAt: Date())
     return s
 }
 

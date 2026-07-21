@@ -14,19 +14,19 @@ struct GameDef: Identifiable {
 
     static let all: [GameDef] = [
         GameDef(id: "hwdykm", title: "How Well Do You Know Me?",
-                subtitle: "Both lock in your answers privately, reveal at the same time, and see your compatibility score — 14 packs from cute to spicy.",
+                subtitle: "Answer privately, reveal together, see your score.",
                 icon: "questionmark.circle.fill", colorKey: "pink", badge: "MOST PLAYED",
                 cta: "Start the quiz", kind: .hwdykm),
         GameDef(id: "debate", title: "Couples Debate",
-                subtitle: "Pick a topic pack, get assigned for or against, then make your case — an AI judge scores each round and crowns a winner.",
+                subtitle: "Argue your assigned side. An AI judge picks a winner.",
                 icon: "bubble.left.and.bubble.right.fill", colorKey: "blue", badge: nil,
                 cta: "Start a debate", kind: .debate),
         GameDef(id: "draw", title: "Draw Together",
-                subtitle: "Get the same prompt, draw it on your own half of a split canvas, and reveal both when the timer's up — no scores, just yours.",
+                subtitle: "Same prompt, two halves of one canvas. No scores.",
                 icon: "pencil.tip.crop.circle", colorKey: "purple", badge: nil,
                 cta: "Start drawing", kind: .draw),
         GameDef(id: "snap", title: "Snap Hunt",
-                subtitle: "The app calls a loose clue, you both race around the house to find it, snap a photo — and a judge crowns the cleverest find.",
+                subtitle: "Race to find the clue, snap it, best find wins.",
                 icon: "camera.viewfinder", colorKey: "green", badge: nil,
                 cta: "Start a hunt", kind: .snap),
     ]
@@ -73,7 +73,7 @@ struct GameCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.35), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
         .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
     }
 }
