@@ -35,6 +35,7 @@ struct DebatePackListView: View {
                         }
                     }
                     .padding(20)
+                    .padding(.bottom, 40)   // clear the floating tab bar
                 }
             }
         }

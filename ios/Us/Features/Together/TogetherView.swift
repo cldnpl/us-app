@@ -10,14 +10,20 @@ struct TogetherView: View {
             // The gradient goes *behind* the ScrollView rather than beside it in
             // a ZStack: as a ZStack sibling its ignoresSafeArea() stretched the
             // stack past the tab bar, the ScrollView inherited that height, and
-            // the last cards ended up off-screen with nothing left to scroll.
+            // on device it stopped being scrollable at all — the cards past the
+            // first screenful were simply drawn below the bottom of the display.
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    dailySection
+                    if daily != nil { dailySection }
                     quizSection
                     gamesSection
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
+                // The tab bar floats over the scroll content and SwiftUI adds no
+                // inset for it here, so the last card needs its own room —
+                // otherwise the scroll ends with it tucked under the bar.
+                .padding(.bottom, 100)
             }
             .background(Theme.softBackground.ignoresSafeArea())
             .navigationTitle("Games")
