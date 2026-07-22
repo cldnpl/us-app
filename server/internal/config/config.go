@@ -63,7 +63,7 @@ func Load() (*Config, error) {
 		JWTSecret:       []byte(env("JWT_SECRET", "")),
 		AccessTokenTTL:  envDuration("ACCESS_TOKEN_TTL", 15*time.Minute),
 		RefreshTokenTTL: envDuration("REFRESH_TOKEN_TTL", 720*time.Hour),
-		AppleClientIDs:  envList("APPLE_CLIENT_IDS", "us.elbek.com"),
+		AppleClientIDs:  envList("APPLE_CLIENT_IDS", "com.claudianapolitano.us,us.elbek.com"),
 		APNS: APNSConfig{
 			KeyPath:    env("APNS_KEY_PATH", ""),
 			KeyID:      env("APNS_KEY_ID", ""),

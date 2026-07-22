@@ -27,7 +27,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_at_least_32_chars}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
-      APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-us.elbek.com}
+      APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-com.claudianapolitano.us,us.elbek.com}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
       MEDIA_DIR: /app/media-data
     volumes:

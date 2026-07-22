@@ -492,11 +492,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					3EE05893A6FB6B780C9B7D72 = {
-						DevelopmentTeam = 988N3YY62P;
+						DevelopmentTeam = H4M7KJL5DT;
 						ProvisioningStyle = Automatic;
 					};
 					3FA668985F6B95D61B1C0952 = {
-						DevelopmentTeam = 988N3YY62P;
+						DevelopmentTeam = H4M7KJL5DT;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -668,7 +668,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = UsWidget/UsWidget.entitlements;
-				DEVELOPMENT_TEAM = 988N3YY62P;
+				DEVELOPMENT_TEAM = H4M7KJL5DT;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = UsWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -676,7 +676,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = us.elbek.com.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudianapolitano.us.widget;
 				PRODUCT_NAME = UsWidget;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -690,14 +690,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Us/Us.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 988N3YY62P;
+				DEVELOPMENT_TEAM = H4M7KJL5DT;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Us/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = us.elbek.com;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudianapolitano.us;
 				PRODUCT_NAME = Us;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -775,7 +775,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = UsWidget/UsWidget.entitlements;
-				DEVELOPMENT_TEAM = 988N3YY62P;
+				DEVELOPMENT_TEAM = H4M7KJL5DT;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = UsWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -783,7 +783,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = us.elbek.com.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudianapolitano.us.widget;
 				PRODUCT_NAME = UsWidget;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -797,14 +797,14 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Us/Us.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 988N3YY62P;
+				DEVELOPMENT_TEAM = H4M7KJL5DT;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Us/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = us.elbek.com;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudianapolitano.us;
 				PRODUCT_NAME = Us;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

@@ -5,7 +5,7 @@ import Foundation
 enum SharedConfig {
     /// App Group container used to share small pieces of state (widget snapshot,
     /// auth tokens for the interactive widget, partner preferences).
-    static let appGroup = "group.us.elbek.com"
+    static let appGroup = "group.com.claudianapolitano.us"
 
     /// Base URL of the Us backend. Kept in sync with the app's `APIConfig`.
     static let apiBaseURL = URL(string: "https://usapi.islamov.online")!
