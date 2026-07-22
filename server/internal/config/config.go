@@ -47,6 +47,7 @@ func (s SMTPConfig) Configured() bool { return s.Host != "" && s.From != "" }
 // APNSConfig holds Apple Push Notification service credentials.
 type APNSConfig struct {
 	KeyPath    string
+	KeyBase64  string // base64-encoded .p8 contents; wins over KeyPath when set
 	KeyID      string
 	TeamID     string
 	Topic      string
@@ -66,6 +67,7 @@ func Load() (*Config, error) {
 		AppleClientIDs:  envList("APPLE_CLIENT_IDS", "com.claudianapolitano.us"),
 		APNS: APNSConfig{
 			KeyPath:    env("APNS_KEY_PATH", ""),
+			KeyBase64:  env("APNS_KEY_BASE64", ""),
 			KeyID:      env("APNS_KEY_ID", ""),
 			TeamID:     env("APNS_TEAM_ID", ""),
 			Topic:      env("APNS_TOPIC", "com.claudianapolitano.us"),

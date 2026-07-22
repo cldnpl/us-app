@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -50,8 +51,15 @@ func run(logger *slog.Logger) error {
 
 	// Push: real APNs sender when credentials are configured, else log-only.
 	var sender push.Sender = push.NewLogSender(logger)
-	if cfg.APNS.KeyPath != "" && cfg.APNS.KeyID != "" && cfg.APNS.TeamID != "" {
-		if s, perr := push.NewAPNsSender(cfg.APNS.KeyPath, cfg.APNS.KeyID, cfg.APNS.TeamID, cfg.APNS.Topic, cfg.APNS.Production); perr != nil {
+	if (cfg.APNS.KeyPath != "" || cfg.APNS.KeyBase64 != "") && cfg.APNS.KeyID != "" && cfg.APNS.TeamID != "" {
+		var keyPEM []byte
+		if cfg.APNS.KeyBase64 != "" {
+			var derr error
+			if keyPEM, derr = base64.StdEncoding.DecodeString(cfg.APNS.KeyBase64); derr != nil {
+				logger.Warn("apns: APNS_KEY_BASE64 is not valid base64, using log sender", "err", derr)
+			}
+		}
+		if s, perr := push.NewAPNsSender(cfg.APNS.KeyPath, keyPEM, cfg.APNS.KeyID, cfg.APNS.TeamID, cfg.APNS.Topic, cfg.APNS.Production); perr != nil {
 			logger.Warn("apns unavailable, using log sender", "err", perr)
 		} else {
 			sender = s
