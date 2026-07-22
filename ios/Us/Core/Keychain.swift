@@ -3,7 +3,7 @@ import Security
 
 /// Minimal Keychain wrapper for storing auth tokens securely.
 enum Keychain {
-    private static let service = "us.elbek.com.tokens"
+    private static let service = "com.claudianapolitano.us.tokens"
 
     static func set(_ value: String?, for key: String) {
         delete(key)

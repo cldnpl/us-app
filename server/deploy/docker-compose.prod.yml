@@ -33,7 +33,14 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ACCESS_TOKEN_TTL: 15m
       REFRESH_TOKEN_TTL: 720h
-      APPLE_CLIENT_IDS: us.elbek.com
+      # Both bundle ids while the app moves to its own account: Sign in with
+      # Apple sends the bundle id as the token audience, so each build is only
+      # accepted if its id is listed here.
+      APPLE_CLIENT_IDS: com.claudianapolitano.us,us.elbek.com
+      # One topic only: APNs requires it to equal the bundle id of the app
+      # being pushed to. Flip this to com.claudianapolitano.us at cutover, together
+      # with an APNS key from the new team — until then the new build gets
+      # no notifications, and after it the old one stops getting them.
       APNS_TOPIC: us.elbek.com
       APNS_KEY_PATH: /app/secrets/AuthKey.p8
       APNS_KEY_ID: ${APNS_KEY_ID}
