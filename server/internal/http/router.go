@@ -81,6 +81,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Use(requireAuth)
 
 			r.Get("/me", d.handleGetMe)
+			r.Delete("/me", d.handleDeleteMe)
 			r.Patch("/me", d.handlePatchMe)
 			r.Post("/me/email/request", d.handleRequestEmailChange)
 			r.Post("/me/email/confirm", d.handleConfirmEmailChange)

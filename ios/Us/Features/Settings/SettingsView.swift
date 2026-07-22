@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var startDate = Date()
     @State private var pronoun: PartnerPronoun = PartnerPrefs.pronoun ?? .they
     @State private var showUnpairConfirm = false
+    @State private var showDeleteConfirm = false
     @State private var showAddWidget = false
     @State private var showEmailChange = false
 
@@ -118,6 +119,7 @@ struct SettingsView: View {
                 Section {
                     Button("Sign out") { Task { await session.signOut() } }
                     Button("Unpair", role: .destructive) { showUnpairConfirm = true }
+                    Button("Delete account", role: .destructive) { showDeleteConfirm = true }
                 }
             }
             .navigationTitle("Settings")
@@ -161,6 +163,12 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("You'll both need to pair again to reconnect.")
+            }
+            .confirmationDialog("Delete your account?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("Delete forever", role: .destructive) { Task { await deleteAccount() } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently removes your account, journal entries and photos. It can't be undone.")
             }
         }
     }
@@ -206,5 +214,11 @@ struct SettingsView: View {
     private func unpair() async {
         try? await APIClient.shared.unpair()
         await session.loadCouple()
+    }
+
+    private func deleteAccount() async {
+        try? await APIClient.shared.deleteAccount()
+        // The account is gone server-side; drop all local state too.
+        await session.signOut()
     }
 }

@@ -132,6 +132,11 @@ extension APIClient {
         try await sendVoid("/v1/milestones/\(id)", method: "DELETE")
     }
 
+    /// Permanently deletes the signed-in account (App Store 5.1.1).
+    func deleteAccount() async throws {
+        try await sendVoid("/v1/me", method: "DELETE")
+    }
+
     // MARK: - Journal
 
     func listJournal() async throws -> [JournalEntry] {

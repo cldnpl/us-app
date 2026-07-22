@@ -102,3 +102,28 @@ func (d Deps) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, toDomainUser(u))
 }
+
+// handleDeleteMe permanently deletes the caller's account (App Store rule
+// 5.1.1: apps with account creation must offer in-app deletion). Media files
+// are removed from disk best-effort; the DB rows cascade away with the user.
+func (d Deps) handleDeleteMe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized", "unauthorized")
+		return
+	}
+	if media, err := d.Store.ListMediaByUploader(r.Context(), userID); err == nil {
+		for _, m := range media {
+			thumb := ""
+			if m.ThumbPath != nil {
+				thumb = *m.ThumbPath
+			}
+			d.Media.Remove(m.FilePath, thumb)
+		}
+	}
+	if err := d.Store.DeleteUser(r.Context(), userID); err != nil {
+		d.serverError(w, "me: delete", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
