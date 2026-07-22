@@ -345,7 +345,7 @@ private struct PaywallDemoScreenView: View {
                     .animation(.spring(response: 0.55, dampingFraction: 0.6), value: play)
                     .padding(.top, 12)
                 Text("You won the debate! 🏆").font(.title2.bold()).foregroundStyle(Theme.ink)
-                Text("2–1 · you vs Elbek").font(.subheadline).foregroundStyle(.secondary)
+                Text("2–1 · you vs Alex").font(.subheadline).foregroundStyle(.secondary)
             }
 
             ForEach(Array(PaywallSampleData.debateRounds.enumerated()), id: \.offset) { i, round in
@@ -365,7 +365,7 @@ private struct PaywallDemoScreenView: View {
 
             DebateArgumentBlock(title: "You (\(round.mySide))", text: round.mine,
                                 score: round.myScore, highlight: round.iWon, accent: accent)
-            DebateArgumentBlock(title: "Elbek (\(round.mySide == "for" ? "against" : "for"))",
+            DebateArgumentBlock(title: "Alex (\(round.mySide == "for" ? "against" : "for"))",
                                 text: round.theirs,
                                 score: round.theirScore, highlight: !round.iWon, accent: accent)
 
@@ -462,7 +462,7 @@ enum PaywallSampleData {
               mine: "It's the one meal nobody is rushing you through. That's the whole point.",
               theirs: "Crumbs. In the sheets. For days. Rest my case.",
               myScore: 7, theirScore: 9, iWon: false,
-              verdict: "Short, vivid, and hard to argue with — Elbek takes it."),
+              verdict: "Short, vivid, and hard to argue with — Alex takes it."),
     ]
 }
 

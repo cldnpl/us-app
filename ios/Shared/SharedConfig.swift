@@ -8,7 +8,7 @@ enum SharedConfig {
     static let appGroup = "group.com.claudianapolitano.us"
 
     /// Base URL of the Us backend. Kept in sync with the app's `APIConfig`.
-    static let apiBaseURL = URL(string: "https://usapi.islamov.online")!
+    static let apiBaseURL = URL(string: "https://us-app-production-9aa4.up.railway.app")!
 
     /// Shared `UserDefaults` suite backed by the App Group.
     static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
@@ -16,7 +16,7 @@ enum SharedConfig {
     /// Custom URL used by the iOS 16 widget fallback to open the app and send.
     static let missYouURL = URL(string: "usapp://missyou")!
 
-    /// TEST ONLY: enables the "0000" pairing bypass + demo data (Claudia/Elbek,
+    /// TEST ONLY: enables the "0000" pairing bypass + demo data (Claudia/Alex,
     /// Naples/Tashkent) so the app can be tested without a real partner — even on
     /// TestFlight/Release. Set to `false` before any public launch.
     static let demoMode = true

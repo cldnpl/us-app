@@ -265,14 +265,14 @@ final class Session: ObservableObject {
     }
 
     /// Names written into the widget snapshot. In DEBUG the partner falls back
-    /// to "Elbek" (and self to "Claudia") so the test widget matches the app.
+    /// to "Alex" (and self to "Claudia") so the test widget matches the app.
     private var snapshotMyName: String {
         user?.displayName ?? (SharedConfig.demoMode ? "Claudia" : "")
     }
     private var snapshotPartnerName: String {
         let real = partner?.displayName
         if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
-            return "Elbek"
+            return "Alex"
         }
         return real ?? ""
     }

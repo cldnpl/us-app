@@ -3,7 +3,7 @@ import CoreLocation
 import Combine
 
 // Demo positions (SharedConfig.demoMode) so the map is visible before real
-// location sharing is set up: Claudia in Naples, Elbek in Tashkent.
+// location sharing is set up: Claudia in Naples, Alex in Tashkent.
 private let sampleMineCoord = CLLocationCoordinate2D(latitude: 40.8518, longitude: 14.2681)
 private let samplePartnerCoord = CLLocationCoordinate2D(latitude: 41.2995, longitude: 69.2401)
 
@@ -194,9 +194,9 @@ struct HomeView: View {
     }
     private var partnerName: String {
         let real = session.partner?.displayName
-        // Demo fallback so the sample map/copy reads "Elbek".
+        // Demo fallback so the sample map/copy reads "Alex".
         if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
-            return "Elbek"
+            return "Alex"
         }
         return real ?? "your partner"
     }
