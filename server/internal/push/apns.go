@@ -2,6 +2,7 @@ package push
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 
 	"github.com/sideshow/apns2"
@@ -15,9 +16,19 @@ type apnsSender struct {
 }
 
 // NewAPNsSender builds a token-authenticated (.p8) APNs sender. It is only
-// constructed when APNS credentials are present in config.
-func NewAPNsSender(keyPath, keyID, teamID, topic string, production bool) (Sender, error) {
-	authKey, err := token.AuthKeyFromFile(keyPath)
+// constructed when APNS credentials are present in config. The key arrives
+// either as a file path or as raw PEM bytes (APNS_KEY_BASE64, for hosts like
+// Railway that only support env vars, not secret files).
+func NewAPNsSender(keyPath string, keyPEM []byte, keyID, teamID, topic string, production bool) (Sender, error) {
+	var (
+		authKey *ecdsa.PrivateKey
+		err     error
+	)
+	if len(keyPEM) > 0 {
+		authKey, err = token.AuthKeyFromBytes(keyPEM)
+	} else {
+		authKey, err = token.AuthKeyFromFile(keyPath)
+	}
 	if err != nil {
 		return nil, err
 	}
