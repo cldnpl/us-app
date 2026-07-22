@@ -53,9 +53,9 @@ struct PartnerMapView: View {
     }
     private var partnerName: String {
         let real = partner?.partnerName ?? session.partner?.displayName
-        // Demo fallback so the sample map reads "Elbek".
+        // Demo fallback so the sample map reads "Alex".
         if SharedConfig.demoMode, real == nil || real?.isEmpty == true || real == "Partner" {
-            return "Elbek"
+            return "Alex"
         }
         return real ?? "Partner"
     }
