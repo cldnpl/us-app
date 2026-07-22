@@ -36,6 +36,9 @@ targets:
         CFBundleIconName: AppIcon
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "3"
+        # Only standard HTTPS (ATS) crypto — skips the export-compliance
+        # question on every TestFlight upload.
+        ITSAppUsesNonExemptEncryption: false
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
