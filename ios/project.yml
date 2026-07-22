@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
 targets:
@@ -24,6 +24,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.claudianapolitano.us
         PRODUCT_NAME: Us
+        TARGETED_DEVICE_FAMILY: "1"
         DEVELOPMENT_TEAM: "H4M7KJL5DT"
         CODE_SIGN_ENTITLEMENTS: Us/Us.entitlements
         GENERATE_INFOPLIST_FILE: "NO"
@@ -35,7 +36,7 @@ targets:
         CFBundleDisplayName: "Us."
         CFBundleIconName: AppIcon
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "6"
+        CFBundleVersion: "7"
         # Only standard HTTPS (ATS) crypto — skips the export-compliance
         # question on every TestFlight upload.
         ITSAppUsesNonExemptEncryption: false
@@ -63,6 +64,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.claudianapolitano.us.widget
         PRODUCT_NAME: UsWidget
+        TARGETED_DEVICE_FAMILY: "1"
         DEVELOPMENT_TEAM: "H4M7KJL5DT"
         CODE_SIGN_ENTITLEMENTS: UsWidget/UsWidget.entitlements
         GENERATE_INFOPLIST_FILE: "NO"
@@ -71,7 +73,7 @@ targets:
       properties:
         CFBundleDisplayName: "Us."
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "6"
+        CFBundleVersion: "7"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
