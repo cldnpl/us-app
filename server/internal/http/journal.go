@@ -78,12 +78,38 @@ func (d Deps) handleCreateJournalEntry(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid_date", "date must be YYYY-MM-DD")
 		return
 	}
-	e, err := d.Store.UpsertEntry(r.Context(), c.ID, userID, date, strings.TrimSpace(req.Body))
+	e, err := d.Store.InsertEntry(r.Context(), c.ID, userID, date, strings.TrimSpace(req.Body))
 	if err != nil {
-		d.serverError(w, "journal: upsert", err)
+		d.serverError(w, "journal: insert", err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, toDomainJournalEntry(e, nil))
+}
+
+type journalUpdateRequest struct {
+	Body string `json:"body"`
+}
+
+func (d Deps) handleUpdateJournalEntry(w http.ResponseWriter, r *http.Request) {
+	e, _, ok := d.entryForAuthor(w, r)
+	if !ok {
+		return
+	}
+	var req journalUpdateRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+	updated, err := d.Store.UpdateEntryBody(r.Context(), e.ID, strings.TrimSpace(req.Body))
+	if err != nil {
+		d.serverError(w, "journal: update", err)
+		return
+	}
+	photos, err := d.Store.ListMediaForEntry(r.Context(), e.ID)
+	if err != nil {
+		d.serverError(w, "journal: entry media", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toDomainJournalEntry(updated, photos))
 }
 
 // entryForAuthor loads an entry and verifies the caller both belongs to the
