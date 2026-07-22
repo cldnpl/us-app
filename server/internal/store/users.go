@@ -103,3 +103,10 @@ func (s *Store) EmailInUse(ctx context.Context, email, excludeUserID string) (bo
 		email, excludeUserID).Scan(&exists)
 	return exists, err
 }
+
+// DeleteUser removes an account. The schema's ON DELETE CASCADE clears the
+// user's memberships, tokens, devices, media rows, and authored content.
+func (s *Store) DeleteUser(ctx context.Context, id string) error {
+	_, err := s.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	return err
+}

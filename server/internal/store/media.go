@@ -77,6 +77,26 @@ func (s *Store) ListMedia(ctx context.Context, coupleID string, limit, offset in
 	return out, rows.Err()
 }
 
+// ListMediaByUploader returns every media row a user uploaded, so account
+// deletion can clean their files off disk before the DB rows cascade away.
+func (s *Store) ListMediaByUploader(ctx context.Context, uploaderID string) ([]Media, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT `+mediaCols+` FROM media WHERE uploader_id = $1`, uploaderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		m, err := scanMedia(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 func (s *Store) GetMedia(ctx context.Context, id string) (Media, error) {
 	return scanMedia(s.pool.QueryRow(ctx, `SELECT `+mediaCols+` FROM media WHERE id = $1`, id))
 }
