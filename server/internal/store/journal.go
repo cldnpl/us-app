@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// JournalEntry is one partner's diary entry for a single day. There is at most
-// one entry per (couple, author, date); the client groups both partners'
+// JournalEntry is one partner's diary entry for a single day. An author can
+// write any number of entries per day; the client groups both partners'
 // entries under a shared day card.
 type JournalEntry struct {
 	ID        string
@@ -32,23 +32,29 @@ func scanJournalEntry(row pgx.Row) (JournalEntry, error) {
 	return e, err
 }
 
-// UpsertEntry creates the author's entry for the given day, or replaces its body
-// if one already exists (one entry per author per day).
-func (s *Store) UpsertEntry(ctx context.Context, coupleID, authorID string, date time.Time, body string) (JournalEntry, error) {
+// InsertEntry adds a new entry for the author on the given day (authors can
+// write as many entries per day as they like).
+func (s *Store) InsertEntry(ctx context.Context, coupleID, authorID string, date time.Time, body string) (JournalEntry, error) {
 	return scanJournalEntry(s.pool.QueryRow(ctx,
 		`INSERT INTO journal_entries (couple_id, author_id, entry_date, body)
 		 VALUES ($1, $2, $3, $4)
-		 ON CONFLICT (couple_id, author_id, entry_date)
-		 DO UPDATE SET body = EXCLUDED.body, updated_at = now()
 		 RETURNING `+journalCols,
 		coupleID, authorID, date, body))
+}
+
+// UpdateEntryBody rewrites the text of an existing entry.
+func (s *Store) UpdateEntryBody(ctx context.Context, id, body string) (JournalEntry, error) {
+	return scanJournalEntry(s.pool.QueryRow(ctx,
+		`UPDATE journal_entries SET body = $2, updated_at = now()
+		 WHERE id = $1 RETURNING `+journalCols,
+		id, body))
 }
 
 // ListEntries returns every entry for the couple, most recent day first.
 func (s *Store) ListEntries(ctx context.Context, coupleID string) ([]JournalEntry, error) {
 	rows, err := s.pool.Query(ctx,
 		`SELECT `+journalCols+` FROM journal_entries WHERE couple_id = $1
-		 ORDER BY entry_date DESC, created_at DESC`, coupleID)
+		 ORDER BY entry_date DESC, created_at ASC`, coupleID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,8 +2,9 @@ import SwiftUI
 import PhotosUI
 
 /// Composer for a diary entry: pick a day, write some words and/or attach
-/// photos. Saving upserts *your* entry for that day (the partner keeps theirs),
-/// then uploads any newly picked photos.
+/// photos. Saving adds a new entry for that day (you can write as many per day
+/// as you like) or rewrites the one being edited, then uploads any newly
+/// picked photos.
 struct AddJournalEntrySheet: View {
     let existing: JournalEntry?
     let onDone: () async -> Void
@@ -112,7 +113,12 @@ struct AddJournalEntrySheet: View {
         errorMessage = nil
         defer { saving = false; progress = nil }
         do {
-            let entry = try await APIClient.shared.createJournalEntry(date: isoDay(date), body: trimmedBody)
+            let entry: JournalEntry
+            if let existing {
+                entry = try await APIClient.shared.updateJournalEntry(id: existing.id, body: trimmedBody)
+            } else {
+                entry = try await APIClient.shared.createJournalEntry(date: isoDay(date), body: trimmedBody)
+            }
             let total = picks.count
             for (i, pick) in picks.enumerated() {
                 if total > 1 { progress = "Photo \(i + 1)/\(total)" }

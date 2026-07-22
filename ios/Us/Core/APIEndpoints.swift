@@ -145,6 +145,11 @@ extension APIClient {
     }
 
     @discardableResult
+    func updateJournalEntry(id: String, body: String) async throws -> JournalEntry {
+        try await send("/v1/journal/\(id)", method: "PUT", body: ["body": body])
+    }
+
+    @discardableResult
     func uploadJournalPhoto(entryId: String, _ jpeg: Data) async throws -> MediaItem {
         let data = try await uploadImage("/v1/journal/\(entryId)/photos", imageData: jpeg, filename: "photo.jpg", caption: nil)
         return try decoder.decode(MediaItem.self, from: data)
