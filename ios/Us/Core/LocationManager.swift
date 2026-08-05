@@ -54,6 +54,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             manager.startUpdatingLocation()
         default:
             isSharing = false
+            wantsSharing = false
         }
     }
 
@@ -69,6 +70,9 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         authorizationStatus = manager.authorizationStatus
         if isSharing, manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
             manager.startUpdatingLocation()
+        } else if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
+            isSharing = false
+            wantsSharing = false
         }
     }
 

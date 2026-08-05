@@ -124,7 +124,7 @@ struct PaywallView: View {
             HStack(spacing: 18) {
                 Button("Restore") { Task { await premium.restore() } }
                     .disabled(premium.isRestoring)
-                Link("Terms", destination: URL(string: "https://usapp.love/terms")!)
+                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 Link("Privacy", destination: URL(string: "https://usapp.love/privacy")!)
             }
             .font(.caption)
