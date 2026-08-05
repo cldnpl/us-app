@@ -2,7 +2,7 @@ import SwiftUI
 
 /// "About you" onboarding, shown once right after sign-in and before pairing:
 /// 1. confirm your name,
-/// 2. choose whether to turn on location (for distance features & widgets).
+/// 2. see why Us. asks for location before the system permission prompt.
 ///
 /// Apple HIG: we explain *why* before triggering the system location prompt.
 struct PersonalOnboardingView: View {
@@ -163,7 +163,7 @@ struct PersonalOnboardingView: View {
             Image(systemName: "location.circle.fill")
                 .font(.system(size: 60)).foregroundStyle(.white)
             VStack(spacing: 10) {
-                Text("Turn on your location?")
+                Text("Location for distance")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
@@ -175,11 +175,8 @@ struct PersonalOnboardingView: View {
             Spacer()
 
             VStack(spacing: 12) {
-                Button { enableLocation() } label: { Text("Turn on location") }
+                Button { enableLocation() } label: { Text("Continue") }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Not now") { session.completePersonalOnboarding() }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.9))
             }
         }
         .padding(28)
