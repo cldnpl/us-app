@@ -46,6 +46,7 @@
 		85688065B303B7D65CA37FF1 /* DrawAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA0109165B27AC8F33334E6 /* DrawAPI.swift */; };
 		864661F51301E65CC924703E /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A69D0FEA5BD17F89E69409 /* LanguageManager.swift */; };
 		8649CCB3B3B3101EF10A2843 /* QuizModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC066EDB9AAF44FC8C216901 /* QuizModels.swift */; };
+		870733F637C72D2A8D628698 /* SharedAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F0563CFA8AE0A4EC03D8810 /* SharedAPI.swift */; };
 		8BA0056840A580B86D97105F /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99784A6F3EA56FA49DECFE36 /* LanguagePickerView.swift */; };
 		952E35B5592E2263CF36155E /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7AA27F8170AA583C746BCF7 /* PaywallView.swift */; };
 		958B335A4CEA7B397FC3468E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A6FB908AB185224330F319 /* AppDelegate.swift */; };
@@ -54,6 +55,7 @@
 		9C35A0DE756F380C6979E7B6 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 5226DFB56ABFB38FC474DEFF /* Localizable.xcstrings */; };
 		9DCF2F09F8687336BF80EB07 /* SetupFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132D0B9B117B71B0031ACD58 /* SetupFlowView.swift */; };
 		9F750AE15CE99A0915459DCF /* RemoteImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20F2BE487797208C99BF44 /* RemoteImage.swift */; };
+		A1E12FADFD8AFB4D36BB0946 /* SharedAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F0563CFA8AE0A4EC03D8810 /* SharedAPI.swift */; };
 		A55A25BAB639DEBC1D101103 /* DebateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CADC17EB397D7C66DBF65C /* DebateModels.swift */; };
 		AAF8DBA2B857DA5011090DAD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF76B2DE10E2AB402F433015 /* RootView.swift */; };
 		AE93CDF82AC585AD6A149E44 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD249F764F14A63C5CD51B8D /* Session.swift */; };
@@ -77,11 +79,13 @@
 		E1DD918E1A5AB2C847C2465F /* SnapAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 096825B65EE4259CCA086666 /* SnapAPI.swift */; };
 		E2DD9B334CC499A20CCEEFA0 /* QuizCategoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAE8F0878FC18342F6C50B4 /* QuizCategoriesView.swift */; };
 		E4043192508311973ED194F8 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3814F0480D37EB1223B70352 /* PushManager.swift */; };
+		E466121A18032EA369315C4C /* DistanceSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D937E9E1AE0112FDFE9EC85 /* DistanceSync.swift */; };
 		E629A3FE8752B064FE277CD0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387A4CDEFCF90279F56B6E0D /* HomeView.swift */; };
 		E6E184909449710AA75AD94F /* GameModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08C8BD968E77513C78DA25F /* GameModels.swift */; };
 		E75FD035E47787F621250A7C /* SharedConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B0CC51C200F4046514F8942 /* SharedConfig.swift */; };
 		E7C0E50BC8F72CF90359E04D /* CycleViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC1D1218E9D388E8A4123AC7 /* CycleViews.swift */; };
 		ED7F042E236EF2DEEF74591C /* TicTacToeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06860EBBD7BC666FC7C6245 /* TicTacToeView.swift */; };
+		EE2168B4565E533DF38AF973 /* DistanceSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D937E9E1AE0112FDFE9EC85 /* DistanceSync.swift */; };
 		EF8B3E67D5D29562D25B95CD /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6B4D11629618FBCC32A7DF /* APIClient.swift */; };
 		F048A5E58BD2665B4399D427 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271F34F0523302D26C3C1B3E /* Haptics.swift */; };
 		F2EF012FB70C011CD05059B8 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ACB3AF762DCDBE18EBFA095 /* ProfileView.swift */; };
@@ -141,6 +145,7 @@
 		4B0CC51C200F4046514F8942 /* SharedConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfig.swift; sourceTree = "<group>"; };
 		4C1F9D99AF1EF7273EC5682C /* DistanceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceViews.swift; sourceTree = "<group>"; };
 		4CAE8F0878FC18342F6C50B4 /* QuizCategoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizCategoriesView.swift; sourceTree = "<group>"; };
+		4D937E9E1AE0112FDFE9EC85 /* DistanceSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceSync.swift; sourceTree = "<group>"; };
 		5226DFB56ABFB38FC474DEFF /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		56EA692DF2690F4D23FDA37F /* UsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UsWidget.entitlements; sourceTree = "<group>"; };
 		58B039F7530F0B769CD33C7D /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
@@ -156,6 +161,7 @@
 		8E040D752BBF0D481F63993F /* DebateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebateViews.swift; sourceTree = "<group>"; };
 		8E20F2BE487797208C99BF44 /* RemoteImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteImage.swift; sourceTree = "<group>"; };
 		8E24143BEC407C5229B81FEE /* AddWidgetGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWidgetGuideView.swift; sourceTree = "<group>"; };
+		8F0563CFA8AE0A4EC03D8810 /* SharedAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedAPI.swift; sourceTree = "<group>"; };
 		90DEA62B27284E7FC247AA54 /* TogetherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TogetherView.swift; sourceTree = "<group>"; };
 		9146BDB029D9DF3EF27B17E8 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		9409C1C95F99042C49E96566 /* Us.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Us.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -303,9 +309,11 @@
 		578533011843375442769B50 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				4D937E9E1AE0112FDFE9EC85 /* DistanceSync.swift */,
 				9FD186001D93E63601BF0C7F /* MissYouIntent.swift */,
 				2CE3705C78CB511681055EF3 /* MissYouSender.swift */,
 				9FC9B1CD56A33C8DFA19DF12 /* PartnerPrefs.swift */,
+				8F0563CFA8AE0A4EC03D8810 /* SharedAPI.swift */,
 				4B0CC51C200F4046514F8942 /* SharedConfig.swift */,
 				137DAA2ED97F7F2DC8EAD12D /* SharedTokenStore.swift */,
 				5BEE23D5BF3C8D20DB205F22 /* WidgetSnapshot.swift */,
@@ -563,9 +571,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EE2168B4565E533DF38AF973 /* DistanceSync.swift in Sources */,
 				F56EFB0858DF6C9C45E882C3 /* MissYouIntent.swift in Sources */,
 				CB31672DF65AB84756E354C3 /* MissYouSender.swift in Sources */,
 				82E867224570AFE2B8C441E7 /* PartnerPrefs.swift in Sources */,
+				870733F637C72D2A8D628698 /* SharedAPI.swift in Sources */,
 				74787AB5D4ABC99AEA29D2FC /* SharedConfig.swift in Sources */,
 				C7FA04B69AD3830C3672D6AF /* SharedTokenStore.swift in Sources */,
 				9B2CF7B5AEEAA43F65CB6718 /* UsWidget.swift in Sources */,
@@ -593,6 +603,7 @@
 				29E2247540578ED055388FF3 /* DebateAPI.swift in Sources */,
 				A55A25BAB639DEBC1D101103 /* DebateModels.swift in Sources */,
 				B6F12FCF5DD241758D7C8046 /* DebateViews.swift in Sources */,
+				E466121A18032EA369315C4C /* DistanceSync.swift in Sources */,
 				255B590326A858A590BE540B /* DistanceViews.swift in Sources */,
 				85688065B303B7D65CA37FF1 /* DrawAPI.swift in Sources */,
 				056D51379D3D9C0EC1F5663C /* DrawModels.swift in Sources */,
@@ -637,6 +648,7 @@
 				AE93CDF82AC585AD6A149E44 /* Session.swift in Sources */,
 				310CFDF2D3E2D740F22D1973 /* SettingsView.swift in Sources */,
 				9DCF2F09F8687336BF80EB07 /* SetupFlowView.swift in Sources */,
+				A1E12FADFD8AFB4D36BB0946 /* SharedAPI.swift in Sources */,
 				E75FD035E47787F621250A7C /* SharedConfig.swift in Sources */,
 				7A3D78DC119D7FC0BB07EF7E /* SharedTokenStore.swift in Sources */,
 				F90291F70830C8CE91ED556B /* SignInView.swift in Sources */,

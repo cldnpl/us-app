@@ -1,11 +1,14 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/sharepact/us/internal/domain"
+	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
 
@@ -49,7 +52,39 @@ func (d Deps) handleUpdateLocation(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "location: upsert", err)
 		return
 	}
+	d.notifyPartnerLocationChanged(r.Context(), userID)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// locationPushThrottle remembers when each user last woke their partner, so a
+// device streaming fixes every 100 m doesn't send a push per fix.
+var (
+	locationPushMu   sync.Mutex
+	locationPushLast = map[string]time.Time{}
+)
+
+const locationPushInterval = 5 * time.Minute
+
+// notifyPartnerLocationChanged sends a silent push so the partner's app can
+// recompute the distance and reload its widgets without being opened. Silent,
+// best-effort, and throttled — the widget also refreshes on its own schedule.
+func (d Deps) notifyPartnerLocationChanged(ctx context.Context, userID string) {
+	locationPushMu.Lock()
+	last, ok := locationPushLast[userID]
+	if ok && time.Since(last) < locationPushInterval {
+		locationPushMu.Unlock()
+		return
+	}
+	locationPushLast[userID] = time.Now()
+	locationPushMu.Unlock()
+
+	c, err := d.Store.GetCoupleForUser(ctx, userID)
+	if err != nil {
+		return // not paired: nobody to tell
+	}
+	d.sendPartnerPush(ctx, c.ID, userID, func(string) push.Notification {
+		return push.Notification{Silent: true, Data: map[string]string{"type": "location_updated"}}
+	})
 }
 
 func (d Deps) handleGetPartnerLocation(w http.ResponseWriter, r *http.Request) {

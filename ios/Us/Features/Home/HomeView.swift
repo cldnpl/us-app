@@ -39,6 +39,7 @@ struct HomeView: View {
             .sheet(isPresented: $showProfile) { ProfileView() }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .task { await loadPartnerLocation() }
+            .task { await pollPartnerLocation() }
             .task { await cycle.refreshOnAppear() }
             .refreshable { await loadPartnerLocation() }
             .onReceive(location.$currentLocation) { _ in publishDistance() }
@@ -241,6 +242,16 @@ struct HomeView: View {
     private func loadPartnerLocation() async {
         partnerLoc = try? await APIClient.shared.partnerLocation()
         publishDistance()
+    }
+
+    /// While Home is on screen, re-read the partner's position every minute so
+    /// the distance moves on its own — no pull-to-refresh, no reopening the app.
+    private func pollPartnerLocation() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 60_000_000_000)
+            guard !Task.isCancelled else { return }
+            await loadPartnerLocation()
+        }
     }
 
     /// Keep the distance widget in sync with what the Home map shows (real when

@@ -42,15 +42,33 @@ func NewAPNsSender(keyPath string, keyPEM []byte, keyID, teamID, topic string, p
 }
 
 func (s *apnsSender) Send(ctx context.Context, deviceTokens []string, n Notification) error {
-	p := payload.NewPayload().AlertTitle(n.Title).AlertBody(n.Body).Sound("default")
+	silent := n.Silent || (n.Title == "" && n.Body == "")
+	var p *payload.Payload
+	if silent {
+		// Background push: content-available only, so iOS wakes the app to
+		// refresh without showing anything.
+		p = payload.NewPayload().ContentAvailable()
+	} else {
+		p = payload.NewPayload().AlertTitle(n.Title).AlertBody(n.Body).Sound("default")
+	}
 	for k, v := range n.Data {
 		p.Custom(k, v)
+	}
+	pushType := apns2.PushTypeAlert
+	priority := apns2.PriorityHigh
+	if silent {
+		// APNs requires background pushes to be declared and sent at low
+		// priority; alert priority on a silent push is rejected.
+		pushType = apns2.PushTypeBackground
+		priority = apns2.PriorityLow
 	}
 	for _, deviceToken := range deviceTokens {
 		res, err := s.client.PushWithContext(ctx, &apns2.Notification{
 			DeviceToken: deviceToken,
 			Topic:       s.topic,
 			Payload:     p,
+			PushType:    pushType,
+			Priority:    priority,
 		})
 		if err != nil {
 			return err

@@ -12,6 +12,10 @@ type Notification struct {
 	Title string
 	Body  string
 	Data  map[string]string
+	// Silent sends a background (content-available) push: no banner, no sound.
+	// It only wakes the app so it can refresh — used for location updates that
+	// keep the distance widget current without the user opening anything.
+	Silent bool
 }
 
 type Sender interface {

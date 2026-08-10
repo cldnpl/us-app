@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import CoreLocation
 
 struct UsEntry: TimelineEntry {
     let date: Date
@@ -99,6 +100,11 @@ struct DistanceEntry: TimelineEntry {
 }
 
 struct DistanceProvider: TimelineProvider {
+    /// How often the widget asks the system to reload. WidgetKit budgets the
+    /// actual cadence, but asking every 15 minutes keeps the distance moving on
+    /// its own — nobody has to tap the widget or open the app.
+    private static let refreshMinutes = 15
+
     private var sample: WidgetSnapshot {
         WidgetSnapshot(partnerName: "Alex", daysTogether: nil, updatedAt: Date(),
                        myName: "You", distanceKm: 200)
@@ -109,10 +115,65 @@ struct DistanceProvider: TimelineProvider {
     func getSnapshot(in context: Context, completion: @escaping (DistanceEntry) -> Void) {
         completion(DistanceEntry(date: Date(), snapshot: WidgetStore.load() ?? sample))
     }
+
     func getTimeline(in context: Context, completion: @escaping (Timeline<DistanceEntry>) -> Void) {
-        let entry = DistanceEntry(date: Date(), snapshot: WidgetStore.load())
-        let next = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date().addingTimeInterval(1800)
-        completion(Timeline(entries: [entry], policy: .after(next)))
+        Task {
+            // Recompute from live data: our own position (from the widget when
+            // it is allowed to have one, otherwise the app's last fix) and the
+            // partner's current position fetched straight from the backend.
+            let mine = await WidgetLocation.current() ?? MyLocationStore.coordinate
+            await DistanceSync.refresh(myCoordinate: mine)
+
+            let entry = DistanceEntry(date: Date(), snapshot: WidgetStore.load())
+            let next = Calendar.current.date(byAdding: .minute, value: Self.refreshMinutes, to: Date())
+                ?? Date().addingTimeInterval(TimeInterval(Self.refreshMinutes * 60))
+            completion(Timeline(entries: [entry], policy: .after(next)))
+        }
+    }
+}
+
+/// Lets the widget read the device's own location while it refreshes.
+///
+/// Only works when the user granted "Always" access (the widget declares
+/// `NSWidgetWantsLocation`); otherwise `isAuthorizedForWidgetUpdates` is false
+/// and we fall back to the last fix the app stored in the App Group.
+private final class WidgetLocation: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    private var continuation: CheckedContinuation<CLLocationCoordinate2D?, Never>?
+    private static var live: WidgetLocation?
+
+    static func current() async -> CLLocationCoordinate2D? {
+        let manager = CLLocationManager()
+        guard manager.isAuthorizedForWidgetUpdates else { return nil }
+        let requester = WidgetLocation()
+        live = requester // keep alive for the duration of the request
+        let coordinate = await requester.request()
+        live = nil
+        return coordinate
+    }
+
+    private func request() async -> CLLocationCoordinate2D? {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            manager.delegate = self
+            manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+            manager.requestLocation()
+        }
+    }
+
+    private func finish(_ coordinate: CLLocationCoordinate2D?) {
+        guard let continuation else { return }
+        self.continuation = nil
+        if let coordinate { MyLocationStore.save(coordinate) }
+        continuation.resume(returning: coordinate)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        finish(locations.last?.coordinate)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        finish(nil)
     }
 }
 

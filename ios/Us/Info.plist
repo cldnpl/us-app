@@ -44,10 +44,16 @@
 	<string>Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Us can save period days you log in the app to Apple Health, so your cycle stays consistent across your health apps and devices.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Allow Always so the distance between you and your partner keeps updating on your widgets even when Us isn't open. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Add photos to your shared gallery and send them to your partner's widget.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

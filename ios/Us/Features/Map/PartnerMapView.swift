@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import WidgetKit
 
 struct MapPin: Identifiable {
     let id = UUID()
@@ -41,6 +42,7 @@ struct PartnerMapView: View {
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadPartner() }
+        .task { await pollPartner() }
         .refreshable { await loadPartner() }
         .onAppear { fitRegion() }
         .onReceive(location.$currentLocation) { _ in fitRegion() }
@@ -126,6 +128,18 @@ struct PartnerMapView: View {
             if location.authorizationStatus == .denied {
                 Text("Enable location access in Settings to share.")
                     .font(.caption).foregroundStyle(.red)
+            } else if location.isSharing && !location.updatesInBackground {
+                // Without "Always", our own position only moves while the app is
+                // open — which is exactly what makes the widget look frozen.
+                Button {
+                    location.requestAlwaysIfPossible()
+                } label: {
+                    Label("Keep the distance updating when Us is closed",
+                          systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                }
+                .tint(Theme.rose)
             }
             Text("Off unless you turn it on.")
                 .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -145,5 +159,18 @@ struct PartnerMapView: View {
     private func loadPartner() async {
         partner = try? await APIClient.shared.partnerLocation()
         fitRegion()
+        // Keep the widget on the same number the map is showing.
+        DistanceSync.publish(km: distanceKm)
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Keep the map live while it is open: the partner's pin (and the distance)
+    /// follow them without pull-to-refresh.
+    private func pollPartner() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            guard !Task.isCancelled else { return }
+            await loadPartner()
+        }
     }
 }
