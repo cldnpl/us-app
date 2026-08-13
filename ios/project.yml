@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "9"
+    CURRENT_PROJECT_VERSION: "11"
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
 targets:
@@ -36,7 +36,7 @@ targets:
         CFBundleDisplayName: "Us."
         CFBundleIconName: AppIcon
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "9"
+        CFBundleVersion: "11"
         # Only standard HTTPS (ATS) crypto — skips the export-compliance
         # question on every TestFlight upload.
         ITSAppUsesNonExemptEncryption: false
@@ -56,8 +56,7 @@ targets:
           - remote-notification
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         NSCameraUsageDescription: "Snap a photo for Snap Hunt so your partner and the judge can see your find."
-        NSHealthShareUsageDescription: "Us reads your cycle from Apple Health so you can see your current phase and predictions. It stays private on your phone until you choose to share a gentle heads-up with your partner."
-        NSHealthUpdateUsageDescription: "Us can save period days you log in the app to Apple Health, so your cycle stays consistent across your health apps and devices."
+        NSHealthShareUsageDescription: "Us reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle & health screen. It is read-only \u2014 Us never writes to Health \u2014 and it stays on this iPhone unless you choose to share a gentle heads-up with your partner."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp
@@ -81,7 +80,7 @@ targets:
       properties:
         CFBundleDisplayName: "Us."
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "9"
+        CFBundleVersion: "11"
         # Lets the distance widget take its own location fix while it refreshes
         # (only when the user granted "Always"), so it never shows a stale
         # position just because the app hasn't been opened.

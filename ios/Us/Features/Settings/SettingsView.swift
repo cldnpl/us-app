@@ -55,6 +55,8 @@ struct SettingsView: View {
                     LabeledContent("Days together", value: "\(liveDays)")
                 }
 
+                appleHealthSection
+
                 Section("App") {
                     NavigationLink {
                         LanguagePickerView()
@@ -123,6 +125,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .task { await cycle.refreshOnAppear() }
             .onAppear {
                 if let existing = session.couple?.startDate { startDate = existing }
                 pronoun = PartnerPrefs.pronoun ?? .they
@@ -198,6 +201,35 @@ struct SettingsView: View {
         nameDraft = trimmed
         Task { await session.updateName(trimmed); Haptics.success() }
     }
+
+    /// Identification of the HealthKit integration, shown to everyone — whatever
+    /// they answered about having a cycle — because the app ships the capability.
+    private var appleHealthSection: some View {
+        Section {
+            LabeledContent("Apple Health") {
+                Text(healthConnected ? "Connected" : "Not connected")
+                    .foregroundStyle(.secondary)
+            }
+            if cycle.userHasCycle == true, !healthConnected, HealthKitManager.shared.isAvailable {
+                Button {
+                    Task { await cycle.connectHealth() }
+                } label: {
+                    Label("Connect Apple Health", systemImage: "heart.text.square.fill")
+                }
+            }
+            Link(destination: AppleHealth.appURL) {
+                Label("Open the Health app", systemImage: "arrow.up.forward.app")
+            }
+        } header: {
+            Text("Apple Health")
+        } footer: {
+            Text("\(AppleHealth.readsLine) \(AppleHealth.neverWritesLine) \(AppleHealth.manageLine)")
+        }
+    }
+
+    /// HealthKit never reveals read permission, so "connected" means we managed
+    /// to derive a cycle from Health data.
+    private var healthConnected: Bool { cycle.insights != nil }
 
     private var partnerFirstName: String {
         (session.partner?.displayName ?? "them").split(separator: " ").first.map(String.init) ?? "them"

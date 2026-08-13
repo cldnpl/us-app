@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		02ECDE50B3884287C487B0AF /* UsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6AB46D7A68082C5C6C4C39E /* UsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		04BA49FF6B5761C1929FDE09 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9146BDB029D9DF3EF27B17E8 /* AppLanguage.swift */; };
+		04C41C9D2B89F08BF2FC15F9 /* AppleHealthViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9FE5C1D4D9B51801EF2BBB5 /* AppleHealthViews.swift */; };
 		056D51379D3D9C0EC1F5663C /* DrawModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0045E71AC4E1790968E54F /* DrawModels.swift */; };
 		0C76B7E7EA9D729ED907C4B1 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E656DCC40CC7C396A96A5433 /* HealthKitManager.swift */; };
 		120CDF7A516C49EF2EFB4633 /* HwdykmModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7803C4E252D28510A2C5EB0 /* HwdykmModels.swift */; };
@@ -201,6 +202,7 @@
 		E56534C0308B3A733B045883 /* HwdykmViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HwdykmViews.swift; sourceTree = "<group>"; };
 		E656DCC40CC7C396A96A5433 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		E7803C4E252D28510A2C5EB0 /* HwdykmModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HwdykmModels.swift; sourceTree = "<group>"; };
+		E9FE5C1D4D9B51801EF2BBB5 /* AppleHealthViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleHealthViews.swift; sourceTree = "<group>"; };
 		EB539A148F352001A4A3C86D /* CycleModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleModel.swift; sourceTree = "<group>"; };
 		F25B699F7688B842B2300662 /* QuizPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizPlayView.swift; sourceTree = "<group>"; };
 		F9A32FB18514169727C31673 /* JournalPhotoPager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPhotoPager.swift; sourceTree = "<group>"; };
@@ -443,6 +445,7 @@
 		E5DC9A06EFD012E7E03B5CAF /* Cycle */ = {
 			isa = PBXGroup;
 			children = (
+				E9FE5C1D4D9B51801EF2BBB5 /* AppleHealthViews.swift */,
 				AD69287FBB4543CE49DCE444 /* CycleManager.swift */,
 				EB539A148F352001A4A3C86D /* CycleModel.swift */,
 				BC1D1218E9D388E8A4123AC7 /* CycleViews.swift */,
@@ -594,6 +597,7 @@
 				1D1C51CA12160A116729C632 /* AddWidgetGuideView.swift in Sources */,
 				958B335A4CEA7B397FC3468E /* AppDelegate.swift in Sources */,
 				04BA49FF6B5761C1929FDE09 /* AppLanguage.swift in Sources */,
+				04C41C9D2B89F08BF2FC15F9 /* AppleHealthViews.swift in Sources */,
 				2075C13A79B3F1B31908B5BB /* ChangeEmailView.swift in Sources */,
 				95C097F009F46FF0F2F0049B /* CycleManager.swift in Sources */,
 				573E19B5F3C060F353D879F5 /* CycleModel.swift in Sources */,
@@ -751,7 +755,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -858,7 +862,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

@@ -100,7 +100,9 @@ struct SelfCycleCard: View {
                     Text(insights.phase.title).font(.headline)
                     Text("Day \(insights.cycleDay) · next period \(nextPeriodText)")
                         .font(.subheadline).foregroundStyle(.secondary)
-                    
+                    // Names the data source right where the numbers are shown.
+                    Label("from Apple Health", systemImage: "heart.text.square.fill")
+                        .font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
@@ -165,7 +167,7 @@ struct CycleSetupCard: View {
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Cycle & health").font(.headline)
-                    Text("Track your cycle, or get tips to support your partner's.")
+                    Text("Track your cycle with Apple Health, or get tips to support your partner's.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
@@ -274,17 +276,22 @@ struct CycleDetailView: View {
     // MARK: Not answered yet → ask
 
     private var askCard: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Cycle & health").font(.headline)
-                Text("Track your own, or get tips to support your partner's.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                Button("Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
-                    .buttonStyle(PrimaryButtonStyle())
-                Button("No — I want to support \(partnerName)") { withAnimation { cycle.setUserHasCycle(false) } }
-                    .font(.subheadline).foregroundStyle(Theme.rose)
-                    .frame(maxWidth: .infinity)
+        VStack(spacing: 16) {
+            Card {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Cycle & health").font(.headline)
+                    Text("Track your own cycle, or get tips to support your partner's.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Label(AppleHealth.readsLine, systemImage: "heart.text.square.fill")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button("Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
+                        .buttonStyle(PrimaryButtonStyle())
+                    Button("No — I want to support \(partnerName)") { withAnimation { cycle.setUserHasCycle(false) } }
+                        .font(.subheadline).foregroundStyle(Theme.rose)
+                        .frame(maxWidth: .infinity)
+                }
             }
+            AppleHealthCard(isConnected: cycle.insights != nil)
         }
     }
 
@@ -303,7 +310,7 @@ struct CycleDetailView: View {
     @ViewBuilder
     private var cycleContent: some View {
         if !HealthKitManager.shared.isAvailable {
-            infoCard("Apple Health isn't available on this device.")
+            infoCard("Apple Health isn't available on this device, so cycle tracking is unavailable.")
         } else if let i = cycle.insights {
             VStack(spacing: 12) {
                 PhaseRing(phase: i.phase, cycleDay: i.cycleDay, cycleLength: i.cycleLength)
@@ -311,9 +318,11 @@ struct CycleDetailView: View {
                 Text("Next period \(i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted)) · ~\(i.cycleLength)-day cycle")
                     .font(.footnote).foregroundStyle(.secondary)
                     .padding(.top, 20)
-
+                AppleHealthSourceNote()
             }
             .padding(.bottom, 4)
+            // Identifies the HealthKit integration even once tracking is running.
+            AppleHealthCard(isConnected: true)
             thoughtsCard
             sharingCard
         } else {
@@ -385,19 +394,16 @@ struct CycleDetailView: View {
     }
 
     private var connectCard: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Your cycle").font(.headline)
-                Text("Reads from Apple Health. Stays on your phone until you share.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                Button {
-                    Task { connecting = true; await cycle.connectHealth(); level = cycle.shareLevel; connecting = false }
-                } label: {
-                    if connecting { ProgressView().tint(.white).frame(maxWidth: .infinity) }
-                    else { Label("Connect Apple Health", systemImage: "heart.text.square.fill") }
+        VStack(spacing: 16) {
+            Card {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Your cycle").font(.headline)
+                    Text("Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(connecting)
+            }
+            AppleHealthCard(isConnected: false, isBusy: connecting) {
+                Task { connecting = true; await cycle.connectHealth(); level = cycle.shareLevel; connecting = false }
             }
         }
     }
@@ -467,6 +473,16 @@ struct CycleDetailView: View {
             partnerCycleView(p, phase)
         } else {
             infoCard("Once \(partnerName) turns on sharing, her phase and support tips appear here.")
+        }
+        // Even on this path the app has the HealthKit capability, so say plainly
+        // where the data comes from and that nothing is read from this iPhone.
+        Card {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Apple Health", systemImage: "heart.text.square.fill")
+                    .font(.headline).foregroundStyle(Theme.rose)
+                Text("What you see here comes from the cycle \(partnerName) tracks in Apple Health on her own iPhone, and only the part she chooses to share. Us doesn't read any health data from this iPhone unless you turn on your own cycle tracking.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
         }
         // No cycle-tracking controls here — a supporter never tracks or shares a
         // cycle of their own. Correcting the answer lives in Settings ▸ You.
@@ -570,7 +586,7 @@ struct CycleDetailView: View {
     }
 
     private var privacyNote: some View {
-        Text("Estimates, not medical advice. Your health data stays on your phone.")
+        Text("Cycle predictions are estimates, not medical advice. Us reads menstrual cycle data from Apple Health only with your permission, never writes to Health, and never uploads it.")
             .font(.caption).foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 8)

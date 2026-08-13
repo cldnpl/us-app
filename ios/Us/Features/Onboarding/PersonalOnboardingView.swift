@@ -132,6 +132,13 @@ struct PersonalOnboardingView: View {
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
+                // Says up front that cycle tracking is powered by Apple Health.
+                Label("If you do, Us reads your cycle from Apple Health — only after you allow it. Nothing is written to Health.",
+                      systemImage: "heart.text.square.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .multilineTextAlignment(.leading)
+                    .padding(.top, 2)
             }
             Spacer()
 
