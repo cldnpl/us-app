@@ -242,7 +242,7 @@ struct SettingsView: View {
     private func enableNotifications() async {
         let center = UNUserNotificationCenter.current()
         if await center.notificationSettings().authorizationStatus == .notDetermined {
-            await PushManager.shared.onAuthenticated()
+            await PushManager.shared.requestPermission()
             await refreshNotificationStatus()
             return
         }

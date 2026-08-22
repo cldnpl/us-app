@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @EnvironmentObject var session: Session
     @State private var showSetup = false
+    @State private var showNotificationsPrimer = false
 
     var body: some View {
         TabView {
@@ -22,7 +23,23 @@ struct MainTabView: View {
         .fullScreenCover(isPresented: $showSetup) {
             SetupFlowView(isPresented: $showSetup)
         }
-        .onAppear { showSetup = SetupFlowView.isNeeded(session: session) }
+        // Then, and only then, ask about notifications — with a partner on the
+        // other end, the ask finally has something to point at.
+        .fullScreenCover(isPresented: $showNotificationsPrimer) {
+            NotificationsPrimerView(isPresented: $showNotificationsPrimer)
+        }
+        .onAppear {
+            showSetup = SetupFlowView.isNeeded(session: session)
+            if !showSetup { Task { await offerNotificationsIfNeeded() } }
+        }
+        .onChange(of: showSetup) { presenting in
+            // Two full-screen covers can't overlap: wait for setup to close.
+            if !presenting { Task { await offerNotificationsIfNeeded() } }
+        }
+    }
+
+    private func offerNotificationsIfNeeded() async {
+        if await NotificationsPrimerView.isNeeded() { showNotificationsPrimer = true }
     }
 }
 
