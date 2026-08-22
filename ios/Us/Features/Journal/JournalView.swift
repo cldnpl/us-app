@@ -170,18 +170,34 @@ struct JournalView: View {
         } catch { errorMessage = message(for: error) }
     }
 
+    /// Same immediate removal as the diary entries, same rollback on failure.
     private func deleteMilestone(_ id: String) async {
+        let previous = milestones
+        withAnimation { milestones.removeAll { $0.id == id } }
         do {
             try await APIClient.shared.deleteMilestone(id: id)
             await load()
-        } catch { errorMessage = message(for: error) }
+        } catch {
+            withAnimation { milestones = previous }
+            errorMessage = message(for: error)
+        }
     }
 
+    /// Removes the entry from the feed at once, then confirms with the server.
+    ///
+    /// A delete you just asked for shouldn't sit there for a round trip before
+    /// looking like it happened. If the server refuses, the entry comes back
+    /// exactly where it was and the toast says why.
     private func deleteEntry(_ entry: JournalEntry) async {
+        let previous = entries
+        withAnimation { entries.removeAll { $0.id == entry.id } }
         do {
             try await APIClient.shared.deleteJournalEntry(id: entry.id)
             await load()
-        } catch { errorMessage = message(for: error) }
+        } catch {
+            withAnimation { entries = previous }
+            errorMessage = message(for: error)
+        }
     }
 
     private func message(for error: Error) -> String {

@@ -34,19 +34,25 @@ struct SwipeToDelete<Content: View>: View {
                     offset < -0.5 ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(.clear),
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                 )
-                .offset(x: offset)
-                // Simultaneous (not high-priority) so vertical scrolling of the
-                // feed is never blocked; the gesture only moves the row on a
-                // horizontal-dominant drag, and the vertical ScrollView ignores
-                // horizontal motion — so the two coexist cleanly.
-                .simultaneousGesture(dragGesture)
                 // Tapping an open row closes it instead of hitting the content.
+                //
+                // This has to be attached BEFORE `.offset`, so the veil slides
+                // left with the content it belongs to. Applied after, it keeps
+                // the row's full width and covers the action buttons too — and
+                // every tap on Edit or Delete just closed the row instead,
+                // which reads as "the buttons do nothing".
                 .overlay {
                     if open {
                         Color.clear.contentShape(Rectangle())
                             .onTapGesture { close() }
                     }
                 }
+                .offset(x: offset)
+                // Simultaneous (not high-priority) so vertical scrolling of the
+                // feed is never blocked; the gesture only moves the row on a
+                // horizontal-dominant drag, and the vertical ScrollView ignores
+                // horizontal motion — so the two coexist cleanly.
+                .simultaneousGesture(dragGesture)
         }
         .animation(.spring(response: 0.32, dampingFraction: 0.86), value: offset)
     }
