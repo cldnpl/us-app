@@ -83,6 +83,16 @@ func (d Deps) handleCreateJournalEntry(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "journal: insert", err)
 		return
 	}
+	// One notification for the whole page: the photos the composer uploads
+	// straight after this land inside the same cooldown and stay quiet.
+	d.notifyPartnerOnce(r.Context(), c.ID, userID, "journal", journalNotifyWindow,
+		func(name string) push.Notification {
+			return push.Notification{
+				Title: "📔 Journal",
+				Body:  name + " wrote in your journal",
+				Data:  map[string]string{"type": "journal"},
+			}
+		})
 	writeJSON(w, http.StatusCreated, toDomainJournalEntry(e, nil))
 }
 
@@ -178,9 +188,16 @@ func (d Deps) handleUploadJournalPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d.sendPartnerPush(r.Context(), e.CoupleID, userID, func(name string) push.Notification {
-		return push.Notification{Title: "📔", Body: name + " added to your journal", Data: map[string]string{"type": "journal_photo"}}
-	})
+	// Same cooldown as the entry itself, so a batch of photos is one buzz —
+	// and photos added to an older day still get their own.
+	d.notifyPartnerOnce(r.Context(), e.CoupleID, userID, "journal", journalNotifyWindow,
+		func(name string) push.Notification {
+			return push.Notification{
+				Title: "📔 Journal",
+				Body:  name + " added photos to your journal",
+				Data:  map[string]string{"type": "journal"},
+			}
+		})
 
 	writeJSON(w, http.StatusCreated, toDomainMedia(m))
 }

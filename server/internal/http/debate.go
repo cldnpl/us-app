@@ -8,36 +8,45 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sharepact/us/internal/judge"
-	"github.com/sharepact/us/internal/push"
 )
 
-// Couples Debate: per motion (round) one partner is assigned FOR and the other
-// AGAINST, alternating by round index so both argue each side across a pack.
-// Each writes their case privately; once both have argued a round, an AI judge
-// scores it and crowns a round winner. Arguments reuse quiz_answers under
-// quiz_id "debate:<packID>"; judge verdicts are cached in game_sessions (keyed
-// by game_type "debate:<packID>") so both partners see the same result.
+// Couples Debate: both partners get the SAME prompt in every round and each
+// makes their own case for it privately — no assigned sides. Once both have
+// argued a round, an AI judge compares the two answers to that one prompt and
+// crowns a round winner; judging answers to opposite prompts would compare
+// nothing. Arguments reuse quiz_answers under quiz_id "debate:<packID>"; judge
+// verdicts are cached in game_sessions (keyed by game_type debateGame(packID))
+// so both partners see the same result.
 
 const maxArgumentLen = 1000
 
-func debateKey(packID string) string  { return "debate:" + packID }
-func debateGame(packID string) string { return "debate:" + packID }
+func debateKey(packID string) string { return "debate:" + packID }
+
+// debateGame namespaces the cached verdicts. The "v2" generation exists because
+// verdicts cached under the old for/against format scored two different
+// questions — they can't be mapped onto same-prompt results, so they're left
+// behind and those rounds are judged again.
+func debateGame(packID string) string { return "debate2:" + packID }
 
 type debatePackSummary struct {
-	ID         string `json:"id"`
-	Title      string `json:"title"`
-	Icon       string `json:"icon"`
-	ColorKey   string `json:"colorKey"`
-	Tag        string `json:"tag"`
-	RoundCount int    `json:"roundCount"`
-	MyDone     bool   `json:"myDone"`
-	BothDone   bool   `json:"bothDone"`
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Icon        string `json:"icon"`
+	ColorKey    string `json:"colorKey"`
+	Tag         string `json:"tag"`
+	RoundCount  int    `json:"roundCount"`
+	MyDone      bool   `json:"myDone"`
+	PartnerDone bool   `json:"partnerDone"`
+	BothDone    bool   `json:"bothDone"`
 }
 
 type debateRoundView struct {
-	ID              string  `json:"id"`
-	Motion          string  `json:"motion"`
-	MySide          string  `json:"mySide"` // "for" | "against"
+	ID     string `json:"id"`
+	Motion string `json:"motion"` // the one prompt both partners answer
+	// Deprecated, kept only so a build shipped before sides were removed still
+	// decodes this response. Always "for" now: there are no sides to assign.
+	// Delete once no such build is installed anywhere.
+	MySide          string  `json:"mySide"`
 	MyArgument      *string `json:"myArgument"`
 	PartnerArgument *string `json:"partnerArgument"` // revealed once both have argued
 	Judged          bool    `json:"judged"`
@@ -59,15 +68,6 @@ type debatePackDetail struct {
 	MyWins        int               `json:"myWins"`
 	PartnerWins   int               `json:"partnerWins"`
 	Rounds        []debateRoundView `json:"rounds"`
-}
-
-// forUserForRound returns the user id arguing FOR the motion in round i, given
-// the couple's two ids in stable order. Sides alternate each round.
-func forUserForRound(i int, aID, bID string) (forUser, againstUser string) {
-	if i%2 == 0 {
-		return aID, bID
-	}
-	return bID, aID
 }
 
 // GET /v1/games/debate/packs
@@ -103,7 +103,8 @@ func (d Deps) handleListDebatePacks(w http.ResponseWriter, r *http.Request) {
 		partnerDone := partner.ID != "" && total > 0 && counts[key][partner.ID] >= total
 		out = append(out, debatePackSummary{
 			ID: p.ID, Title: p.Title, Icon: p.Icon, ColorKey: p.ColorKey, Tag: p.Tag,
-			RoundCount: total, MyDone: myDone, BothDone: myDone && partnerDone,
+			RoundCount: total, MyDone: myDone, PartnerDone: partnerDone,
+			BothDone: myDone && partnerDone,
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"packs": out})
@@ -149,17 +150,18 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 	}
 	dirty := false
 	j := judge.New(d.Config.AnthropicAPIKey, d.Config.AnthropicModel)
-	for i, m := range pack.Motions {
-		forUser, againstUser := forUserForRound(i, aID, bID)
-		forArg := byUser[forUser][m.ID]
-		againstArg := byUser[againstUser][m.ID]
-		if forArg == "" || againstArg == "" {
+	for _, m := range pack.Motions {
+		// Same prompt, one answer each — a and b are just the couple's two ids
+		// in stable order, so the verdict means the same on both phones.
+		argA := byUser[aID][m.ID]
+		argB := byUser[bID][m.ID]
+		if argA == "" || argB == "" {
 			continue
 		}
 		if _, done := verdicts[m.ID]; done {
 			continue
 		}
-		verdicts[m.ID] = j.Score(r.Context(), m.Prompt, forArg, againstArg)
+		verdicts[m.ID] = j.Score(r.Context(), m.Prompt, argA, argB)
 		dirty = true
 	}
 	if dirty {
@@ -176,13 +178,14 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 	rounds := make([]debateRoundView, 0, len(pack.Motions))
 	myWins, partnerWins := 0, 0
 	myDone, bothDone := true, true
-	for i, m := range pack.Motions {
-		forUser, againstUser := forUserForRound(i, aID, bID)
-		mySide := "against"
-		if forUser == userID {
-			mySide = "for"
-		}
-		v := debateRoundView{ID: m.ID, Motion: m.Prompt, MySide: mySide}
+	// Which of the two stable slots is me, so the shared verdict can be told
+	// from this user's point of view.
+	mySlot := "b"
+	if userID == aID {
+		mySlot = "a"
+	}
+	for _, m := range pack.Motions {
+		v := debateRoundView{ID: m.ID, Motion: m.Prompt, MySide: "for"}
 
 		if mine := byUser[userID][m.ID]; mine != "" {
 			v.MyArgument = &mine
@@ -190,7 +193,7 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 			myDone = false
 		}
 
-		bothArgued := byUser[forUser][m.ID] != "" && byUser[againstUser][m.ID] != ""
+		bothArgued := byUser[aID][m.ID] != "" && byUser[bID][m.ID] != ""
 		if !bothArgued {
 			bothDone = false
 		}
@@ -201,9 +204,9 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 
 		if vr, done := verdicts[m.ID]; done {
 			v.Judged = true
-			myScore, partnerScore := vr.AgainstScore, vr.ForScore
-			if mySide == "for" {
-				myScore, partnerScore = vr.ForScore, vr.AgainstScore
+			myScore, partnerScore := vr.BScore, vr.AScore
+			if mySlot == "a" {
+				myScore, partnerScore = vr.AScore, vr.BScore
 			}
 			v.MyScore = &myScore
 			v.PartnerScore = &partnerScore
@@ -211,7 +214,7 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 			switch {
 			case vr.Winner == "tie":
 				rw = "tie"
-			case vr.Winner == mySide:
+			case vr.Winner == mySlot:
 				rw = "me"
 				myWins++
 			default:
@@ -286,12 +289,9 @@ func (d Deps) handleArgueDebate(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "debate: save", err)
 		return
 	}
-	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
-		return push.Notification{
-			Title: "Couples Debate",
-			Body:  name + " made their case in " + pack.Title + " — argue back!",
-			Data:  map[string]string{"type": "debate", "packId": pack.ID},
-		}
-	})
+	d.notifyTurnOrResults(r.Context(), c.ID, userID, debateKey(pack.ID),
+		"Couples Debate", len(pack.Motions),
+		"The judge has ruled on "+pack.Title+" — see who won 🏆",
+		map[string]string{"type": "debate", "packId": pack.ID})
 	w.WriteHeader(http.StatusNoContent)
 }

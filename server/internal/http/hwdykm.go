@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-
-	"github.com/sharepact/us/internal/push"
 )
 
 // "How Well Do You Know Me": per question one partner is the subject (answers
@@ -24,6 +22,7 @@ type hwdykmPackSummary struct {
 	Tag           string `json:"tag"`
 	QuestionCount int    `json:"questionCount"`
 	MyDone        bool   `json:"myDone"`
+	PartnerDone   bool   `json:"partnerDone"`
 	BothDone      bool   `json:"bothDone"`
 }
 
@@ -92,7 +91,8 @@ func (d Deps) handleListHwdykmPacks(w http.ResponseWriter, r *http.Request) {
 		partnerDone := partner.ID != "" && counts[key][partner.ID] >= total && total > 0
 		out = append(out, hwdykmPackSummary{
 			ID: p.ID, Title: p.Title, Icon: p.Icon, ColorKey: p.ColorKey, Tag: p.Tag,
-			QuestionCount: total, MyDone: myDone, BothDone: myDone && partnerDone,
+			QuestionCount: total, MyDone: myDone, PartnerDone: partnerDone,
+			BothDone: myDone && partnerDone,
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"packs": out})
@@ -221,12 +221,9 @@ func (d Deps) handleAnswerHwdykmPack(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "hwdykm: save", err)
 		return
 	}
-	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
-		return push.Notification{
-			Title: "How Well Do You Know Me",
-			Body:  name + " is playing " + pack.Title + " — join in!",
-			Data:  map[string]string{"type": "hwdykm", "packId": pack.ID},
-		}
-	})
+	d.notifyTurnOrResults(r.Context(), c.ID, userID, hwdykmKey(pack.ID),
+		"How Well Do You Know Me", len(pack.Questions),
+		"You've both finished "+pack.Title+" — see your score 💛",
+		map[string]string{"type": "hwdykm", "packId": pack.ID})
 	w.WriteHeader(http.StatusNoContent)
 }

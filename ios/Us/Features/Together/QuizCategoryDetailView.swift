@@ -6,8 +6,11 @@ struct QuizCategoryDetailView: View {
     let categoryTitle: String
     let categoryIcon: String   // SF Symbol
 
+    @EnvironmentObject private var session: Session
     @State private var detail: QuizCategoryDetail?
     @State private var errorMessage: String?
+
+    private var partnerName: String { session.partner?.displayName ?? "Your partner" }
 
     var body: some View {
         ZStack {
@@ -19,7 +22,8 @@ struct QuizCategoryDetailView: View {
                             NavigationLink {
                                 QuizPlayView(quizId: quiz.id, colorKey: detail.colorKey)
                             } label: {
-                                QuizCard(quiz: quiz, colorKey: detail.colorKey)
+                                QuizCard(quiz: quiz, colorKey: detail.colorKey,
+                                         partnerName: partnerName)
                             }
                             .buttonStyle(.plain)
                         }
@@ -48,6 +52,7 @@ struct QuizCategoryDetailView: View {
 struct QuizCard: View {
     let quiz: QuizSummary
     let colorKey: String
+    var partnerName = "Your partner"
 
     var body: some View {
         let accent = QuizPalette.accent(colorKey)
@@ -74,6 +79,12 @@ struct QuizCard: View {
                 QuizIconTile(systemName: quiz.icon, colorKey: colorKey)
             }
 
+            // They answered first: say so on the card itself, so you don't have
+            // to open every quiz to find the one that's waiting on you.
+            if !quiz.myDone, quiz.partnerDone {
+                YourTurnHint(partnerName: partnerName, accent: accent)
+            }
+
             HStack {
                 Text("\(quiz.questionCount) question\(quiz.questionCount == 1 ? "" : "s")")
                     .font(.caption).foregroundStyle(.secondary)
@@ -84,7 +95,7 @@ struct QuizCard: View {
                         .font(.footnote.bold())
                         .foregroundStyle(accent)
                 } else {
-                    Label("PLAY", systemImage: "play.fill")
+                    Label(quiz.partnerDone ? "ANSWER NOW" : "PLAY", systemImage: "play.fill")
                         .font(.footnote.bold())
                         .foregroundStyle(accent)
                 }

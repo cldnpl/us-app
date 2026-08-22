@@ -16,6 +16,7 @@ struct QuizPlayView: View {
     @State private var showResults = false
     @State private var submitting = false
     @State private var errorMessage: String?
+    @FocusState private var answerFocused: Bool
 
     private var partnerName: String { session.partner?.displayName ?? "your partner" }
     private var accent: Color { QuizPalette.accent(colorKey) }
@@ -99,6 +100,12 @@ struct QuizPlayView: View {
                 .lineLimit(3...6)
                 .padding(14)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .focused($answerFocused)
+                // One field per question, not one field reused across all of
+                // them: while it holds the keyboard, a live text field keeps
+                // showing what was typed into it even after the binding is
+                // cleared, so question 2 would open with question 1's answer.
+                .id(q.id)
                 .onChange(of: draft) { v in
                     selection = v.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : v
                 }
@@ -175,9 +182,22 @@ struct QuizPlayView: View {
         let match = q.myAnswer != nil && q.myAnswer == q.partnerAnswer
         return VStack(alignment: .leading, spacing: 12) {
             Text(q.prompt).font(.subheadline.bold()).foregroundStyle(Theme.ink)
-            HStack(spacing: 10) {
-                miniAnswer("You", q.option(for: q.myAnswer), q.myAnswer, Theme.coral)
-                miniAnswer(partnerName, q.option(for: q.partnerAnswer), q.partnerAnswer, Theme.rose)
+            // Picked options are short labels and read well next to each other.
+            // Written answers get a full-width row each — squeezed into half the
+            // screen, a long answer becomes a narrow column of single words.
+            if q.isChoice {
+                HStack(alignment: .top, spacing: 10) {
+                    miniAnswer("You", q.option(for: q.myAnswer), q.myAnswer, Theme.coral)
+                        .frame(maxHeight: .infinity)          // both cards match
+                    miniAnswer(partnerName, q.option(for: q.partnerAnswer), q.partnerAnswer, Theme.rose)
+                        .frame(maxHeight: .infinity)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 10) {
+                    miniAnswer("You", q.option(for: q.myAnswer), q.myAnswer, Theme.coral)
+                    miniAnswer(partnerName, q.option(for: q.partnerAnswer), q.partnerAnswer, Theme.rose)
+                }
             }
             if q.isChoice {
                 Label(match ? "You match!" : "Different picks", systemImage: match ? "heart.fill" : "sparkles")
@@ -199,12 +219,17 @@ struct QuizPlayView: View {
                 .frame(height: 64).frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
-            HStack(spacing: 5) {
+            HStack(alignment: .top, spacing: 5) {
                 if let sf = option?.icon { Image(systemName: sf).font(.caption).foregroundStyle(tint) }
-                Text(option?.label ?? fallback ?? "—").font(.footnote).foregroundStyle(Theme.ink).lineLimit(3)
+                // No line limit: the answer is the whole point of this screen,
+                // so the card grows to fit it instead of trailing off in "…".
+                Text(option?.label ?? fallback ?? "—")
+                    .font(.footnote).foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(12)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
@@ -216,6 +241,8 @@ struct QuizPlayView: View {
         Haptics.tap(.light)
     }
 
+    /// Loads the answer already stored for the question now on screen — empty
+    /// for one not answered yet. Always called when `index` changes.
     private func syncSelection() {
         let q = quiz?.questions[safe: index]
         selection = q?.myAnswer
@@ -224,12 +251,16 @@ struct QuizPlayView: View {
 
     private func back() {
         guard index > 0 else { return }
+        answerFocused = false
         withAnimation { index -= 1 }
         syncSelection()
     }
 
     private func next(isLast: Bool) async {
         guard let answer = selection?.trimmingCharacters(in: .whitespacesAndNewlines), !answer.isEmpty else { return }
+        // Hand the keyboard back before the question changes, so the field that
+        // held this answer is gone by the time the next one is built.
+        answerFocused = false
         submitting = true; errorMessage = nil
         defer { submitting = false }
         do {

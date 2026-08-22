@@ -82,7 +82,7 @@ func run(logger *slog.Logger) error {
 		return err
 	}
 
-	router := httpapi.NewRouter(httpapi.Deps{
+	deps := httpapi.Deps{
 		Config: cfg,
 		Pool:   pool,
 		Logger: logger,
@@ -91,7 +91,13 @@ func run(logger *slog.Logger) error {
 		Push:   sender,
 		Mail:   mailer,
 		Media:  mediaStore,
-	})
+	}
+	router := httpapi.NewRouter(deps)
+
+	// Notifications nobody's request can trigger (the Question of the Day).
+	jobCtx, stopJobs := context.WithCancel(ctx)
+	defer stopJobs()
+	deps.StartDailyJobs(jobCtx)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,

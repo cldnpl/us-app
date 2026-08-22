@@ -31,13 +31,22 @@ func resolveOptions(opts []catalogOption) []quizOptionView {
 // ---- response shapes ----
 
 type quizCategorySummary struct {
-	ID             string  `json:"id"`
-	Title          string  `json:"title"`
-	Icon           string  `json:"icon"`
-	ColorKey       string  `json:"colorKey"`
-	QuizCount      int     `json:"quizCount"`
-	CompletedCount int     `json:"completedCount"` // quizzes I've finished
-	Progress       float64 `json:"progress"`       // 0..1, my completion
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Icon      string `json:"icon"`
+	ColorKey  string `json:"colorKey"`
+	QuizCount int    `json:"quizCount"`
+	// Quizzes each of us has finished, and how many are waiting on me because
+	// my partner already answered them.
+	CompletedCount        int `json:"completedCount"`
+	PartnerCompletedCount int `json:"partnerCompletedCount"`
+	YourTurnCount         int `json:"yourTurnCount"`
+	// Progress is the *couple's*: a quiz only counts fully once both of us have
+	// answered it, so one person finishing alone moves the bar half a quiz. That
+	// way the bar reflects what the feature is for — comparing answers — instead
+	// of hitting 100% while the other half is still unanswered.
+	Progress   float64 `json:"progress"`   // 0..1, both of us
+	MyProgress float64 `json:"myProgress"` // 0..1, mine alone
 }
 
 type quizSummary struct {
@@ -72,7 +81,10 @@ type quizQuestionView struct {
 	Options       []quizOptionView `json:"options,omitempty"`
 	MyAnswer      *string          `json:"myAnswer"`
 	PartnerAnswer *string          `json:"partnerAnswer"` // revealed only after I answer this question
-	BothAnswered  bool             `json:"bothAnswered"`
+	// Whether my partner has answered, which the app can say ("your turn")
+	// without revealing *what* they answered before I've answered myself.
+	PartnerAnswered bool `json:"partnerAnswered"`
+	BothAnswered    bool `json:"bothAnswered"`
 }
 
 type quizDetail struct {
@@ -118,22 +130,40 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	counts := completionByUser(keys)
+	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 
 	out := make([]quizCategorySummary, 0, len(quizCatalog))
 	for _, cat := range quizCatalog {
-		done := 0
+		done, partnerDone, yourTurn := 0, 0, 0
 		for _, q := range cat.Quizzes {
-			if quizDone(counts, q.ID, userID, len(q.Questions)) {
+			mine := quizDone(counts, q.ID, userID, len(q.Questions))
+			theirs := partner.ID != "" && quizDone(counts, q.ID, partner.ID, len(q.Questions))
+			if mine {
 				done++
 			}
+			if theirs {
+				partnerDone++
+				if !mine {
+					yourTurn++
+				}
+			}
 		}
-		progress := 0.0
-		if len(cat.Quizzes) > 0 {
-			progress = float64(done) / float64(len(cat.Quizzes))
+		myProgress, progress := 0.0, 0.0
+		if n := len(cat.Quizzes); n > 0 {
+			myProgress = float64(done) / float64(n)
+			if partner.ID == "" {
+				// Nobody to compare with yet — don't cap the bar at half.
+				progress = myProgress
+			} else {
+				// Each quiz is worth two halves, one per person.
+				progress = float64(done+partnerDone) / float64(2*n)
+			}
 		}
 		out = append(out, quizCategorySummary{
 			ID: cat.ID, Title: cat.Title, Icon: cat.Icon, ColorKey: cat.ColorKey,
-			QuizCount: len(cat.Quizzes), CompletedCount: done, Progress: progress,
+			QuizCount: len(cat.Quizzes), CompletedCount: done,
+			PartnerCompletedCount: partnerDone, YourTurnCount: yourTurn,
+			Progress: progress, MyProgress: myProgress,
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"categories": out})
@@ -231,6 +261,7 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 				v.PartnerAnswer = &pa
 			}
 		}
+		v.PartnerAnswered = theyAnswered
 		v.BothAnswered = iAnswered && theyAnswered
 		views = append(views, v)
 	}
@@ -277,13 +308,9 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "quiz: save", err)
 		return
 	}
-	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
-		return push.Notification{
-			Title: quiz.Title,
-			Body:  name + " answered — see how you compare",
-			Data:  map[string]string{"type": "quiz_answer", "quizId": quizID},
-		}
-	})
+	d.notifyTurnOrResults(r.Context(), c.ID, userID, quizID, quiz.Title, len(quiz.Questions),
+		"You've both answered — see how you compare 💛",
+		map[string]string{"type": "quiz", "quizId": quizID})
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -360,6 +387,7 @@ func (d Deps) handleGetDailyQuiz(w http.ResponseWriter, r *http.Request) {
 	if qv.MyAnswer != nil { // reveal partner only after I answer
 		qv.PartnerAnswer = partner
 	}
+	qv.PartnerAnswered = partner != nil
 	qv.BothAnswered = qv.MyAnswer != nil && partner != nil
 
 	writeJSON(w, http.StatusOK, dailyQuestionResponse{

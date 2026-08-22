@@ -2,8 +2,11 @@ import SwiftUI
 
 struct TogetherView: View {
     @EnvironmentObject private var premium: PremiumStore
+    @EnvironmentObject private var session: Session
     @State private var daily: QuizDaily?
     @State private var lockedGame: GameDef?
+
+    private var partnerName: String { session.partner?.displayName ?? "Your partner" }
 
     var body: some View {
         NavigationStack {
@@ -41,7 +44,7 @@ struct TogetherView: View {
                 NavigationLink {
                     DailyQuizView(onAnswered: { Task { await loadDaily() } })
                 } label: {
-                    DailyQuestionCard(daily: daily)
+                    DailyQuestionCard(daily: daily, partnerName: partnerName)
                 }
                 .buttonStyle(.plain)
             }
@@ -111,6 +114,7 @@ struct TogetherView: View {
 /// The hero card at the top of Games: today's rotating question, category-coloured.
 struct DailyQuestionCard: View {
     let daily: QuizDaily
+    var partnerName = "Your partner"
 
     var body: some View {
         let accent = QuizPalette.accent(daily.colorKey)
@@ -130,6 +134,9 @@ struct DailyQuestionCard: View {
                 .foregroundStyle(Theme.ink)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            if daily.question.isMyTurn {
+                YourTurnHint(partnerName: partnerName, accent: accent)
+            }
             HStack(spacing: 10) {
                 Image(systemName: daily.icon).font(.footnote.bold()).foregroundStyle(accent)
                 Text(daily.categoryTitle).font(.subheadline.bold()).foregroundStyle(accent)
@@ -151,6 +158,7 @@ struct DailyQuestionCard: View {
 struct CategoryCard: View {
     let category: QuizCategorySummary
     var locked = false
+    var partnerName = "Your partner"
 
     var body: some View {
         let accent = QuizPalette.accent(category.colorKey)
@@ -163,10 +171,20 @@ struct CategoryCard: View {
                         .font(.caption.bold()).foregroundStyle(accent)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
+                    // The bar is the couple's: a quiz answered by one of us is
+                    // worth half, and only fills up once both have answered.
                     HStack(spacing: 10) {
                         ProgressBar(value: category.progress, accent: accent)
                         Text("\(Int((category.progress * 100).rounded()))%")
                             .font(.caption.bold()).foregroundStyle(accent)
+                    }
+                    if category.waitingForMe > 0 {
+                        Label("\(category.waitingForMe) waiting for you", systemImage: "arrow.right.circle.fill")
+                            .font(.caption2.bold()).foregroundStyle(accent)
+                    } else if let theirs = category.partnerCompletedCount {
+                        Text("You \(category.completedCount)/\(category.quizCount) · \(partnerName) \(theirs)/\(category.quizCount)")
+                            .font(.caption2).foregroundStyle(.secondary)
+                            .lineLimit(1).minimumScaleFactor(0.8)
                     }
                 }
             }

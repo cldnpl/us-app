@@ -29,6 +29,10 @@ type Config struct {
 	// falls back to an offline heuristic so the game still works.
 	AnthropicAPIKey string
 	AnthropicModel  string
+
+	// DailyQuestionHourUTC is the hour (0–23, UTC) from which the daily
+	// "new Question of the Day" notification may go out.
+	DailyQuestionHourUTC int
 }
 
 // SMTPConfig holds outgoing-mail credentials. When Host is empty the server
@@ -87,6 +91,9 @@ func Load() (*Config, error) {
 
 		AnthropicAPIKey: env("ANTHROPIC_API_KEY", ""),
 		AnthropicModel:  env("ANTHROPIC_MODEL", "claude-opus-4-8"),
+
+		// 09:00 UTC by default — morning in Europe, where the couple is.
+		DailyQuestionHourUTC: clampHour(int(envInt64("DAILY_QUESTION_HOUR_UTC", 9))),
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -114,6 +121,14 @@ func envList(key, def string) []string {
 		}
 	}
 	return out
+}
+
+// clampHour keeps a misconfigured hour from silencing the daily job forever.
+func clampHour(h int) int {
+	if h < 0 || h > 23 {
+		return 9
+	}
+	return h
 }
 
 func envBool(key string, def bool) bool {

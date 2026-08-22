@@ -3,6 +3,7 @@ import SwiftUI
 /// Full list of quiz topic packs, opened from the "Quiz" card on the Games tab.
 struct QuizCategoriesView: View {
     @EnvironmentObject private var premium: PremiumStore
+    @EnvironmentObject private var session: Session
     @State private var categories: [QuizCategorySummary] = []
     @State private var errorMessage: String?
     @State private var lockedCategory: QuizCategorySummary?
@@ -39,7 +40,7 @@ struct QuizCategoriesView: View {
                                                            categoryTitle: category.title,
                                                            categoryIcon: category.icon)
                                 } label: {
-                                    CategoryCard(category: category)
+                                    CategoryCard(category: category, partnerName: partnerName)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -58,6 +59,8 @@ struct QuizCategoriesView: View {
             PaywallView(trigger: .quizCategory(category.title))
         }
     }
+
+    private var partnerName: String { session.partner?.displayName ?? "Your partner" }
 
     private func load() async {
         do {

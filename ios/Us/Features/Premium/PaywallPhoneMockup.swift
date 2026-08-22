@@ -363,10 +363,9 @@ private struct PaywallDemoScreenView: View {
             Text("“\(round.motion)”")
                 .font(.subheadline.bold()).foregroundStyle(Theme.ink)
 
-            DebateArgumentBlock(title: "You (\(round.mySide))", text: round.mine,
+            DebateArgumentBlock(title: "You", text: round.mine,
                                 score: round.myScore, highlight: round.iWon, accent: accent)
-            DebateArgumentBlock(title: "Alex (\(round.mySide == "for" ? "against" : "for"))",
-                                text: round.theirs,
+            DebateArgumentBlock(title: "Alex", text: round.theirs,
                                 score: round.theirScore, highlight: !round.iWon, accent: accent)
 
             HStack(alignment: .top, spacing: 8) {
@@ -443,7 +442,6 @@ enum PaywallSampleData {
 
     struct Round {
         let motion: String
-        let mySide: String
         let mine: String
         let theirs: String
         let myScore: Int
@@ -453,12 +451,12 @@ enum PaywallSampleData {
     }
 
     static let debateRounds: [Round] = [
-        .init(motion: "Pineapple belongs on pizza", mySide: "for",
+        .init(motion: "Pineapple belongs on pizza",
               mine: "Sweet and savoury is the oldest trick in the book — and tomato is a fruit too.",
               theirs: "Texture matters. Warm fruit on molten cheese is a texture crime.",
               myScore: 8, theirScore: 6, iWon: true,
               verdict: "Cleaner argument with a concrete example — your round."),
-        .init(motion: "Breakfast in bed is overrated", mySide: "against",
+        .init(motion: "Breakfast in bed is overrated",
               mine: "It's the one meal nobody is rushing you through. That's the whole point.",
               theirs: "Crumbs. In the sheets. For days. Rest my case.",
               myScore: 7, theirScore: 9, iWon: false,

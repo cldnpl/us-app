@@ -51,6 +51,8 @@ struct JournalView: View {
             }
             .task { await load() }
             .refreshable { await load() }
+            // The diary's own photo wall: every photo written into the journal,
+            // month by month, in the same order as the pages behind it.
             .navigationDestination(isPresented: $showGallery) { GalleryView() }
             .sheet(isPresented: $showAddEntry) {
                 AddJournalEntrySheet(existing: nil) { await load() }

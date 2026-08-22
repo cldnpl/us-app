@@ -3,8 +3,11 @@ import SwiftUI
 // MARK: - Pack list
 
 struct DebatePackListView: View {
+    @EnvironmentObject private var session: Session
     @State private var packs: [DebatePackSummary] = []
     @State private var errorMessage: String?
+
+    private var partnerName: String { session.partner?.displayName ?? "Your partner" }
 
     var body: some View {
         ZStack {
@@ -29,7 +32,7 @@ struct DebatePackListView: View {
                             NavigationLink {
                                 DebatePlayView(packId: pack.id, colorKey: pack.colorKey)
                             } label: {
-                                DebatePackCard(pack: pack)
+                                DebatePackCard(pack: pack, partnerName: partnerName)
                             }
                             .buttonStyle(.plain)
                         }
@@ -52,6 +55,7 @@ struct DebatePackListView: View {
 
 struct DebatePackCard: View {
     let pack: DebatePackSummary
+    var partnerName = "Your partner"
 
     var body: some View {
         let accent = QuizPalette.accent(pack.colorKey)
@@ -64,7 +68,11 @@ struct DebatePackCard: View {
                         Text(pack.tag).font(.caption2.bold()).foregroundStyle(accent)
                     }
                 }
-                Text("\(pack.roundCount) rounds").font(.caption).foregroundStyle(.secondary)
+                if pack.isMyTurn {
+                    YourTurnHint(partnerName: partnerName, accent: accent)
+                } else {
+                    Text("\(pack.roundCount) rounds").font(.caption).foregroundStyle(.secondary)
+                }
             }
             Spacer()
             if pack.bothDone {
@@ -121,7 +129,6 @@ struct DebatePlayView: View {
     @ViewBuilder
     private func roundScreen(_ pack: DebatePackDetail) -> some View {
         let round = pack.rounds[min(index, pack.rounds.count - 1)]
-        let forSide = round.mySide == "for"
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 20) {
@@ -134,20 +141,24 @@ struct DebatePlayView: View {
                     }
                     .padding(.top, 12)
 
-                    Text("YOU'RE ARGUING \(forSide ? "FOR" : "AGAINST")")
+                    // Both of you get this exact prompt — nobody is handed a
+                    // side, so the judge is comparing two answers to the same
+                    // question rather than to opposite ones.
+                    Text("YOU BOTH ARGUE THIS")
                         .font(.caption.bold()).tracking(1)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(forSide ? Theme.coral : Theme.rose, in: Capsule())
+                        .background(Theme.coral, in: Capsule())
 
                     Text("“\(round.motion)”")
                         .font(.title2.bold()).multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink).padding(.horizontal)
 
-                    Text(forSide
-                         ? "Convince the judge this is true."
-                         : "Convince the judge this is false.")
+                    Text("Agree or disagree — make your case. \(partnerName) answers the same one, and the judge picks the better argument.")
                         .font(.subheadline).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 4)
 
                     ZStack(alignment: .topLeading) {
                         if draft.isEmpty {
@@ -212,7 +223,7 @@ struct DebatePlayView: View {
                     VStack(spacing: 14) {
                         QuizIconTile(systemName: "hourglass", colorKey: colorKey, size: 72).padding(.top, 40)
                         Text("Waiting for the rebuttal").font(.title2.bold()).foregroundStyle(Theme.ink)
-                        Text("Your case is locked in! The judge scores each round once \(partnerName) argues back.")
+                        Text("Your case is locked in! The judge compares it with \(partnerName)'s answer to the same prompt once they've argued too.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
@@ -232,10 +243,10 @@ struct DebatePlayView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
 
-            DebateArgumentBlock(title: "You (\(round.mySide == "for" ? "for" : "against"))",
+            DebateArgumentBlock(title: "You",
                                 text: round.myArgument, score: round.myScore,
                                 highlight: round.roundWinner == "me", accent: accent)
-            DebateArgumentBlock(title: "\(partnerName) (\(round.mySide == "for" ? "against" : "for"))",
+            DebateArgumentBlock(title: partnerName,
                                 text: round.partnerArgument, score: round.partnerScore,
                                 highlight: round.roundWinner == "partner", accent: accent)
 
@@ -257,8 +268,7 @@ struct DebatePlayView: View {
     private func pendingRow(_ round: DebateRound) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
-            Text("You argued \(round.mySide == "for" ? "for" : "against")")
-                .font(.caption2.bold()).foregroundStyle(.secondary)
+            Text("Your case").font(.caption2.bold()).foregroundStyle(.secondary)
             Text(round.myArgument ?? "—").font(.footnote).foregroundStyle(Theme.ink)
         }
         .padding(14)

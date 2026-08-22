@@ -61,6 +61,26 @@ func (s *Store) GetCoupleMembers(ctx context.Context, coupleID string) ([]User, 
 	return out, rows.Err()
 }
 
+// ListActiveCouples returns every paired couple — the audience for the daily
+// jobs that aren't triggered by a request.
+func (s *Store) ListActiveCouples(ctx context.Context) ([]Couple, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT `+coupleCols+` FROM couples WHERE status = 'active'`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Couple
+	for rows.Next() {
+		c, err := scanCouple(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
 func (s *Store) DeleteCouple(ctx context.Context, coupleID string) error {
 	_, err := s.pool.Exec(ctx, `DELETE FROM couples WHERE id = $1`, coupleID)
 	return err

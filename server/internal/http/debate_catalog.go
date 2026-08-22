@@ -2,12 +2,13 @@ package httpapi
 
 // Couples Debate topic packs. These echo the "How Well Do You Know Me" packs in
 // theme (food, travel, romance, little habits…) but are their own content: each
-// entry is a debatable *motion* one partner argues for and the other against,
-// not a preference question.
+// entry is one debatable statement that BOTH partners answer, arguing whatever
+// they actually think. Nobody is assigned a side — the judge compares the two
+// cases made on the same statement and says who argued it better.
 
 type debateMotion struct {
 	ID     string
-	Prompt string // the motion under debate
+	Prompt string // the statement both partners argue about
 }
 
 type debatePack struct {

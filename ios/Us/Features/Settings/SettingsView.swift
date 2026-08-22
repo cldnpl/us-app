@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
     @EnvironmentObject var session: Session
@@ -12,6 +13,10 @@ struct SettingsView: View {
     @State private var showDeleteConfirm = false
     @State private var showAddWidget = false
     @State private var showEmailChange = false
+    /// Whether iOS is currently letting Us notify this person. Read on appear
+    /// and whenever the app comes back — the only place it can change is the
+    /// system Settings app, which means leaving and returning.
+    @State private var notificationsAllowed: Bool?
 
     /// Draft of the display name. Committed on blur or return, not per
     /// keystroke, so we don't PATCH the server on every letter typed.
@@ -65,6 +70,7 @@ struct SettingsView: View {
                             Text(verbatim: languages.current.endonym)
                         }
                     }
+                    notificationsRow
                 }
 
                 Section("Home Screen") {
@@ -131,6 +137,7 @@ struct SettingsView: View {
                 pronoun = PartnerPrefs.pronoun ?? .they
                 nameDraft = session.user?.displayName ?? ""
             }
+            .task { await refreshNotificationStatus() }
             // Tapping an inert part of a Form doesn't drop focus, so blur alone
             // would silently lose a typed name. Commit on every way out of the
             // screen: blur, Return, leaving the tab, and backgrounding the app.
@@ -140,6 +147,7 @@ struct SettingsView: View {
             .onDisappear { commitName() }
             .onChange(of: scenePhase) { phase in
                 if phase != .active { commitName() }
+                if phase == .active { Task { await refreshNotificationStatus() } }
             }
             .onChange(of: session.user?.displayName) { newName in
                 // Keep the field in step when the name changes elsewhere (a
@@ -202,6 +210,47 @@ struct SettingsView: View {
         Task { await session.updateName(trimmed); Haptics.success() }
     }
 
+    /// Notification state, and the way back when they're off: iOS only ever
+    /// asks once, so a person who declined (or never saw the prompt) otherwise
+    /// has no clue why their partner's nudges never arrive.
+    @ViewBuilder
+    private var notificationsRow: some View {
+        switch notificationsAllowed {
+        case .some(true):
+            LabeledContent("Notifications") { Text("On").foregroundStyle(.secondary) }
+        case .some(false):
+            Button {
+                Task { await enableNotifications() }
+            } label: {
+                LabeledContent("Notifications") {
+                    Text("Off").foregroundStyle(Theme.rose)
+                }
+            }
+            .tint(.primary)
+        case nil:
+            LabeledContent("Notifications") { ProgressView() }
+        }
+    }
+
+    private func refreshNotificationStatus() async {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        notificationsAllowed = (status == .authorized || status == .provisional)
+    }
+
+    /// Asks iOS if it hasn't been asked yet, otherwise sends the person to the
+    /// system settings — after a refusal, only they can undo it.
+    private func enableNotifications() async {
+        let center = UNUserNotificationCenter.current()
+        if await center.notificationSettings().authorizationStatus == .notDetermined {
+            await PushManager.shared.onAuthenticated()
+            await refreshNotificationStatus()
+            return
+        }
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            await UIApplication.shared.open(url)
+        }
+    }
+
     /// Identification of the HealthKit integration, shown to everyone — whatever
     /// they answered about having a cycle — because the app ships the capability.
     private var appleHealthSection: some View {
@@ -227,9 +276,11 @@ struct SettingsView: View {
         }
     }
 
-    /// HealthKit never reveals read permission, so "connected" means we managed
-    /// to derive a cycle from Health data.
-    private var healthConnected: Bool { cycle.insights != nil }
+    /// HealthKit never reveals read permission, so "connected" means the app has
+    /// completed the permission sheet on this iPhone (or has read real data at
+    /// some point). It's remembered across relaunches and sign-outs, so the row
+    /// doesn't flip back to "Not connected" whenever a read comes back empty.
+    private var healthConnected: Bool { cycle.isHealthConnected }
 
     private var partnerFirstName: String {
         (session.partner?.displayName ?? "them").split(separator: " ").first.map(String.init) ?? "them"

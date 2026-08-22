@@ -1,5 +1,7 @@
-// Package judge scores a single round of Couples Debate: given a motion and the
-// two sides' written cases, it returns a per-side score and a short verdict.
+// Package judge scores a single round of Couples Debate: both partners answer
+// the SAME prompt, and the judge says whose case was better — it never assigns
+// opposite sides, because comparing answers to two different questions would
+// tell the couple nothing.
 //
 // When an Anthropic API key is configured it asks Claude to judge; otherwise it
 // falls back to a local heuristic so the game always works offline.
@@ -16,13 +18,15 @@ import (
 	"time"
 )
 
-// Verdict is one round's result. Scores are 0..10. Winner is "for", "against",
-// or "tie". These JSON tags double as the shape cached in game_sessions.state.
+// Verdict is one round's result. Scores are 0..10. Winner is "a", "b", or
+// "tie", where a and b are the couple's two user ids in stable order — so the
+// cached verdict reads the same on both partners' phones. These JSON tags
+// double as the shape cached in game_sessions.state.
 type Verdict struct {
-	ForScore     int    `json:"forScore"`
-	AgainstScore int    `json:"againstScore"`
-	Winner       string `json:"winner"`
-	Reason       string `json:"reason"`
+	AScore int    `json:"aScore"`
+	BScore int    `json:"bScore"`
+	Winner string `json:"winner"`
+	Reason string `json:"reason"`
 }
 
 // Judge scores debate rounds. The zero value is not usable — call New.
@@ -44,15 +48,17 @@ func New(apiKey, model string) *Judge {
 	}
 }
 
-// Score judges one round. It never returns an error: any problem reaching or
-// parsing the model degrades to the heuristic, so a verdict always exists.
-func (j *Judge) Score(ctx context.Context, motion, forArg, againstArg string) Verdict {
+// Score judges one round: `prompt` is the question both partners answered, and
+// argA/argB are their two answers to it. It never returns an error — any problem
+// reaching or parsing the model degrades to the heuristic, so a verdict always
+// exists.
+func (j *Judge) Score(ctx context.Context, prompt, argA, argB string) Verdict {
 	if j.apiKey != "" {
-		if v, ok := j.scoreWithClaude(ctx, motion, forArg, againstArg); ok {
+		if v, ok := j.scoreWithClaude(ctx, prompt, argA, argB); ok {
 			return v
 		}
 	}
-	return heuristic(motion, forArg, againstArg)
+	return heuristic(prompt, argA, argB)
 }
 
 // ---- Claude ----
@@ -65,24 +71,25 @@ const (
 var verdictSchema = map[string]any{
 	"type": "object",
 	"properties": map[string]any{
-		"forScore":     map[string]any{"type": "integer"},
-		"againstScore": map[string]any{"type": "integer"},
-		"winner":       map[string]any{"type": "string", "enum": []string{"for", "against", "tie"}},
-		"reason":       map[string]any{"type": "string"},
+		"aScore": map[string]any{"type": "integer"},
+		"bScore": map[string]any{"type": "integer"},
+		"winner": map[string]any{"type": "string", "enum": []string{"a", "b", "tie"}},
+		"reason": map[string]any{"type": "string"},
 	},
-	"required":             []string{"forScore", "againstScore", "winner", "reason"},
+	"required":             []string{"aScore", "bScore", "winner", "reason"},
 	"additionalProperties": false,
 }
 
 const judgeSystem = `You are the impartial judge of a lighthearted debate between two romantic partners.
-Score each side from 0 to 10 on how persuasive, clear, and creative their case is — reward good reasoning, examples, and wit; do not reward length alone or anything mean-spirited.
-Pick the winning side, or "tie" if they are within a point of each other.
+Both answered the SAME prompt, each making their own case — they may take opposite positions or the same one; that is fine either way.
+Score partner A and partner B from 0 to 10 on how persuasive, clear, and creative their case is — reward good reasoning, examples, and wit; do not reward length alone or anything mean-spirited, and never favour a position just because it is listed first.
+Pick the better case, or "tie" if they are within a point of each other.
 Keep the reason to one or two upbeat, playful sentences the couple will enjoy reading. Never take real relationship sides or give relationship advice.`
 
-func (j *Judge) scoreWithClaude(ctx context.Context, motion, forArg, againstArg string) (Verdict, bool) {
+func (j *Judge) scoreWithClaude(ctx context.Context, topic, argA, argB string) (Verdict, bool) {
 	prompt := fmt.Sprintf(
-		"Motion: %q\n\nFOR (arguing the motion is true):\n%s\n\nAGAINST (arguing the motion is false):\n%s\n\nScore both sides and crown a winner.",
-		motion, strings.TrimSpace(forArg), strings.TrimSpace(againstArg))
+		"Prompt both partners answered: %q\n\nPARTNER A:\n%s\n\nPARTNER B:\n%s\n\nScore both cases and say who argued it better.",
+		topic, strings.TrimSpace(argA), strings.TrimSpace(argB))
 
 	body := map[string]any{
 		"model":      j.model,
@@ -155,25 +162,24 @@ func (j *Judge) requestText(ctx context.Context, body map[string]any) (string, b
 
 // heuristic scores each case on substance signals: length within reason,
 // reasoning connectives, concrete examples, and acknowledging the other side.
-func heuristic(motion, forArg, againstArg string) Verdict {
-	f := scoreText(forArg)
-	a := scoreText(againstArg)
-	v := Verdict{ForScore: f, AgainstScore: a}
+func heuristic(topic, argA, argB string) Verdict {
+	a := scoreText(argA)
+	b := scoreText(argB)
+	v := Verdict{AScore: a, BScore: b}
 	switch {
-	case f-a >= 1:
-		v.Winner = "for"
-	case a-f >= 1:
-		v.Winner = "against"
+	case a-b >= 1:
+		v.Winner = "a"
+	case b-a >= 1:
+		v.Winner = "b"
 	default:
 		v.Winner = "tie"
 	}
-	switch v.Winner {
-	case "for":
-		v.Reason = "The case for it landed harder — clearer points and more to back them up. Nicely argued! 🏆"
-	case "against":
-		v.Reason = "The case against it won the round — sharper reasoning and better examples. Well played! 🏆"
-	default:
+	if v.Winner == "tie" {
 		v.Reason = "Too close to call — you both made a strong case. It's a tie! 🤝"
+	} else {
+		// The app names the winner; the reason stays about the argument itself,
+		// since "a" and "b" mean nothing to the couple reading it.
+		v.Reason = "This one landed harder — clearer points and more to back them up. Nicely argued! 🏆"
 	}
 	return v
 }
@@ -220,14 +226,14 @@ func scoreText(s string) int {
 }
 
 func clamp(v Verdict) Verdict {
-	v.ForScore = clampScore(v.ForScore)
-	v.AgainstScore = clampScore(v.AgainstScore)
-	if v.Winner != "for" && v.Winner != "against" && v.Winner != "tie" {
+	v.AScore = clampScore(v.AScore)
+	v.BScore = clampScore(v.BScore)
+	if v.Winner != "a" && v.Winner != "b" && v.Winner != "tie" {
 		switch {
-		case v.ForScore > v.AgainstScore:
-			v.Winner = "for"
-		case v.AgainstScore > v.ForScore:
-			v.Winner = "against"
+		case v.AScore > v.BScore:
+			v.Winner = "a"
+		case v.BScore > v.AScore:
+			v.Winner = "b"
 		default:
 			v.Winner = "tie"
 		}

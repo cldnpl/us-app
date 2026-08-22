@@ -3,8 +3,11 @@ import SwiftUI
 // MARK: - Pack list
 
 struct HwdykmPackListView: View {
+    @EnvironmentObject private var session: Session
     @State private var packs: [HwdykmPackSummary] = []
     @State private var errorMessage: String?
+
+    private var partnerName: String { session.partner?.displayName ?? "Your partner" }
 
     var body: some View {
         ZStack {
@@ -20,7 +23,7 @@ struct HwdykmPackListView: View {
                             NavigationLink {
                                 HwdykmPlayView(packId: pack.id, colorKey: pack.colorKey)
                             } label: {
-                                HwdykmPackCard(pack: pack)
+                                HwdykmPackCard(pack: pack, partnerName: partnerName)
                             }
                             .buttonStyle(.plain)
                         }
@@ -44,6 +47,7 @@ struct HwdykmPackListView: View {
 
 struct HwdykmPackCard: View {
     let pack: HwdykmPackSummary
+    var partnerName = "Your partner"
 
     var body: some View {
         let accent = QuizPalette.accent(pack.colorKey)
@@ -56,7 +60,11 @@ struct HwdykmPackCard: View {
                         Text(pack.tag).font(.caption2.bold()).foregroundStyle(accent)
                     }
                 }
-                Text("\(pack.questionCount) questions").font(.caption).foregroundStyle(.secondary)
+                if pack.isMyTurn {
+                    YourTurnHint(partnerName: partnerName, accent: accent)
+                } else {
+                    Text("\(pack.questionCount) questions").font(.caption).foregroundStyle(.secondary)
+                }
             }
             Spacer()
             if pack.bothDone {

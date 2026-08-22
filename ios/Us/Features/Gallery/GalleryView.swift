@@ -1,215 +1,151 @@
 import SwiftUI
-import PhotosUI
 
+/// Every photo in the diary, newest first and grouped by month — the same
+/// months, in the same order, as the journal pages this screen opens from.
+///
+/// The photos come from the journal entries themselves, not from the media
+/// library: a diary photo belongs to the *day it was written under*, which is
+/// the order this screen has to show, and the library deliberately excludes
+/// journal photos so they aren't listed twice.
 struct GalleryView: View {
     @EnvironmentObject var session: Session
 
-    @State private var items: [MediaItem] = []
-    @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var isUploading = false
-    @State private var uploadDone = 0
-    @State private var uploadTotal = 0
+    @State private var entries: [JournalEntry] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
-    @State private var selected: MediaItem?
+    @State private var pager: PhotoPagerContext?
+
+    private let columns = [GridItem(.adaptive(minimum: 100), spacing: 10)]
+
+    private var months: [JournalPhotoMonth] { JournalPhotoMonth.group(entries) }
 
     var body: some View {
         ZStack {
             Theme.softBackground.ignoresSafeArea()
 
-                if isLoading {
-                    ProgressView()
-                } else if items.isEmpty {
-                    emptyState
-                } else {
-                    PhotoScatterView(
-                        items: items,
-                        onTap: { selected = $0 },
-                        onDelete: { item in Task { await delete(item) } }
-                    )
-                }
-            }
-            .navigationTitle("Photos")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    PhotosPicker(selection: $pickerItems, maxSelectionCount: 12, matching: .images) {
-                        if isUploading {
-                            HStack(spacing: 6) {
-                                ProgressView()
-                                if uploadTotal > 1 { Text("\(uploadDone)/\(uploadTotal)").font(.caption) }
-                            }
-                        } else {
-                            Image(systemName: "plus.circle.fill")
+            if isLoading && entries.isEmpty {
+                ProgressView()
+            } else if months.isEmpty {
+                emptyState
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        ForEach(months) { month in
+                            monthSection(month)
                         }
                     }
-                    .disabled(isUploading)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 }
             }
-            .task { await load() }
-            .refreshable { await load() }
-            .onChange(of: pickerItems) { picks in
-                Task { await uploadMany(picks) }
+        }
+        .navigationTitle("Photos")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await load() }
+        .refreshable { await load() }
+        .fullScreenCover(item: $pager) { ctx in
+            JournalPhotoPager(photos: ctx.photos, startIndex: ctx.startIndex) { await load() }
+        }
+        .overlay(alignment: .bottom) { errorToast }
+    }
+
+    private func monthSection(_ month: JournalPhotoMonth) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(month.label)
+                    .font(.title3.weight(.heavy))
+                    .foregroundStyle(Theme.ink)
+                Text("\(month.photos.count)")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
             }
-            .fullScreenCover(item: $selected) { PhotoDetailView(item: $0) }
-            .overlay(alignment: .bottom) {
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.footnote).foregroundStyle(.white)
-                        .padding(.horizontal, 16).padding(.vertical, 10)
-                        .background(.red.opacity(0.9), in: Capsule())
-                        .padding(.bottom, 12)
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(Array(month.photos.enumerated()), id: \.element.id) { idx, item in
+                    RemoteImage(path: item.thumbUrl)
+                        .aspectRatio(1, contentMode: .fill)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(.white, lineWidth: 3)
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .onTapGesture {
+                            // The pager walks the month you tapped into.
+                            pager = PhotoPagerContext(photos: month.photos, startIndex: idx)
+                        }
                 }
             }
+        }
     }
 
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 52)).foregroundStyle(Theme.coral)
-            Text("No photos yet").font(.title3.bold())
-            Text("Tap ＋ to toss in a few photos.")
+            Text("No photos yet").font(.title3.bold()).foregroundStyle(Theme.ink)
+            Text("Photos you add to a diary entry show up here, month by month.")
                 .font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding(32)
     }
 
-    private func load() async {
-        do {
-            items = try await APIClient.shared.listMedia().media
-            errorMessage = nil
-        } catch {
-            errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
+    @ViewBuilder
+    private var errorToast: some View {
+        if let errorMessage {
+            Text(errorMessage)
+                .font(.footnote).foregroundStyle(.white)
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(.red.opacity(0.9), in: Capsule())
+                .padding(.bottom, 12)
         }
-        isLoading = false
     }
 
-    private func uploadMany(_ picks: [PhotosPickerItem]) async {
-        guard !picks.isEmpty else { return }
-        isUploading = true
-        errorMessage = nil
-        uploadTotal = picks.count
-        uploadDone = 0
-        defer { isUploading = false; pickerItems = []; uploadTotal = 0; uploadDone = 0 }
-
-        for pick in picks {
-            do {
-                guard let data = try await pick.loadTransferable(type: Data.self),
-                      let ui = UIImage(data: data),
-                      let jpeg = ui.jpegData(compressionQuality: 0.85) else { continue }
-                _ = try await APIClient.shared.uploadPhoto(jpeg, caption: nil)
-                uploadDone += 1
-            } catch {
+    private func load() async {
+        do {
+            entries = try await APIClient.shared.listJournal()
+            errorMessage = nil
+        } catch {
+            // A superseded refresh cancels the request; that isn't a failure.
+            if !(error is CancellationError || (error as? URLError)?.code == .cancelled) {
                 errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
             }
         }
-        await load()
-        if uploadDone > 0 { Haptics.success() }
-    }
-
-    private func delete(_ item: MediaItem) async {
-        do {
-            try await APIClient.shared.deletePhoto(id: item.id)
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                items.removeAll { $0.id == item.id }
-            }
-        } catch {
-            errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
-        }
+        isLoading = false
     }
 }
 
-/// A playful "photos tossed on a table" layout: each photo is rotated and
-/// offset by a stable pseudo-random amount (derived from its id), overlapping
-/// the ones below it, with the newest on top.
-private struct PhotoScatterView: View {
-    let items: [MediaItem]
-    let onTap: (MediaItem) -> Void
-    let onDelete: (MediaItem) -> Void
+/// One month of diary photos, in the journal's own order.
+struct JournalPhotoMonth: Identifiable {
+    let id: String        // yyyy-MM
+    let label: String
+    let photos: [MediaItem]
 
-    private let cardW: CGFloat = 220
-    private let cardH: CGFloat = 292
-    private let step: CGFloat = 168 // vertical advance per photo (overlap = cardH - step)
+    /// Flattens the entries' photos into months, newest first. Entries arrive
+    /// date DESC from the server, so preserving that order here keeps this
+    /// screen and the diary pages telling the story the same way round.
+    @MainActor
+    static func group(_ entries: [JournalEntry]) -> [JournalPhotoMonth] {
+        let cal = JournalDates.utc
+        var order: [String] = []
+        var buckets: [String: [MediaItem]] = [:]
+        var labels: [String: String] = [:]
 
-    var body: some View {
-        GeometryReader { geo in
-            let jitter = max(6, (geo.size.width - cardW) / 2 - 14)
-            ScrollView(showsIndicators: false) {
-                ZStack(alignment: .top) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { idx, item in
-                        card(item)
-                            .rotationEffect(.degrees(angle(item)))
-                            .offset(x: dx(item, jitter),
-                                    y: CGFloat(idx) * step + 36 + CGFloat(rand(item.id, 3) * 20))
-                            .zIndex(Double(items.count - idx))
-                            .transition(.scale.combined(with: .opacity))
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .top)
-                .frame(height: CGFloat(max(items.count - 1, 0)) * step + cardH + 90, alignment: .top)
-                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: items.count)
+        for entry in entries where !entry.photos.isEmpty {
+            let comps = cal.dateComponents([.year, .month], from: entry.date)
+            let key = String(format: "%04d-%02d", comps.year ?? 0, comps.month ?? 0)
+            if buckets[key] == nil {
+                order.append(key)
+                labels[key] = JournalDates.monthYear.string(from: entry.date)
             }
+            buckets[key, default: []].append(contentsOf: entry.photos)
         }
-    }
-
-    private func card(_ item: MediaItem) -> some View {
-        RemoteImage(path: item.thumbUrl)
-            .frame(width: cardW, height: cardH)
-            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .strokeBorder(.white, lineWidth: 6)
-            )
-            .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 12)
-            .contentShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .onTapGesture { onTap(item) }
-            .contextMenu {
-                Button(role: .destructive) { onDelete(item) } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-    }
-
-    // Stable pseudo-random in 0..1 from the item id (FNV-1a), so angles/offsets
-    // don't jump on every re-render.
-    private func rand(_ id: String, _ salt: UInt64) -> Double {
-        var h: UInt64 = 1469598103934665603
-        for b in id.utf8 { h = (h ^ UInt64(b)) &* 1099511628211 }
-        h = (h ^ salt) &* 1099511628211
-        return Double(h % 10_000) / 10_000.0
-    }
-
-    private func angle(_ item: MediaItem) -> Double { (rand(item.id, 1) * 2 - 1) * 13 }
-    private func dx(_ item: MediaItem, _ jitter: CGFloat) -> CGFloat {
-        CGFloat(rand(item.id, 2) * 2 - 1) * jitter
-    }
-}
-
-struct PhotoDetailView: View {
-    let item: MediaItem
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            RemoteImage(path: item.fileUrl, contentMode: .fit)
-                .ignoresSafeArea()
-            VStack {
-                HStack {
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title).foregroundStyle(.white.opacity(0.9))
-                    }
-                }
-                .padding()
-                Spacer()
-                if let caption = item.caption, !caption.isEmpty {
-                    Text(caption)
-                        .foregroundStyle(.white)
-                        .padding().frame(maxWidth: .infinity)
-                        .background(.black.opacity(0.4))
-                }
-            }
+        return order.map {
+            JournalPhotoMonth(id: $0, label: labels[$0] ?? $0, photos: buckets[$0] ?? [])
         }
     }
 }

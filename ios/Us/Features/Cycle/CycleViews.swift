@@ -291,7 +291,7 @@ struct CycleDetailView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            AppleHealthCard(isConnected: cycle.insights != nil)
+            AppleHealthRow(isConnected: cycle.isHealthConnected)
         }
     }
 
@@ -321,13 +321,49 @@ struct CycleDetailView: View {
                 AppleHealthSourceNote()
             }
             .padding(.bottom, 4)
-            // Identifies the HealthKit integration even once tracking is running.
-            AppleHealthCard(isConnected: true)
+            // Identifies the HealthKit integration even once tracking is running,
+            // but as one line — the full explanation is a tap away.
+            AppleHealthRow(isConnected: true, onRefresh: refreshFromHealth)
             thoughtsCard
             sharingCard
+        } else if cycle.isHealthConnected {
+            // Connected, but Health has nothing to give yet. Never fall back to
+            // the connect card here: iOS has already shown the permission sheet
+            // and won't show it again, so that button would be a dead end.
+            noHealthDataCard
         } else {
             connectCard
         }
+    }
+
+    private var noHealthDataCard: some View {
+        VStack(spacing: 16) {
+            Card {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("No period logged yet").font(.headline)
+                    Text("Us is connected to Apple Health but hasn't found a period in the last 12 months. Log one in Health — or in the app you already use, like Flo or Clue, with Health sharing turned on — and your cycle appears here on its own.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Button {
+                        Task { await refreshFromHealth() }
+                    } label: {
+                        if connecting { ProgressView().frame(maxWidth: .infinity) }
+                        else { Label("Check Health again", systemImage: "arrow.clockwise") }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .tint(Theme.rose)
+                    .disabled(connecting)
+                }
+            }
+            AppleHealthRow(isConnected: true,
+                           statusDetail: "Waiting for data",
+                           onRefresh: refreshFromHealth)
+        }
+    }
+
+    private func refreshFromHealth() async {
+        connecting = true
+        await cycle.refreshInsights()
+        connecting = false
     }
 
     // MARK: Pregnancy (her side)
@@ -398,7 +434,7 @@ struct CycleDetailView: View {
             Card {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Your cycle").font(.headline)
-                    Text("Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
+                    Text("Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health — including periods synced there from Flo, Clue or any other app. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
             }

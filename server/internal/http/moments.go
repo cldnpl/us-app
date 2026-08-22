@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sharepact/us/internal/domain"
+	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
 
@@ -46,7 +47,7 @@ type milestoneRequest struct {
 }
 
 func (d Deps) handleCreateMilestone(w http.ResponseWriter, r *http.Request) {
-	c, _, ok := d.coupleForRequest(w, r)
+	c, userID, ok := d.coupleForRequest(w, r)
 	if !ok {
 		return
 	}
@@ -73,6 +74,13 @@ func (d Deps) handleCreateMilestone(w http.ResponseWriter, r *http.Request) {
 		d.serverError(w, "milestones: create", err)
 		return
 	}
+	d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
+		return push.Notification{
+			Title: "✨ New milestone",
+			Body:  name + " added “" + title + "”",
+			Data:  map[string]string{"type": "milestone"},
+		}
+	})
 	writeJSON(w, http.StatusCreated, toDomainMilestone(m))
 }
 

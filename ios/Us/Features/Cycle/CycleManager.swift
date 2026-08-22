@@ -26,10 +26,18 @@ enum CycleShareLevel: String, CaseIterable {
 }
 
 /// Local persistence for the cycle feature's personal flags.
+///
+/// Everything in here belongs to *this iPhone*, not to the account signed in on
+/// it: the Apple Health permission is granted to the app by the person holding
+/// the phone, and iOS never revokes it on sign-out. So none of these keys are
+/// cleared when the user signs out — otherwise the cycle would vanish and the
+/// permission sheet, which iOS only ever shows once, could not be shown again.
 enum CyclePrefs {
     private static let hasCycleKey = "userHasCycle"
     private static let pregnantKey = "isPregnant"
     private static let dueDateKey = "pregnancyDueDate"
+    private static let healthConnectedKey = "healthKitConnected"
+    private static let periodStartsKey = "cycleCachedPeriodStarts"
 
     /// nil until the user answers (in onboarding or from the cycle screen).
     static var userHasCycle: Bool? {
@@ -52,12 +60,36 @@ enum CyclePrefs {
             else { UserDefaults.standard.removeObject(forKey: dueDateKey) }
         }
     }
+
+    /// True once the Apple Health permission sheet has been completed on this
+    /// iPhone (or once we've successfully read cycle data, which proves access
+    /// was granted in an older build). iOS shows that sheet exactly once, so
+    /// this flag is what tells the UI to stop offering a "Connect" button that
+    /// could no longer do anything.
+    static var healthConnected: Bool {
+        get { UserDefaults.standard.bool(forKey: healthConnectedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: healthConnectedKey) }
+    }
+
+    /// The period-start dates last read from Apple Health, kept on this iPhone
+    /// so the cycle still renders when a live read isn't possible — at launch
+    /// before Health unlocks, offline, and right after signing back in. The
+    /// cache never leaves the device; the only thing uploaded is the summary
+    /// the user explicitly chooses to share with her partner.
+    static var cachedPeriodStarts: [Date] {
+        get { (UserDefaults.standard.array(forKey: periodStartsKey) as? [Date]) ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: periodStartsKey) }
+    }
 }
 
-/// Owns the cycle state for the UI: your own insights (read from Apple Health),
-/// your partner's shared summary (read from the backend), your sharing choice,
-/// and the free-text note for the day. Only the sharing level, the flag, and the
-/// note are persisted locally; health data is never cached by us.
+/// Owns the cycle state for the UI: your own insights (derived from Apple
+/// Health), your partner's shared summary (read from the backend), your sharing
+/// choice, and the free-text note for the day.
+///
+/// The Apple Health connection and the dates it gave us are cached on this
+/// iPhone (see `CyclePrefs`) so the cycle survives a relaunch and a sign-out —
+/// the Health permission belongs to the device, not to the account, and asking
+/// for it a second time is impossible.
 @MainActor
 final class CycleManager: ObservableObject {
     static let shared = CycleManager()
@@ -66,6 +98,18 @@ final class CycleManager: ObservableObject {
     @Published private(set) var partner: PartnerCycle?
     @Published var todayNote: String = ""
     @Published var lastError: String?
+
+    /// Whether Apple Health has been connected on this iPhone. Persisted, so it
+    /// stays true across relaunches and sign-outs even before the first read of
+    /// the session comes back.
+    @Published private(set) var isHealthConnected: Bool = CyclePrefs.healthConnected
+
+    init() {
+        // Show the last known cycle immediately. HealthKit may not answer for a
+        // while (or at all, if the device is still locked), and the account
+        // being signed in has nothing to do with the Health data on this phone.
+        insights = CycleEngine.insights(fromPeriodStarts: CyclePrefs.cachedPeriodStarts)
+    }
 
     /// Whether *this user* has a menstrual cycle (set in onboarding). nil = not
     /// asked yet (existing users) → we offer the choice from the cycle screen.
@@ -166,9 +210,15 @@ final class CycleManager: ObservableObject {
     }
 
     /// Ask for Health permission, then load my cycle and publish my summary.
+    ///
+    /// The connection is remembered on this iPhone even if the read that follows
+    /// comes back empty: iOS won't show the permission sheet twice, so a user
+    /// whose tracking app hasn't synced yet must not be sent back to a "Connect"
+    /// button that can no longer do anything.
     func connectHealth() async {
         do {
             try await HealthKitManager.shared.requestAuthorization()
+            markHealthConnected()
             await refreshInsights()
             if shareLevel != .off { await pushShare() }
         } catch {
@@ -176,13 +226,44 @@ final class CycleManager: ObservableObject {
         }
     }
 
+    /// Re-read Apple Health and update the cycle.
+    ///
+    /// A read that comes back empty — Health still locked, the tracking app
+    /// (Flo, Clue, …) hasn't synced yet, access revoked in Settings — must never
+    /// wipe what we already know. We keep the cached dates, and the ring keeps
+    /// advancing from them until Health has something newer to say.
     func refreshInsights() async {
         do {
             let starts = try await HealthKitManager.shared.periodStartDates()
+            guard !starts.isEmpty else {
+                if insights == nil {
+                    insights = CycleEngine.insights(fromPeriodStarts: CyclePrefs.cachedPeriodStarts)
+                }
+                return
+            }
+            CyclePrefs.cachedPeriodStarts = starts
             insights = CycleEngine.insights(fromPeriodStarts: starts)
+            // Reading real samples proves access was granted — this also heals
+            // users who connected in a build that didn't record the flag.
+            markHealthConnected()
         } catch {
             lastError = error.localizedDescription
         }
+    }
+
+    private func markHealthConnected() {
+        guard !isHealthConnected else { return }
+        CyclePrefs.healthConnected = true
+        isHealthConnected = true
+    }
+
+    /// Sign-out cleanup. Only the partner's shared data belongs to the account
+    /// that just signed out; the Health connection, the cached cycle and the
+    /// "do you have a cycle?" answer belong to this iPhone and are deliberately
+    /// kept, so signing back in never means setting the cycle up again.
+    func forgetPartnerData() {
+        partner = nil
+        partnerPregnancy = nil
     }
 
     func refreshPartner() async {

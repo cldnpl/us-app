@@ -13,8 +13,20 @@ struct QuizCategorySummary: Codable, Identifiable {
     let icon: String         // SF Symbol
     let colorKey: String
     let quizCount: Int
-    let completedCount: Int
-    let progress: Double   // 0...1, my completion
+    let completedCount: Int  // quizzes I've finished
+    /// 0...1 for the two of us: a quiz counts half when one of us has answered
+    /// it and fully once both have, because comparing is the point.
+    let progress: Double
+
+    // Sent only by a backend that knows about the partner's half. Optional so
+    // the app keeps working against an older deploy — and so the UI can leave
+    // the split out entirely rather than print a made-up number.
+    var partnerCompletedCount: Int? = nil
+    var yourTurnCount: Int? = nil
+    var myProgress: Double? = nil
+
+    /// Quizzes my partner has finished and I haven't — my move.
+    var waitingForMe: Int { yourTurnCount ?? 0 }
 }
 
 struct QuizCategoryDetail: Codable {
@@ -62,7 +74,14 @@ struct QuizQuestion: Codable, Identifiable {
     let options: [QuizOption]?
     let myAnswer: String?
     let partnerAnswer: String?  // present only once I've answered this one
+    /// Whether my partner has answered — known even before I answer, so a card
+    /// can say "your turn" without revealing what they picked. Optional: older
+    /// backends don't send it.
+    var partnerAnswered: Bool? = nil
     let bothAnswered: Bool
+
+    /// True when they've answered and I haven't: my move.
+    var isMyTurn: Bool { myAnswer == nil && partnerAnswered == true }
 
     var isChoice: Bool { type == "choice" }
     /// True when this question's options carry photos (render as image cards).
@@ -122,6 +141,24 @@ struct StepDots: View {
                     .frame(width: i == index ? 22 : 8, height: 8)
             }
         }
+    }
+}
+
+/// "Sam finished — your turn": one consistent nudge for every place where one
+/// of you has answered something the other hasn't, so nobody has to open a
+/// quiz to find out whose move it is.
+struct YourTurnHint: View {
+    let partnerName: String
+    let accent: Color
+    var compact = false
+
+    var body: some View {
+        Label(compact ? "Your turn" : "\(partnerName) finished — your turn",
+              systemImage: "arrow.right.circle.fill")
+            .font(.caption.bold())
+            .foregroundStyle(accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
     }
 }
 

@@ -189,6 +189,13 @@ final class Session: ObservableObject {
         SessionCache.clear()
         UserDefaults.standard.set(false, forKey: "testPaired")
         UserDefaults.standard.removeObject(forKey: "testStartDate")
+        // Drop what belonged to the account (the partner's shared cycle) but
+        // deliberately keep this iPhone's own cycle state: the Apple Health
+        // connection, the dates read from it, and the "do you have a cycle?"
+        // answer. They are device-level — iOS never revokes Health access on
+        // sign-out, and it only ever shows the permission sheet once — so
+        // clearing them would leave the user with no way to get her cycle back.
+        CycleManager.shared.forgetPartnerData()
         user = nil
         partner = nil
         couple = nil

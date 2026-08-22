@@ -10,7 +10,12 @@ struct HwdykmPackSummary: Codable, Identifiable {
     let tag: String
     let questionCount: Int
     let myDone: Bool
+    /// Optional: sent only by a backend that reports the partner's half.
+    var partnerDone: Bool? = nil
     let bothDone: Bool
+
+    /// They finished this pack and I haven't — my move.
+    var isMyTurn: Bool { !myDone && partnerDone == true }
 }
 
 struct HwdykmPackDetail: Codable {

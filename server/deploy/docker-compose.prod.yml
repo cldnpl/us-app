@@ -37,14 +37,21 @@ services:
       # Apple sends the bundle id as the token audience, so each build is only
       # accepted if its id is listed here.
       APPLE_CLIENT_IDS: com.claudianapolitano.us,us.elbek.com
-      # One topic only: APNs requires it to equal the bundle id of the app
-      # being pushed to. Flip this to com.claudianapolitano.us at cutover, together
-      # with an APNS key from the new team — until then the new build gets
-      # no notifications, and after it the old one stops getting them.
-      APNS_TOPIC: us.elbek.com
+      # One topic only: APNs requires it to equal the bundle id of the app being
+      # pushed to, so while the app moves accounts this is the single switch
+      # that decides which build can receive notifications at all — the other
+      # one gets nothing, silently.
+      #
+      # Set APNS_TOPIC in .env at cutover, together with an APNs .p8 from the
+      # new team (APNS_KEY_ID / APNS_TEAM_ID must match that key, or every push
+      # is rejected):  APNS_TOPIC=com.claudianapolitano.us
+      APNS_TOPIC: ${APNS_TOPIC:-us.elbek.com}
       APNS_KEY_PATH: /app/secrets/AuthKey.p8
       APNS_KEY_ID: ${APNS_KEY_ID}
       APNS_TEAM_ID: ${APNS_TEAM_ID}
+      # Only picks which APNs host is tried first: the sender retries the other
+      # one when a token turns out to belong to it (TestFlight builds carry
+      # production tokens even while Xcode builds carry sandbox ones).
       APNS_PRODUCTION: "false"
       CORS_ALLOWED_ORIGINS: https://us.islamov.online
       MEDIA_DIR: /app/media-data
