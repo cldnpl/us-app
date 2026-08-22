@@ -19,6 +19,9 @@ const dailyJobInterval = 15 * time.Minute
 // The send is claimed per couple through notification_marks, so a restart, a
 // redeploy, or a second instance can't send the same day twice.
 func (d Deps) StartDailyJobs(ctx context.Context) {
+	// Logged at boot so the deploy logs say plainly that the scheduled side of
+	// notifications is alive, and from which hour it will fire.
+	d.Logger.Info("daily notification jobs started", "questionHourUTC", d.Config.DailyQuestionHourUTC)
 	go func() {
 		ticker := time.NewTicker(dailyJobInterval)
 		defer ticker.Stop()
