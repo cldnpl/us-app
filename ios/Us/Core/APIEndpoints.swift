@@ -91,6 +91,12 @@ extension APIClient {
                            body: ["apnsToken": apnsToken, "environment": environment])
     }
 
+    /// Unregisters this install's token from the signed-out account, so the
+    /// phone stops receiving that account's notifications.
+    func deleteDevice(apnsToken: String) async throws {
+        try await sendVoid("/v1/devices", method: "DELETE", body: ["apnsToken": apnsToken])
+    }
+
     // MARK: - Gallery
 
     func listMedia() async throws -> MediaList {

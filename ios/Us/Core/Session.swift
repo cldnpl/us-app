@@ -184,6 +184,10 @@ final class Session: ObservableObject {
     }
 
     func signOut() async {
+        // Give the phone back first: a device token belongs to whoever is
+        // signed in on it, and the account leaving must stop being able to
+        // notify this handset. Needs the tokens, so it runs before they go.
+        await PushManager.shared.unregisterCurrentDevice()
         try? await APIClient.shared.logout()
         TokenStore.clear()
         SessionCache.clear()

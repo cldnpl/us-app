@@ -61,5 +61,13 @@ final class PushManager {
         try? await APIClient.shared.registerDevice(apnsToken: token, environment: environment)
     }
 
+    /// Hands this phone back before signing out: the account that is leaving
+    /// must stop being able to reach it. Must run while the tokens are still
+    /// valid, i.e. before the Keychain is cleared.
+    func unregisterCurrentDevice() async {
+        guard let token = deviceTokenHex, TokenStore.accessToken != nil else { return }
+        try? await APIClient.shared.deleteDevice(apnsToken: token)
+    }
+
     func reset() { deviceTokenHex = nil }
 }

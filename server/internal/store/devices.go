@@ -7,12 +7,19 @@ type DeviceToken struct {
 	Environment string
 }
 
+// UpsertDevice records this install's APNs token against the signed-in user.
+//
+// The conflict is on the token alone, so registering hands the phone over to
+// whoever is signed in on it now: a token belongs to one account at a time, and
+// the previous owner stops receiving notifications meant for them on a phone
+// that is no longer theirs.
 func (s *Store) UpsertDevice(ctx context.Context, userID, apnsToken, platform, environment string) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO devices (user_id, apns_token, platform, environment)
 		 VALUES ($1, $2, $3, $4)
-		 ON CONFLICT (user_id, apns_token)
-		 DO UPDATE SET platform = EXCLUDED.platform, environment = EXCLUDED.environment, updated_at = now()`,
+		 ON CONFLICT (apns_token)
+		 DO UPDATE SET user_id = EXCLUDED.user_id, platform = EXCLUDED.platform,
+		               environment = EXCLUDED.environment, updated_at = now()`,
 		userID, apnsToken, platform, environment)
 	return err
 }
