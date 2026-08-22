@@ -121,14 +121,36 @@ struct DistanceProvider: TimelineProvider {
             // Recompute from live data: our own position (from the widget when
             // it is allowed to have one, otherwise the app's last fix) and the
             // partner's current position fetched straight from the backend.
-            let mine = await WidgetLocation.current() ?? MyLocationStore.coordinate
-            await DistanceSync.refresh(myCoordinate: mine)
+            //
+            // Under a deadline, because none of it is allowed to cost us the
+            // widget: a silent location request or an unreachable backend used
+            // to leave this provider hanging, `completion` was never called,
+            // and WidgetKit had nothing to draw but its grey placeholder —
+            // which then took the days-together widget down with it, both
+            // living in the same throttled extension. A stale distance is a far
+            // better outcome than a blank widget.
+            await withDeadline(seconds: 8) {
+                let mine = await WidgetLocation.current() ?? MyLocationStore.coordinate
+                await DistanceSync.refresh(myCoordinate: mine)
+            }
 
             let entry = DistanceEntry(date: Date(), snapshot: WidgetStore.load())
             let next = Calendar.current.date(byAdding: .minute, value: Self.refreshMinutes, to: Date())
                 ?? Date().addingTimeInterval(TimeInterval(Self.refreshMinutes * 60))
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
+    }
+}
+
+/// Runs `work`, giving up after `seconds`. Never fails — the caller carries on
+/// with whatever data it already has, which for a timeline provider is the
+/// difference between a slightly stale widget and no widget at all.
+private func withDeadline(seconds: Double, _ work: @escaping @Sendable () async -> Void) async {
+    await withTaskGroup(of: Void.self) { group in
+        group.addTask { await work() }
+        group.addTask { try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000)) }
+        _ = await group.next()   // whichever finishes first
+        group.cancelAll()
     }
 }
 
@@ -158,6 +180,10 @@ private final class WidgetLocation: NSObject, CLLocationManagerDelegate {
             manager.delegate = self
             manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
             manager.requestLocation()
+            // CoreLocation can stay silent — neither a fix nor an error — so
+            // this may never resume. That's survivable only because the caller
+            // runs it under `withDeadline`, which stops waiting and falls back
+            // to the app's last known position.
         }
     }
 
