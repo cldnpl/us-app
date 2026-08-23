@@ -102,6 +102,26 @@ struct QuizOption: Codable, Identifiable {
     let icon: String?    // SF Symbol
     let image: String?   // photo keyword (loremflickr)
 
+    init(id: String, label: String, icon: String?, image: String?) {
+        self.id = id
+        self.label = label
+        self.icon = icon
+        self.image = image
+    }
+
+    // Older backend deploys omit the id field entirely; fall back to the label
+    // so the card still decodes. Once the backend is on the id-carrying build
+    // this branch is never taken.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.label = try c.decode(String.self, forKey: .label)
+        self.icon = try c.decodeIfPresent(String.self, forKey: .icon)
+        self.image = try c.decodeIfPresent(String.self, forKey: .image)
+        self.id = (try c.decodeIfPresent(String.self, forKey: .id)) ?? self.label
+    }
+
+    enum CodingKeys: String, CodingKey { case id, label, icon, image }
+
     /// The backend resolves photo keywords to concrete, curated image URLs.
     var imageURL: URL? {
         guard let image, !image.isEmpty else { return nil }

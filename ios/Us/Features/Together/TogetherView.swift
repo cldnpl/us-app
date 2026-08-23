@@ -4,6 +4,7 @@ struct TogetherView: View {
     @EnvironmentObject private var premium: PremiumStore
     @EnvironmentObject private var session: Session
     @State private var daily: QuizDaily?
+    @State private var dailyError: String?
     @State private var lockedGame: GameDef?
 
     private var partnerName: String { session.partner?.displayName ?? "Your partner" }
@@ -17,7 +18,7 @@ struct TogetherView: View {
             // first screenful were simply drawn below the bottom of the display.
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    if daily != nil { dailySection }
+                    dailySection
                     quizSection
                     gamesSection
                 }
@@ -30,7 +31,10 @@ struct TogetherView: View {
             }
             .background(Theme.softBackground.ignoresSafeArea())
             .navigationTitle("Games")
-            .task { await load() }
+            // Fire from onAppear rather than .task so a parent-view rebuild
+            // (Session/PremiumStore publishing early) can't cancel the request
+            // before it lands. The detached Task is retained by the runtime.
+            .onAppear { Task { await load() } }
             .refreshable { await load() }
             .sheet(item: $lockedGame) { game in
                 PaywallView(trigger: .game(game.title))
@@ -47,6 +51,19 @@ struct TogetherView: View {
                     DailyQuestionCard(daily: daily, partnerName: partnerName)
                 }
                 .buttonStyle(.plain)
+            } else if let dailyError {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Daily question unavailable")
+                        .font(.subheadline.bold()).foregroundStyle(Theme.ink)
+                    Text(dailyError)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(3)
+                    Button("Retry") { Task { await loadDaily() } }
+                        .font(.caption.bold())
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
             }
         }
     }
@@ -107,7 +124,33 @@ struct TogetherView: View {
     }
 
     private func loadDaily() async {
-        daily = try? await APIClient.shared.getDailyQuiz()
+        do {
+            daily = try await APIClient.shared.getDailyQuiz()
+            dailyError = nil
+        } catch is CancellationError {
+            return
+        } catch let e as URLError where e.code == .cancelled {
+            return
+        } catch {
+            daily = nil
+            dailyError = describe(error)
+        }
+    }
+
+    private func describe(_ error: Error) -> String {
+        if let apiErr = error as? APIErrorResponse { return apiErr.error }
+        switch error {
+        case let DecodingError.keyNotFound(key, ctx):
+            return "missing key '\(key.stringValue)' at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))"
+        case let DecodingError.valueNotFound(_, ctx):
+            return "null value at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))"
+        case let DecodingError.typeMismatch(type, ctx):
+            return "type mismatch (\(type)) at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))"
+        case let DecodingError.dataCorrupted(ctx):
+            return "corrupted: \(ctx.debugDescription)"
+        default:
+            return error.localizedDescription
+        }
     }
 }
 
