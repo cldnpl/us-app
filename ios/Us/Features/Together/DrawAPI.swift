@@ -7,9 +7,10 @@ extension APIClient {
         try await send("/v1/games/draw")
     }
 
-    func submitDraw(_ jpeg: Data) async throws -> DrawRound {
+    func submitDraw(_ jpeg: Data, roundID: String) async throws -> DrawRound {
         let data = try await uploadImage("/v1/games/draw/submit", imageData: jpeg,
-                                         filename: "drawing.jpg", caption: nil)
+                                         filename: "drawing.jpg", caption: nil,
+                                         queryItems: [URLQueryItem(name: "roundId", value: roundID)])
         return try decoder.decode(DrawRound.self, from: data)
     }
 

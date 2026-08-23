@@ -18,7 +18,7 @@ struct DrawTogetherView: View {
                 if round.mySubmitted {
                     revealScreen(round)
                 } else {
-                    DrawingPad(prompt: round.prompt) { data in await submit(data) }
+                    DrawingPad(prompt: round.prompt) { data in await submit(data, roundID: round.roundId) }
                 }
             } else if let errorMessage {
                 Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
@@ -109,9 +109,9 @@ struct DrawTogetherView: View {
 
     private func reload() async { round = try? await APIClient.shared.getDraw() }
 
-    private func submit(_ data: Data) async {
+    private func submit(_ data: Data, roundID: String) async {
         do {
-            round = try await APIClient.shared.submitDraw(data)
+            round = try await APIClient.shared.submitDraw(data, roundID: roundID)
             Haptics.success()
         } catch {
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription

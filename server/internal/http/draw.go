@@ -134,8 +134,26 @@ func (d Deps) handleGetDraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
-	round, ok := d.currentRound(w, r, c.ID, userID)
-	if !ok {
+	roundID := r.URL.Query().Get("roundId")
+	if roundID == "" {
+		writeError(w, http.StatusBadRequest, "missing_round_id", "the drawing round is required")
+		return
+	}
+	round, err := d.Store.GetGame(r.Context(), roundID)
+	if err != nil || round.CoupleID != c.ID || round.GameType != drawGameType {
+		writeError(w, http.StatusNotFound, "draw_round_not_found", "that drawing round is no longer available")
+		return
+	}
+	if round.Status != "active" {
+		writeError(w, http.StatusConflict, "draw_round_finished", "that drawing round is already finished")
+		return
+	}
+	// A stale upload from an older round must never land in the newest round.
+	// This protects against a slow image upload completing after the couple has
+	// already revealed the previous round and started another one.
+	latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, drawGameType)
+	if latestErr != nil || latest.ID != round.ID {
+		writeError(w, http.StatusConflict, "draw_round_stale", "that drawing round has ended")
 		return
 	}
 	v, err := d.buildDrawView(r, round, userID, partner.ID)

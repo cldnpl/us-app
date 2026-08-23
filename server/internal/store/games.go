@@ -46,6 +46,14 @@ func (s *Store) GetLatestGame(ctx context.Context, coupleID, gameType string) (G
 		 ORDER BY created_at DESC LIMIT 1`, coupleID, gameType))
 }
 
+// GetGame fetches a specific game session so submissions remain attached to
+// the round the client actually drew, even if another round starts while an
+// upload is still in flight.
+func (s *Store) GetGame(ctx context.Context, id string) (GameSession, error) {
+	return scanGame(s.pool.QueryRow(ctx,
+		`SELECT `+gameCols+` FROM game_sessions WHERE id = $1`, id))
+}
+
 func (s *Store) UpdateGame(ctx context.Context, id string, state []byte, turnUserID *string, status string) (GameSession, error) {
 	return scanGame(s.pool.QueryRow(ctx,
 		`UPDATE game_sessions SET state = $2, turn_user_id = $3, status = $4, updated_at = now()

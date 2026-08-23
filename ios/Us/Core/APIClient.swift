@@ -114,12 +114,15 @@ final class APIClient {
     /// Adds the active app language to every JSON request in one place. The
     /// server ignores it for endpoints whose content is not localized, while
     /// quiz/hwdykm/debate handlers can never accidentally omit it.
-    private func localizedURL(for path: String) async throws -> URL {
+    private func localizedURL(for path: String, queryItems extraQueryItems: [URLQueryItem] = []) async throws -> URL {
         let url = baseURL.appendingPathComponent(path)
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw APIClientError.invalidResponse
         }
         var items = components.queryItems ?? []
+        for item in extraQueryItems where !items.contains(where: { $0.name == item.name }) {
+            items.append(item)
+        }
         if !items.contains(where: { $0.name == "lang" }) {
             let code = await LanguageManager.shared.current.code
             items.append(URLQueryItem(name: "lang", value: code))
@@ -137,9 +140,10 @@ final class APIClient {
     }
 
     /// Uploads a single image as multipart/form-data and returns the JSON response.
-    func uploadImage(_ path: String, imageData: Data, filename: String, caption: String?) async throws -> Data {
+    func uploadImage(_ path: String, imageData: Data, filename: String, caption: String?,
+                     queryItems: [URLQueryItem] = []) async throws -> Data {
         let boundary = "Boundary-\(UUID().uuidString)"
-        let requestURL = try await localizedURL(for: path)
+        let requestURL = try await localizedURL(for: path, queryItems: queryItems)
         var body = Data()
         func appendString(_ s: String) { body.append(s.data(using: .utf8)!) }
         appendString("--\(boundary)\r\n")
