@@ -48,8 +48,9 @@ struct DrawTogetherView: View {
                 } else {
                     VStack(spacing: 12) {
                         QuizIconTile(systemName: "hourglass", colorKey: "purple", size: 64).padding(.top, 8)
-                        Text("Nicely done!").font(.title3.bold()).foregroundStyle(Theme.ink)
-                        Text("Your drawing is locked in. You'll both see them side by side once \(partnerName) draws too.")
+                        Text("Waiting for \(partnerName)'s drawing")
+                            .font(.title3.bold()).foregroundStyle(Theme.ink)
+                        Text("Your drawing is locked in. We'll show both drawings once \(partnerName) finishes.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
@@ -57,11 +58,13 @@ struct DrawTogetherView: View {
                 }
 
                 VStack(spacing: 10) {
-                    Button { Task { await newRound() } } label: {
-                        Label("New drawing", systemImage: "arrow.clockwise")
-                            .font(.subheadline.bold())
+                    if round.revealed {
+                        Button { Task { await newRound() } } label: {
+                            Label("New drawing", systemImage: "arrow.clockwise")
+                                .font(.subheadline.bold())
+                        }
+                        .buttonStyle(PillButtonStyle(color: accent))
                     }
-                    .buttonStyle(PillButtonStyle(color: accent))
 
                     if !round.revealed {
                         Button { Task { await reload() } } label: {

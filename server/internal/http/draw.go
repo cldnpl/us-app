@@ -222,6 +222,22 @@ func (d Deps) handleNewDraw(w http.ResponseWriter, r *http.Request) {
 
 	prev := ""
 	if g, err := d.Store.GetLatestGame(r.Context(), c.ID, drawGameType); err == nil {
+		// Never abandon a live round while either partner is still drawing. The
+		// client hides this action until the reveal, but enforce it here too so a
+		// stale client or a second device cannot silently orphan the partner's
+		// in-progress drawing.
+		if g.Status == "active" {
+			current, viewErr := d.buildDrawView(r, g, userID, partner.ID)
+			if viewErr != nil {
+				d.serverError(w, "draw: current round", viewErr)
+				return
+			}
+			if !current.Revealed {
+				writeError(w, http.StatusConflict, "draw_waiting", "waiting for the other drawing to finish")
+				return
+			}
+		}
+
 		var st drawState
 		_ = json.Unmarshal(g.State, &st)
 		prev = st.Prompt
