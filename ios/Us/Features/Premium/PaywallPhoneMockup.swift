@@ -310,8 +310,9 @@ private struct PaywallDemoScreenView: View {
             .frame(maxHeight: .infinity)
             .overlay(Rectangle().strokeBorder(.black.opacity(0.05)))
 
-            DrawToolbar(palette: [.black, .red, .orange, .green, .blue, .purple],
-                        color: .red, isEraser: false, accent: accent)
+            DrawToolbar(palette: DrawPaletteColor.all, selectedColorID: "red",
+                        brushSize: 6, brushSizes: [3, 6, 12, 20],
+                        isEraser: false, isBucket: false, accent: accent)
         }
     }
 
