@@ -23,10 +23,20 @@ final class LanguageManager: ObservableObject {
         let saved = UserDefaults.standard.string(forKey: Self.storageKey)
         current = saved.flatMap(AppLanguage.named) ?? AppLanguage.deviceDefault
         Bundle.setLanguage(current.code)
+        // Instant on relaunch: show whatever was cached last time before the
+        // network even gets a chance to answer, then quietly refresh it.
+        TranslationStore.shared.loadCachedIfAvailable(for: current.code)
+        Task { await TranslationStore.shared.load(for: current.code) }
     }
 
-    func select(_ language: AppLanguage) {
+    /// Switches the display language. Awaits the new language's translations
+    /// before flipping `current` — `current` drives `.id(current.code)` on the
+    /// root view (see UsApp.swift), which forces a full rebuild, so the
+    /// network snapshot must already be populated by the time that happens or
+    /// the rebuild would render with stale/English text and then jump.
+    func select(_ language: AppLanguage) async {
         guard language != current else { return }
+        await TranslationStore.shared.load(for: language.code)
         UserDefaults.standard.set(language.code, forKey: Self.storageKey)
         // Also tell the system, so anything we don't route through our own
         // bundle override (system dialogs, share sheets) follows along on the
@@ -51,6 +61,12 @@ final class LanguageManager: ObservableObject {
 /// `NSLocalizedString` / SwiftUI `Text("…")` lookup goes through here.
 private final class LocalizedBundle: Bundle, @unchecked Sendable {
     override func localizedString(forKey key: String, value: String?, table tableName: String?) -> String {
+        // Three-rung fallback: the backend-fetched translation for the current
+        // language, then whatever .lproj resource this bundle points at (only
+        // ever English now — see Localizable.xcstrings), then the raw key.
+        if let translated = Bundle.translatedString(forKey: key) {
+            return translated
+        }
         guard let path = objc_getAssociatedObject(self, &Bundle.overrideBundleKey) as? String,
               let override = Bundle(path: path) else {
             return super.localizedString(forKey: key, value: value, table: tableName)

@@ -17,7 +17,7 @@ import (
 func resolveOptions(opts []catalogOption) []quizOptionView {
 	out := make([]quizOptionView, 0, len(opts))
 	for _, o := range opts {
-		v := quizOptionView{Label: o.Label, Icon: o.Icon}
+		v := quizOptionView{ID: o.ID, Label: o.Label, Icon: o.Icon}
 		if o.Image != "" {
 			if url, ok := photoURL[o.Image]; ok {
 				v.Image = url
@@ -69,6 +69,7 @@ type quizCategoryDetail struct {
 }
 
 type quizOptionView struct {
+	ID    string `json:"id"`
 	Label string `json:"label"`
 	Icon  string `json:"icon,omitempty"`  // SF Symbol
 	Image string `json:"image,omitempty"` // photo keyword
@@ -79,7 +80,7 @@ type quizQuestionView struct {
 	Prompt        string           `json:"prompt"`
 	Type          string           `json:"type"`
 	Options       []quizOptionView `json:"options,omitempty"`
-	MyAnswer      *string          `json:"myAnswer"`
+	MyAnswer      *string          `json:"myAnswer"`      // option id (choice) or free text (open)
 	PartnerAnswer *string          `json:"partnerAnswer"` // revealed only after I answer this question
 	// Whether my partner has answered, which the app can say ("your turn")
 	// without revealing *what* they answered before I've answered myself.
@@ -132,8 +133,9 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 	counts := completionByUser(keys)
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 
-	out := make([]quizCategorySummary, 0, len(quizCatalog))
-	for _, cat := range quizCatalog {
+	categories := quizCategoriesFor(langParam(r))
+	out := make([]quizCategorySummary, 0, len(categories))
+	for _, cat := range categories {
 		done, partnerDone, yourTurn := 0, 0, 0
 		for _, q := range cat.Quizzes {
 			mine := quizDone(counts, q.ID, userID, len(q.Questions))
@@ -182,7 +184,7 @@ func (d Deps) handleGetQuizCategory(w http.ResponseWriter, r *http.Request) {
 	catID := chi.URLParam(r, "id")
 	var cat catalogCategory
 	found := false
-	for _, cc := range quizCatalog {
+	for _, cc := range quizCategoriesFor(langParam(r)) {
 		if cc.ID == catID {
 			cat, found = cc, true
 			break
@@ -227,7 +229,7 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quizID := chi.URLParam(r, "quizId")
-	quiz, found := findQuiz(quizID)
+	quiz, found := findQuizIn(quizCategoriesFor(langParam(r)), quizID)
 	if !found {
 		writeError(w, http.StatusNotFound, "unknown_quiz", "unknown quiz")
 		return
@@ -295,7 +297,8 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &req) {
 		return
 	}
-	if !quiz.questionIDSet()[req.QuestionID] {
+	question, found := quiz.question(req.QuestionID)
+	if !found {
 		writeError(w, http.StatusBadRequest, "unknown_question", "unknown question")
 		return
 	}
@@ -303,6 +306,22 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 	if answer == "" {
 		writeError(w, http.StatusBadRequest, "empty", "pick or write an answer first")
 		return
+	}
+	// Choice questions store the option id, never its (localizable) label —
+	// otherwise two partners on different languages could never match, and a
+	// stored answer would stop resolving the moment the label wording changes.
+	if question.Type == qTypeChoice {
+		validOption := false
+		for _, o := range question.Options {
+			if o.ID == answer {
+				validOption = true
+				break
+			}
+		}
+		if !validOption {
+			writeError(w, http.StatusBadRequest, "unknown_option", "unknown option")
+			return
+		}
 	}
 	if err := d.Store.UpsertQuizAnswer(r.Context(), c.ID, quizID, req.QuestionID, userID, answer); err != nil {
 		d.serverError(w, "quiz: save", err)
@@ -330,10 +349,15 @@ type dailyQuestionResponse struct {
 	Question      quizQuestionView `json:"question"`
 }
 
-// dailyPick returns the category, quiz and question for a given day.
-func dailyPick(t time.Time) (catalogCategory, catalogQuiz, catalogQuestion) {
+// dailyPick returns the category, quiz and question for a given day, chosen
+// from categories. The day-index math only depends on category/question
+// counts, which are identical between the English catalog and any of its
+// localized copies (same structure, translated text) — so callers pass
+// quizCatalog for id-only validation or quizCategoriesFor(lang) for display,
+// and always land on the same logical question either way.
+func dailyPick(t time.Time, categories []catalogCategory) (catalogCategory, catalogQuiz, catalogQuestion) {
 	day := int(t.Unix() / 86400) // days since epoch (UTC)
-	cat := quizCatalog[((day%len(quizCatalog))+len(quizCatalog))%len(quizCatalog)]
+	cat := categories[((day%len(categories))+len(categories))%len(categories)]
 	type qp struct {
 		quiz catalogQuiz
 		q    catalogQuestion
@@ -344,7 +368,7 @@ func dailyPick(t time.Time) (catalogCategory, catalogQuiz, catalogQuestion) {
 			all = append(all, qp{quiz, q})
 		}
 	}
-	pick := all[(day/len(quizCatalog))%len(all)]
+	pick := all[(day/len(categories))%len(all)]
 	return cat, pick.quiz, pick.q
 }
 
@@ -363,7 +387,7 @@ func (d Deps) handleGetDailyQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now().UTC()
-	cat, quiz, q := dailyPick(now)
+	cat, quiz, q := dailyPick(now, quizCategoriesFor(langParam(r)))
 	key := dailyKey(now)
 
 	answers, err := d.Store.GetQuizAnswers(r.Context(), c.ID, key)
@@ -418,7 +442,20 @@ func (d Deps) handleAnswerDailyQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now().UTC()
-	_, _, q := dailyPick(now)
+	_, _, q := dailyPick(now, quizCatalog)
+	if q.Type == qTypeChoice {
+		validOption := false
+		for _, o := range q.Options {
+			if o.ID == answer {
+				validOption = true
+				break
+			}
+		}
+		if !validOption {
+			writeError(w, http.StatusBadRequest, "unknown_option", "unknown option")
+			return
+		}
+	}
 	if err := d.Store.UpsertQuizAnswer(r.Context(), c.ID, dailyKey(now), q.ID, userID, answer); err != nil {
 		d.serverError(w, "daily: save", err)
 		return

@@ -21,6 +21,9 @@ server/deploy/api
 *.test
 *.out
 
+# ---- Python tooling ----
+server/scripts/__pycache__/
+
 # ---- Node / Next.js (landing) ----
 landing/node_modules/
 landing/.next/

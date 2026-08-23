@@ -7,21 +7,41 @@ import SwiftUI
 /// either name, so both "deutsch" and "german" find German.
 struct LanguagePickerView: View {
     @ObservedObject private var languages = LanguageManager.shared
+    @ObservedObject private var translations = TranslationStore.shared
     @State private var query = ""
 
     var body: some View {
         List(filtered) { language in
             Button {
-                languages.select(language)
-                Haptics.success()
+                Task {
+                    await languages.select(language)
+                    Haptics.success()
+                }
             } label: {
                 row(for: language)
             }
             .tint(.primary)
+            .disabled(translations.isLoading)
         }
         .searchable(text: $query, prompt: Text("Search languages"))
         .navigationTitle(Text("Language"))
         .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            // Blocking, not inline: every string on screen is about to change
+            // at once, so a partial re-render mid-fetch would look broken
+            // rather than just slow.
+            if translations.isLoading {
+                ZStack {
+                    Color.black.opacity(0.15).ignoresSafeArea()
+                    ProgressView()
+                        .tint(.white)
+                        .padding(20)
+                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.default, value: translations.isLoading)
     }
 
     private func row(for language: AppLanguage) -> some View {

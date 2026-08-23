@@ -79,8 +79,8 @@ struct QuizPlayView: View {
             if q.hasPhotos {
                 VStack(spacing: 14) {
                     ForEach(options) { o in
-                        Button { toggle(o.label) } label: {
-                            PhotoChoiceCard(option: o, colorKey: colorKey, selected: selection == o.label)
+                        Button { toggle(o.id) } label: {
+                            PhotoChoiceCard(option: o, colorKey: colorKey, selected: selection == o.id)
                         }
                         .buttonStyle(.plain)
                     }
@@ -88,8 +88,8 @@ struct QuizPlayView: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(options) { o in
-                        Button { toggle(o.label) } label: {
-                            IconChoiceRow(option: o, colorKey: colorKey, selected: selection == o.label)
+                        Button { toggle(o.id) } label: {
+                            IconChoiceRow(option: o, colorKey: colorKey, selected: selection == o.id)
                         }
                         .buttonStyle(.plain)
                     }
@@ -236,8 +236,8 @@ struct QuizPlayView: View {
 
     // MARK: - Actions
 
-    private func toggle(_ label: String) {
-        selection = (selection == label) ? nil : label
+    private func toggle(_ optionID: String) {
+        selection = (selection == optionID) ? nil : optionID
         Haptics.tap(.light)
     }
 

@@ -133,9 +133,9 @@ struct HwdykmPlayView: View {
                         .foregroundStyle(Theme.ink).padding(.horizontal)
 
                     VStack(spacing: 12) {
-                        ForEach(q.options, id: \.self) { opt in
-                            Button { selection = (selection == opt) ? nil : opt; Haptics.tap(.light) } label: {
-                                HwdykmOptionRow(text: opt, selected: selection == opt, accent: accent)
+                        ForEach(q.options) { opt in
+                            Button { selection = (selection == opt.id) ? nil : opt.id; Haptics.tap(.light) } label: {
+                                HwdykmOptionRow(text: opt.label, selected: selection == opt.id, accent: accent)
                             }
                             .buttonStyle(.plain)
                         }
@@ -211,8 +211,8 @@ struct HwdykmPlayView: View {
                 Image(systemName: q.matched ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundStyle(q.matched ? Theme.coral : .secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Real answer: \(q.honestAnswer ?? "—")").font(.footnote).foregroundStyle(Theme.ink)
-                    Text("Guess: \(q.guess ?? "—")").font(.footnote).foregroundStyle(.secondary)
+                    Text("Real answer: \(q.option(for: q.honestAnswer)?.label ?? "—")").font(.footnote).foregroundStyle(Theme.ink)
+                    Text("Guess: \(q.option(for: q.guess)?.label ?? "—")").font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }

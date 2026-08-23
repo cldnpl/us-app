@@ -46,7 +46,7 @@ func (d Deps) runDailyQuestionNudge(ctx context.Context) {
 		d.Logger.Warn("daily question: list couples", "err", err)
 		return
 	}
-	_, _, question := dailyPick(now)
+	_, _, question := dailyPick(now, quizCatalog)
 	key := dailyKey(now)
 
 	for _, c := range couples {

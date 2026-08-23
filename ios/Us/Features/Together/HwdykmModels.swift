@@ -30,13 +30,25 @@ struct HwdykmPackDetail: Codable {
     let questions: [HwdykmQuestion]
 }
 
+struct HwdykmOption: Codable, Identifiable {
+    let id: String
+    let label: String
+}
+
 struct HwdykmQuestion: Codable, Identifiable {
     let id: String
     let prompt: String
-    let options: [String]
+    let options: [HwdykmOption]
     let subjectIsMe: Bool      // true → I answer honestly; false → I guess my partner
-    let myAnswer: String?
-    let honestAnswer: String?  // reveal only
-    let guess: String?         // reveal only
+    let myAnswer: String?      // option id
+    let honestAnswer: String?  // option id, reveal only
+    let guess: String?         // option id, reveal only
     let matched: Bool
+
+    /// Look up the option matching a stored answer id, for display. Ids are
+    /// stable across languages; labels are not, so never match on label.
+    func option(for id: String?) -> HwdykmOption? {
+        guard let id else { return nil }
+        return options.first { $0.id == id }
+    }
 }

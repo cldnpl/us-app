@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -92,6 +93,11 @@ func run(logger *slog.Logger) error {
 		Mail:   mailer,
 		Media:  mediaStore,
 	}
+	contentTranslations, err := deps.Store.AllContentTranslations(ctx)
+	if err != nil {
+		return fmt.Errorf("load content translations: %w", err)
+	}
+	httpapi.LoadCatalogTranslations(logger, contentTranslations)
 	router := httpapi.NewRouter(deps)
 
 	// Notifications nobody's request can trigger (the Question of the Day).

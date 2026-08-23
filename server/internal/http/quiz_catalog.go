@@ -1,5 +1,7 @@
 package httpapi
 
+import "fmt"
+
 // Static quiz catalog. Categories → quizzes → questions, all keyed by stable
 // string ids that quiz_answers references. Content lives in code so it can grow
 // without a DB migration. Icons are SF Symbol names (rendered on iOS); photo
@@ -22,9 +24,13 @@ const (
 	qTypeChoice quizQuestionType = "choice" // pick one of Options
 )
 
-// catalogOption is one selectable answer. Label is stored as the answer. Icon
-// is an optional SF Symbol; Image is an optional photo keyword (loremflickr).
+// catalogOption is one selectable answer. ID is stable within its question
+// (assigned by index in choice(), never by label) and is what quiz_answers
+// stores/compares — Label is display-only and may be localized per request,
+// so it must never be used for matching. Icon is an optional SF Symbol; Image
+// is an optional photo keyword (loremflickr).
 type catalogOption struct {
+	ID    string `json:"id"`
 	Label string `json:"label"`
 	Icon  string `json:"icon,omitempty"`
 	Image string `json:"image,omitempty"`
@@ -59,8 +65,14 @@ type catalogCategory struct {
 func icon(label, sf string) catalogOption       { return catalogOption{Label: label, Icon: sf} }
 func photo(label, keyword string) catalogOption { return catalogOption{Label: label, Image: keyword} }
 
-// choice builds a this-or-that / which-do-you-prefer question.
+// choice builds a this-or-that / which-do-you-prefer question. Option ids are
+// assigned here by position ("opt0", "opt1", …) rather than on each individual
+// icon()/photo() call — stable as long as options are only ever appended, never
+// reordered or removed, which matches how this catalog evolves in practice.
 func choice(id, prompt string, options ...catalogOption) catalogQuestion {
+	for i := range options {
+		options[i].ID = fmt.Sprintf("opt%d", i)
+	}
 	return catalogQuestion{ID: id, Prompt: prompt, Type: qTypeChoice, Options: options}
 }
 
@@ -1502,4 +1514,15 @@ func (q catalogQuiz) questionIDSet() map[string]bool {
 		set[question.ID] = true
 	}
 	return set
+}
+
+// question returns the question with the given id within this quiz, and
+// whether it exists.
+func (q catalogQuiz) question(id string) (catalogQuestion, bool) {
+	for _, question := range q.Questions {
+		if question.ID == id {
+			return question, true
+		}
+	}
+	return catalogQuestion{}, false
 }

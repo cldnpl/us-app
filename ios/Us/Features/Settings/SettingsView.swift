@@ -12,33 +12,22 @@ struct SettingsView: View {
     @State private var showUnpairConfirm = false
     @State private var showDeleteConfirm = false
     @State private var showAddWidget = false
-    @State private var showEmailChange = false
     /// Whether iOS is currently letting Us notify this person. Read on appear
     /// and whenever the app comes back — the only place it can change is the
     /// system Settings app, which means leaving and returning.
     @State private var notificationsAllowed: Bool?
 
-    /// Draft of the display name. Committed on blur or return, not per
-    /// keystroke, so we don't PATCH the server on every letter typed.
-    @State private var nameDraft = ""
-    @FocusState private var nameFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("Name") {
-                        TextField("Your name", text: $nameDraft)
-                            .multilineTextAlignment(.trailing)
-                            .textContentType(.name)
-                            .submitLabel(.done)
-                            .focused($nameFocused)
-                            .onSubmit { commitName() }
+                    NavigationLink {
+                        ProfileEditView()
+                    } label: {
+                        Label("Profile", systemImage: "person.crop.circle")
                     }
-
-                    Button { showEmailChange = true } label: { emailRow }
-                        .tint(.primary)
 
                     Toggle("I have a menstrual cycle", isOn: Binding(
                         get: { cycle.userHasCycle == true },
@@ -135,24 +124,10 @@ struct SettingsView: View {
             .onAppear {
                 if let existing = session.couple?.startDate { startDate = existing }
                 pronoun = PartnerPrefs.pronoun ?? .they
-                nameDraft = session.user?.displayName ?? ""
             }
             .task { await refreshNotificationStatus() }
-            // Tapping an inert part of a Form doesn't drop focus, so blur alone
-            // would silently lose a typed name. Commit on every way out of the
-            // screen: blur, Return, leaving the tab, and backgrounding the app.
-            .onChange(of: nameFocused) { focused in
-                if !focused { commitName() }
-            }
-            .onDisappear { commitName() }
             .onChange(of: scenePhase) { phase in
-                if phase != .active { commitName() }
                 if phase == .active { Task { await refreshNotificationStatus() } }
-            }
-            .onChange(of: session.user?.displayName) { newName in
-                // Keep the field in step when the name changes elsewhere (a
-                // foreground refresh, say) and the user isn't mid-edit.
-                if !nameFocused, let newName { nameDraft = newName }
             }
             .onChange(of: pronoun) { new in session.setPartnerPronoun(new) }
             .onChange(of: startDate) { newDate in
@@ -168,7 +143,6 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .sheet(isPresented: $showPaywall) { PaywallView() }
-            .sheet(isPresented: $showEmailChange) { ChangeEmailView() }
             .confirmationDialog("Unpair from your partner?", isPresented: $showUnpairConfirm, titleVisibility: .visible) {
                 Button("Unpair", role: .destructive) { Task { await unpair() } }
                 Button("Cancel", role: .cancel) {}
@@ -182,32 +156,6 @@ struct SettingsView: View {
                 Text("This permanently removes your account, journal entries and photos. It can't be undone.")
             }
         }
-    }
-
-    /// The email row: current address plus a disclosure chevron.
-    private var emailRow: some View {
-        HStack {
-            Text("Email")
-            Spacer()
-            Text(session.user?.email ?? "Add")
-                .foregroundStyle(.secondary)
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
-        }
-    }
-
-    /// Saves the name if it actually changed, reverting an empty field rather
-    /// than sending a blank name the server would reject.
-    private func commitName() {
-        let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            nameDraft = session.user?.displayName ?? ""
-            return
-        }
-        guard trimmed != session.user?.displayName else { return }
-        nameDraft = trimmed
-        Task { await session.updateName(trimmed); Haptics.success() }
     }
 
     /// Notification state, and the way back when they're off: iOS only ever

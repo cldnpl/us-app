@@ -72,7 +72,7 @@ struct QuizQuestion: Codable, Identifiable {
     let prompt: String
     let type: String            // "open" | "choice"
     let options: [QuizOption]?
-    let myAnswer: String?
+    let myAnswer: String?       // option id (choice) or free text (open)
     let partnerAnswer: String?  // present only once I've answered this one
     /// Whether my partner has answered — known even before I answer, so a card
     /// can say "your turn" without revealing what they picked. Optional: older
@@ -87,19 +87,20 @@ struct QuizQuestion: Codable, Identifiable {
     /// True when this question's options carry photos (render as image cards).
     var hasPhotos: Bool { options?.contains { $0.image != nil } ?? false }
 
-    /// Look up the option matching an answer label, to show its icon/photo in compare.
-    func option(for label: String?) -> QuizOption? {
-        guard let label else { return nil }
-        return options?.first { $0.label == label }
+    /// Look up the option matching a stored answer id, to show its label/icon/
+    /// photo in compare. Ids are stable across languages; labels are not, so
+    /// they must never be used to match — see catalogOption in the Go catalog.
+    func option(for id: String?) -> QuizOption? {
+        guard let id else { return nil }
+        return options?.first { $0.id == id }
     }
 }
 
 struct QuizOption: Codable, Identifiable {
+    let id: String
     let label: String
     let icon: String?    // SF Symbol
     let image: String?   // photo keyword (loremflickr)
-
-    var id: String { label }
 
     /// The backend resolves photo keywords to concrete, curated image URLs.
     var imageURL: URL? {

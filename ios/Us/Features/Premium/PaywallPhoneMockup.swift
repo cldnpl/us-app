@@ -418,9 +418,9 @@ enum PaywallSampleData {
     static let quiz = (
         prompt: "What's your ideal way to end a long day together?",
         options: [
-            QuizOption(label: "A long shower, together", icon: "drop.fill", image: nil),
-            QuizOption(label: "Sofa, series, no talking", icon: "tv.fill", image: nil),
-            QuizOption(label: "Straight to bed", icon: "moon.stars.fill", image: nil),
+            QuizOption(id: "opt0", label: "A long shower, together", icon: "drop.fill", image: nil),
+            QuizOption(id: "opt1", label: "Sofa, series, no talking", icon: "tv.fill", image: nil),
+            QuizOption(id: "opt2", label: "Straight to bed", icon: "moon.stars.fill", image: nil),
         ]
     )
 

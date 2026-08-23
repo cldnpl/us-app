@@ -27,14 +27,14 @@ type hwdykmPackSummary struct {
 }
 
 type hwdykmQuestionView struct {
-	ID           string   `json:"id"`
-	Prompt       string   `json:"prompt"`
-	Options      []string `json:"options"`
-	SubjectIsMe  bool     `json:"subjectIsMe"` // true → I answer honestly; false → I guess my partner
-	MyAnswer     *string  `json:"myAnswer"`
-	HonestAnswer *string  `json:"honestAnswer"` // reveal only
-	Guess        *string  `json:"guess"`        // reveal only
-	Matched      bool     `json:"matched"`
+	ID           string         `json:"id"`
+	Prompt       string         `json:"prompt"`
+	Options      []hwdykmOption `json:"options"`
+	SubjectIsMe  bool           `json:"subjectIsMe"` // true → I answer honestly; false → I guess my partner
+	MyAnswer     *string        `json:"myAnswer"`     // option id
+	HonestAnswer *string        `json:"honestAnswer"` // option id, reveal only
+	Guess        *string        `json:"guess"`        // option id, reveal only
+	Matched      bool           `json:"matched"`
 }
 
 type hwdykmPackDetail struct {
@@ -83,8 +83,9 @@ func (d Deps) handleListHwdykmPacks(w http.ResponseWriter, r *http.Request) {
 		counts[k.QuizID][k.UserID]++
 	}
 
-	out := make([]hwdykmPackSummary, 0, len(hwdykmPacks))
-	for _, p := range hwdykmPacks {
+	packs := hwdykmPacksFor(langParam(r))
+	out := make([]hwdykmPackSummary, 0, len(packs))
+	for _, p := range packs {
 		total := len(p.Questions)
 		key := hwdykmKey(p.ID)
 		myDone := counts[key][userID] >= total && total > 0
@@ -108,7 +109,7 @@ func (d Deps) handleGetHwdykmPack(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	pack, found := findHwdykmPack(chi.URLParam(r, "id"))
+	pack, found := findHwdykmPackIn(hwdykmPacksFor(langParam(r)), chi.URLParam(r, "id"))
 	if !found {
 		writeError(w, http.StatusNotFound, "unknown_pack", "unknown pack")
 		return
@@ -201,20 +202,27 @@ func (d Deps) handleAnswerHwdykmPack(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &req) {
 		return
 	}
-	valid := false
-	for _, q := range pack.Questions {
-		if q.ID == req.QuestionID {
-			valid = true
+	var question *hwdykmQuestion
+	for i := range pack.Questions {
+		if pack.Questions[i].ID == req.QuestionID {
+			question = &pack.Questions[i]
 			break
 		}
 	}
-	if !valid {
+	if question == nil {
 		writeError(w, http.StatusBadRequest, "unknown_question", "unknown question")
 		return
 	}
 	answer := strings.TrimSpace(req.Answer)
-	if answer == "" {
-		writeError(w, http.StatusBadRequest, "empty", "pick an answer first")
+	validOption := false
+	for _, o := range question.Options {
+		if o.ID == answer {
+			validOption = true
+			break
+		}
+	}
+	if !validOption {
+		writeError(w, http.StatusBadRequest, "unknown_option", "unknown option")
 		return
 	}
 	if err := d.Store.UpsertQuizAnswer(r.Context(), c.ID, hwdykmKey(pack.ID), req.QuestionID, userID, answer); err != nil {

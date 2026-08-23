@@ -63,6 +63,7 @@
 		AAF8DBA2B857DA5011090DAD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF76B2DE10E2AB402F433015 /* RootView.swift */; };
 		AE93CDF82AC585AD6A149E44 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD249F764F14A63C5CD51B8D /* Session.swift */; };
 		AEF2F45A4E33FB7CF8DA5E01 /* MissYouSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE3705C78CB511681055EF3 /* MissYouSender.swift */; };
+		B09309A6568F6F960E0AFF0C /* TranslationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2973F0821847CA5EE50AC6 /* TranslationStore.swift */; };
 		B6F12FCF5DD241758D7C8046 /* DebateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E040D752BBF0D481F63993F /* DebateViews.swift */; };
 		B960FA7BD966375E77D2AC93 /* TogetherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DEA62B27284E7FC247AA54 /* TogetherView.swift */; };
 		BA76717068F6E539E369CD88 /* SnapViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3109B4071D1FB5407AD32D7A /* SnapViews.swift */; };
@@ -146,6 +147,7 @@
 		37E6D6DA342BBDA0C296AFAF /* PersonalOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalOnboardingView.swift; sourceTree = "<group>"; };
 		3814F0480D37EB1223B70352 /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
 		387A4CDEFCF90279F56B6E0D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		3B2973F0821847CA5EE50AC6 /* TranslationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationStore.swift; sourceTree = "<group>"; };
 		4B0CC51C200F4046514F8942 /* SharedConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedConfig.swift; sourceTree = "<group>"; };
 		4C1F9D99AF1EF7273EC5682C /* DistanceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceViews.swift; sourceTree = "<group>"; };
 		4CAE8F0878FC18342F6C50B4 /* QuizCategoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizCategoriesView.swift; sourceTree = "<group>"; };
@@ -375,6 +377,7 @@
 				251A0284E86354A2A203D248 /* Models.swift */,
 				3814F0480D37EB1223B70352 /* PushManager.swift */,
 				CD249F764F14A63C5CD51B8D /* Session.swift */,
+				3B2973F0821847CA5EE50AC6 /* TranslationStore.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -531,32 +534,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				ar,
-				bn,
-				da,
-				de,
 				en,
-				es,
-				fa,
-				fil,
-				fr,
-				hi,
-				id,
-				it,
-				ja,
-				ko,
-				nl,
-				pl,
-				"pt-BR",
-				ru,
-				sw,
-				th,
-				tr,
-				uk,
-				ur,
-				uz,
-				vi,
-				"zh-Hans",
 			);
 			mainGroup = 36A88B0DF208FA9E0495B04A;
 			minimizedProjectReferenceProxies = 1;
@@ -679,6 +657,7 @@
 				6B27D5B26B0874B216ED6CC0 /* Theme.swift in Sources */,
 				ED7F042E236EF2DEEF74591C /* TicTacToeView.swift in Sources */,
 				B960FA7BD966375E77D2AC93 /* TogetherView.swift in Sources */,
+				B09309A6568F6F960E0AFF0C /* TranslationStore.swift in Sources */,
 				184D2AD9A5A725E6362FFEC0 /* UsApp.swift in Sources */,
 				3498FCD4DD3C45F86CF672A9 /* WelcomeView.swift in Sources */,
 				69E99F31DC16CC4C468F08F9 /* WidgetSnapshot.swift in Sources */,

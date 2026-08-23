@@ -95,8 +95,9 @@ func (d Deps) handleListDebatePacks(w http.ResponseWriter, r *http.Request) {
 		counts[k.QuizID][k.UserID]++
 	}
 
-	out := make([]debatePackSummary, 0, len(debatePacks))
-	for _, p := range debatePacks {
+	packs := debatePacksFor(langParam(r))
+	out := make([]debatePackSummary, 0, len(packs))
+	for _, p := range packs {
 		total := len(p.Motions)
 		key := debateKey(p.ID)
 		myDone := total > 0 && counts[key][userID] >= total
@@ -120,7 +121,7 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	pack, found := findDebatePack(chi.URLParam(r, "id"))
+	pack, found := findDebatePackIn(debatePacksFor(langParam(r)), chi.URLParam(r, "id"))
 	if !found {
 		writeError(w, http.StatusNotFound, "unknown_pack", "unknown pack")
 		return

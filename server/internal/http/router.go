@@ -66,6 +66,13 @@ func NewRouter(d Deps) http.Handler {
 			writeJSON(w, http.StatusOK, map[string]string{"pong": "us"})
 		})
 
+		// Public, IP-rate-limited: needed before login (onboarding/sign-in
+		// strings), and it's static content so there's no auth reason to gate it.
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.NewRateLimiter(5, 20).ByIP)
+			r.Get("/translations/{lang}", d.handleGetTranslations)
+		})
+
 		// Public auth endpoints (rate limited by IP).
 		r.Group(func(r chi.Router) {
 			r.Use(authLimiter.ByIP)

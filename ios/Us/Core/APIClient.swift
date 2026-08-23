@@ -61,7 +61,7 @@ final class APIClient {
     }
 
     private func raw(_ path: String, method: String, body: (any Encodable)?, authorized: Bool, retryOn401: Bool) async throws -> Data {
-        var req = URLRequest(url: baseURL.appendingPathComponent(path))
+        var req = URLRequest(url: try await localizedURL(for: path))
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if authorized, let token = TokenStore.accessToken {
@@ -88,7 +88,7 @@ final class APIClient {
     /// Attempts to rotate the refresh token. Returns true on success.
     private func refresh() async throws -> Bool {
         guard let rt = TokenStore.refreshToken else { return false }
-        var req = URLRequest(url: baseURL.appendingPathComponent("/v1/auth/refresh"))
+        var req = URLRequest(url: try await localizedURL(for: "/v1/auth/refresh"))
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try encoder.encode(["refreshToken": rt])
@@ -111,6 +111,24 @@ final class APIClient {
         return true
     }
 
+    /// Adds the active app language to every JSON request in one place. The
+    /// server ignores it for endpoints whose content is not localized, while
+    /// quiz/hwdykm/debate handlers can never accidentally omit it.
+    private func localizedURL(for path: String) async throws -> URL {
+        let url = baseURL.appendingPathComponent(path)
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            throw APIClientError.invalidResponse
+        }
+        var items = components.queryItems ?? []
+        if !items.contains(where: { $0.name == "lang" }) {
+            let code = await LanguageManager.shared.current.code
+            items.append(URLQueryItem(name: "lang", value: code))
+            components.queryItems = items
+        }
+        guard let localized = components.url else { throw APIClientError.invalidResponse }
+        return localized
+    }
+
     // MARK: - Media (raw bytes + multipart upload)
 
     /// Authenticated GET returning raw bytes (used for loading images).
@@ -121,6 +139,7 @@ final class APIClient {
     /// Uploads a single image as multipart/form-data and returns the JSON response.
     func uploadImage(_ path: String, imageData: Data, filename: String, caption: String?) async throws -> Data {
         let boundary = "Boundary-\(UUID().uuidString)"
+        let requestURL = try await localizedURL(for: path)
         var body = Data()
         func appendString(_ s: String) { body.append(s.data(using: .utf8)!) }
         appendString("--\(boundary)\r\n")
@@ -137,7 +156,7 @@ final class APIClient {
         appendString("--\(boundary)--\r\n")
 
         func makeRequest() -> URLRequest {
-            var req = URLRequest(url: baseURL.appendingPathComponent(path))
+            var req = URLRequest(url: requestURL)
             req.httpMethod = "POST"
             req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
             if let token = TokenStore.accessToken {

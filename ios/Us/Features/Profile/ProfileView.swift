@@ -1,7 +1,6 @@
 import SwiftUI
 
 /// Compact account glance presented from the profile icon in the Home nav bar.
-/// Full settings live in the Settings tab.
 struct ProfileView: View {
     @EnvironmentObject var session: Session
     @Environment(\.dismiss) private var dismiss
@@ -41,6 +40,9 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink("Edit") { ProfileEditView() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
@@ -59,5 +61,67 @@ struct ProfileView: View {
     private var initials: String {
         let name = session.user?.displayName ?? "?"
         return String(name.prefix(1)).uppercased()
+    }
+}
+
+/// Dedicated account editor. Profile fields stay out of the main Settings
+/// form so settings remain a list of preferences rather than an inline editor.
+struct ProfileEditView: View {
+    @EnvironmentObject var session: Session
+    @State private var nameDraft = ""
+    @FocusState private var nameFocused: Bool
+    @State private var showEmailChange = false
+    @Environment(\.scenePhase) private var scenePhase
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Your name", text: $nameDraft)
+                    .textContentType(.name)
+                    .submitLabel(.done)
+                    .focused($nameFocused)
+                    .onSubmit { commitName() }
+
+                Button { showEmailChange = true } label: {
+                    HStack {
+                        Text("Email")
+                        Spacer()
+                        Text(session.user?.email ?? "Add")
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .tint(.primary)
+            } header: {
+                Text("Profile")
+            }
+        }
+        .navigationTitle("Edit")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { nameDraft = session.user?.displayName ?? "" }
+        .onChange(of: nameFocused) { focused in
+            if !focused { commitName() }
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase != .active { commitName() }
+        }
+        .onChange(of: session.user?.displayName) { newName in
+            if !nameFocused, let newName { nameDraft = newName }
+        }
+        .onDisappear { commitName() }
+        .sheet(isPresented: $showEmailChange) { ChangeEmailView() }
+    }
+
+    private func commitName() {
+        let trimmed = nameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            nameDraft = session.user?.displayName ?? ""
+            return
+        }
+        guard trimmed != session.user?.displayName else { return }
+        nameDraft = trimmed
+        Task { await session.updateName(trimmed); Haptics.success() }
     }
 }
