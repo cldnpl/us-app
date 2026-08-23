@@ -60,7 +60,7 @@ final class TranslationStore: ObservableObject {
         defer { isLoading = false }
         do {
             let response: TranslationsResponse = try await APIClient.shared.send(
-                "translations/\(lang)", method: "GET", authorized: false)
+                "/v1/translations/\(lang)", method: "GET", authorized: false)
             strings = response.strings
             TranslationSnapshot.shared.update(response.strings)
             Self.writeCache(response.strings, for: lang)
