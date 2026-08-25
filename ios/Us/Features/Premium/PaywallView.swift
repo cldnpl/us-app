@@ -42,7 +42,7 @@ struct PaywallView: View {
 
     private var header: some View {
         VStack(spacing: 10) {
-            Text("US. PREMIUM")
+            Text(loc: "US. PREMIUM")
                 .font(.caption.bold()).tracking(2.5)
                 .foregroundStyle(Theme.rose)
 
@@ -52,7 +52,7 @@ struct PaywallView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("One subscription for both of you — every quiz pack, every game, no limits.")
+            Text(loc: "One subscription for both of you — every quiz pack, every game, no limits.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -111,21 +111,21 @@ struct PaywallView: View {
                         ProgressView().tint(.white)
                     } else {
                         Image(systemName: "sparkles")
-                        Text("Unlock everything · \(premium.priceLine)")
+                        Text(loc: "Unlock everything · \(premium.priceLine)")
                     }
                 }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(premium.isPurchasing)
 
-            Text("Auto-renews monthly. Cancel anytime in the App Store.")
+            Text(loc: "Auto-renews monthly. Cancel anytime in the App Store.")
                 .font(.caption2).foregroundStyle(.secondary)
 
             HStack(spacing: 18) {
-                Button("Restore") { Task { await premium.restore() } }
+                Button(loc: "Restore") { Task { await premium.restore() } }
                     .disabled(premium.isRestoring)
-                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Link("Privacy", destination: URL(string: "https://usapp.love/privacy")!)
+                Link("Terms".loc, destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Link("Privacy".loc, destination: URL(string: "https://usapp.love/privacy")!)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -184,7 +184,7 @@ struct PremiumLockBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "lock.fill").font(.system(size: compact ? 9 : 10, weight: .bold))
-            if !compact { Text("PREMIUM").font(.system(size: 10, weight: .bold)).tracking(0.5) }
+            if !compact { Text(loc: "PREMIUM").font(.system(size: 10, weight: .bold)).tracking(0.5) }
         }
         .foregroundStyle(.white)
         .padding(.horizontal, compact ? 7 : 9)

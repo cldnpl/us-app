@@ -54,7 +54,7 @@ struct QuizPlayView: View {
                     StepDots(total: quiz.questions.count, index: index, accent: accent) {
                         quiz.questions[$0].myAnswer != nil
                     }
-                    Text("Question \(index + 1) of \(quiz.questions.count)")
+                    Text(loc: "Question \(index + 1) of \(quiz.questions.count)")
                         .font(.caption.bold()).foregroundStyle(.secondary)
 
                     Text(q.prompt)
@@ -96,7 +96,7 @@ struct QuizPlayView: View {
                 }
             }
         } else {
-            TextField("Your answer", text: $draft, axis: .vertical)
+            TextField("Your answer".loc, text: $draft, axis: .vertical)
                 .lineLimit(3...6)
                 .padding(14)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -118,7 +118,7 @@ struct QuizPlayView: View {
         return HStack(spacing: 14) {
             if index > 0 {
                 Button { back() } label: {
-                    Label("Back", systemImage: "chevron.left").font(.subheadline.bold())
+                    Label(loc: "Back", systemImage: "chevron.left").font(.subheadline.bold())
                 }
                 .foregroundStyle(.secondary)
             }
@@ -145,9 +145,9 @@ struct QuizPlayView: View {
                     let matches = quiz.questions.filter { $0.myAnswer != nil && $0.myAnswer == $0.partnerAnswer }.count
                     VStack(spacing: 8) {
                         QuizIconTile(systemName: "checkmark.seal.fill", colorKey: colorKey, size: 64)
-                        Text("Results").font(.title.bold()).foregroundStyle(Theme.ink)
+                        Text(loc: "Results").font(.title.bold()).foregroundStyle(Theme.ink)
                         if quiz.questions.contains(where: { $0.isChoice }) {
-                            Text("You matched on \(matches) of \(quiz.questions.count)")
+                            Text(loc: "You matched on \(matches) of \(quiz.questions.count)")
                                 .font(.headline).foregroundStyle(accent)
                         }
                     }
@@ -159,19 +159,19 @@ struct QuizPlayView: View {
                 } else {
                     VStack(spacing: 14) {
                         QuizIconTile(systemName: "hourglass", colorKey: colorKey, size: 72).padding(.top, 40)
-                        Text("Waiting for results").font(.title2.bold()).foregroundStyle(Theme.ink)
-                        Text("You've answered them all! We'll show how you compare once \(partnerName) finishes this quiz too.")
+                        Text(loc: "Waiting for results").font(.title2.bold()).foregroundStyle(Theme.ink)
+                        Text(loc: "You've answered them all! We'll show how you compare once \(partnerName) finishes this quiz too.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
                 }
 
                 Button { Task { await reload() } } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
+                    Label(loc: "Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
                 }
                 .foregroundStyle(accent).padding(.top, 8)
 
-                Button("Review my answers") { withAnimation { index = 0; syncSelection(); showResults = false } }
+                Button(loc: "Review my answers") { withAnimation { index = 0; syncSelection(); showResults = false } }
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding(20)

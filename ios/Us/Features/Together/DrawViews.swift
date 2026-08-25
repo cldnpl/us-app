@@ -27,7 +27,7 @@ struct DrawTogetherView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Draw Together")
+        .navigationTitle(Text(loc: "Draw Together"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: session.remoteChangeID) { await load() }
     }
@@ -38,20 +38,20 @@ struct DrawTogetherView: View {
     private func revealScreen(_ round: DrawRound) -> some View {
         ScrollView {
             VStack(spacing: 18) {
-                Text("“\(round.prompt)”")
+                Text(loc: "“\(round.prompt)”")
                     .font(.title3.bold()).multilineTextAlignment(.center)
                     .foregroundStyle(Theme.ink).padding(.top, 8)
 
                 if round.revealed {
-                    Text("The big reveal! 🎨").font(.headline).foregroundStyle(accent)
+                    Text(loc: "The big reveal! 🎨").font(.headline).foregroundStyle(accent)
                     drawingCard(title: "You", path: round.myImagePath)
                     drawingCard(title: partnerName, path: round.partnerImagePath)
                 } else {
                     VStack(spacing: 12) {
                         QuizIconTile(systemName: "hourglass", colorKey: "purple", size: 64).padding(.top, 8)
-                        Text("Waiting for \(partnerName)'s drawing")
+                        Text(loc: "Waiting for \(partnerName)'s drawing")
                             .font(.title3.bold()).foregroundStyle(Theme.ink)
-                        Text("Your drawing is locked in. We'll show both drawings once \(partnerName) finishes.")
+                        Text(loc: "Your drawing is locked in. We'll show both drawings once \(partnerName) finishes.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
@@ -61,7 +61,7 @@ struct DrawTogetherView: View {
                 VStack(spacing: 10) {
                     if round.revealed {
                         Button { Task { await newRound() } } label: {
-                            Label("New drawing", systemImage: "arrow.clockwise")
+                            Label(loc: "New drawing", systemImage: "arrow.clockwise")
                                 .font(.subheadline.bold())
                         }
                         .buttonStyle(PillButtonStyle(color: accent))
@@ -69,7 +69,7 @@ struct DrawTogetherView: View {
 
                     if !round.revealed {
                         Button { Task { await reload() } } label: {
-                            Label("Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
+                            Label(loc: "Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
                         }
                         .foregroundStyle(accent)
                     }
@@ -291,8 +291,8 @@ struct DrawPromptHeader: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("DRAW").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
-            Text("“\(prompt)”")
+            Text(loc: "DRAW").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+            Text(loc: "“\(prompt)”")
                 .font(.title3.bold()).multilineTextAlignment(.center)
                 .foregroundStyle(Theme.ink).padding(.horizontal, 20)
             HStack(spacing: 6) {
@@ -351,13 +351,13 @@ struct DrawToolbar: View {
                         Button {
                             onBrushSize(size)
                         } label: {
-                            Label("\(Int(size)) pt", systemImage: size == brushSize ? "checkmark" : "circle")
+                            Label(loc: "\(Int(size)) pt", systemImage: size == brushSize ? "checkmark" : "circle")
                         }
                     }
                 } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "line.3.horizontal")
-                        Text("\(Int(brushSize))")
+                        Text(loc: "\(Int(brushSize))")
                             .font(.caption.bold().monospacedDigit())
                     }
                     .foregroundStyle(Theme.ink)
@@ -392,7 +392,7 @@ struct DrawToolbar: View {
 
             Button(action: onDone) {
                 if submitting { ProgressView() }
-                else { Label("Done", systemImage: "checkmark").font(.subheadline.bold()) }
+                else { Label(loc: "Done", systemImage: "checkmark").font(.subheadline.bold()) }
             }
             .buttonStyle(PillButtonStyle(color: accent))
             .frame(maxWidth: .infinity)

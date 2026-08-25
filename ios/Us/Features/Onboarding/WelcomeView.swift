@@ -21,7 +21,7 @@ struct WelcomeView: View {
                         .frame(width: 210)
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
-                    Text("Two people, one little world.")
+                    Text(loc: "Two people, one little world.")
                         .font(.title3)
                         .foregroundStyle(.white.opacity(0.95))
                         .multilineTextAlignment(.center)
@@ -29,12 +29,12 @@ struct WelcomeView: View {
 
                     VStack(spacing: 12) {
                         NavigationLink(value: AuthMode.register) {
-                            Text("Create an account")
+                            Text(loc: "Create an account")
                         }
                         .buttonStyle(PrimaryButtonStyle())
 
                         NavigationLink(value: AuthMode.login) {
-                            Text("Log in")
+                            Text(loc: "Log in")
                                 .font(.headline)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
@@ -174,7 +174,7 @@ struct AuthOptionsView: View {
                     googleButton
 
                     Button { showEmailSheet = true } label: {
-                        Label("Continue with email", systemImage: "envelope.fill")
+                        Label(loc: "Continue with email", systemImage: "envelope.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle())
@@ -197,10 +197,10 @@ struct AuthOptionsView: View {
         .sheet(isPresented: $showEmailSheet) {
             SignInView(isSignUp: isRegister)
         }
-        .alert("Google sign-in coming soon", isPresented: $showGoogleNote) {
-            Button("OK", role: .cancel) {}
+        .alert(Text(loc: "Google sign-in coming soon"), isPresented: $showGoogleNote) {
+            Button(loc: "OK", role: .cancel) {}
         } message: {
-            Text("Google sign-in still needs a bit of setup. For now, use Apple or email.")
+            Text(loc: "Google sign-in still needs a bit of setup. For now, use Apple or email.")
         }
     }
 
@@ -208,10 +208,10 @@ struct AuthOptionsView: View {
     private var googleButton: some View {
         Button { showGoogleNote = true } label: {
             HStack(spacing: 8) {
-                Text("G")
+                Text(loc: "G")
                     .font(.system(size: 18, weight: .heavy, design: .rounded))
                     .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96))
-                Text("Continue with Google").fontWeight(.medium)
+                Text(loc: "Continue with Google").fontWeight(.medium)
             }
             .foregroundStyle(.black.opacity(0.8))
             .frame(maxWidth: .infinity)

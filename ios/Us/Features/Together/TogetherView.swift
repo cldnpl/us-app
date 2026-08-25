@@ -30,7 +30,7 @@ struct TogetherView: View {
                 .padding(.bottom, 100)
             }
             .background(Theme.softBackground.ignoresSafeArea())
-            .navigationTitle("Games")
+            .navigationTitle(Text(loc: "Games"))
             // Fire from onAppear rather than .task so a parent-view rebuild
             // (Session/PremiumStore publishing early) can't cancel the request
             // before it lands. The detached Task is retained by the runtime.
@@ -53,12 +53,12 @@ struct TogetherView: View {
                 .buttonStyle(.plain)
             } else if let dailyError {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Daily question unavailable")
+                    Text(loc: "Daily question unavailable")
                         .font(.subheadline.bold()).foregroundStyle(Theme.ink)
                     Text(dailyError)
                         .font(.caption).foregroundStyle(.secondary)
                         .lineLimit(3)
-                    Button("Retry") { Task { await loadDaily() } }
+                    Button(loc: "Retry") { Task { await loadDaily() } }
                         .font(.caption.bold())
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,7 +164,7 @@ struct DailyQuestionCard: View {
         let answered = daily.question.myAnswer != nil
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Label("QUESTION OF THE DAY", systemImage: "sparkles")
+                Label(loc: "QUESTION OF THE DAY", systemImage: "sparkles")
                     .font(.caption.bold()).foregroundStyle(accent)
                 Spacer()
                 if answered {
@@ -210,7 +210,7 @@ struct CategoryCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(category.title).font(.headline).foregroundStyle(Theme.ink)
                 if locked {
-                    Text("\(category.quizCount) quizzes · Premium")
+                    Text(loc: "\(category.quizCount) quizzes · Premium")
                         .font(.caption.bold()).foregroundStyle(accent)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
@@ -218,14 +218,14 @@ struct CategoryCard: View {
                     // worth half, and only fills up once both have answered.
                     HStack(spacing: 10) {
                         ProgressBar(value: category.progress, accent: accent)
-                        Text("\(Int((category.progress * 100).rounded()))%")
+                        Text(loc: "\(Int((category.progress * 100).rounded()))%")
                             .font(.caption.bold()).foregroundStyle(accent)
                     }
                     if category.waitingForMe > 0 {
-                        Label("\(category.waitingForMe) waiting for you", systemImage: "arrow.right.circle.fill")
+                        Label(loc: "\(category.waitingForMe) waiting for you", systemImage: "arrow.right.circle.fill")
                             .font(.caption2.bold()).foregroundStyle(accent)
                     } else if let theirs = category.partnerCompletedCount {
-                        Text("You \(category.completedCount)/\(category.quizCount) · \(partnerName) \(theirs)/\(category.quizCount)")
+                        Text(loc: "You \(category.completedCount)/\(category.quizCount) · \(partnerName) \(theirs)/\(category.quizCount)")
                             .font(.caption2).foregroundStyle(.secondary)
                             .lineLimit(1).minimumScaleFactor(0.8)
                     }
@@ -254,14 +254,14 @@ struct QuizEntryCard: View {
         VStack(alignment: .leading, spacing: 14) {
             QuizIconTile(systemName: "square.grid.2x2.fill", colorKey: "purple", size: 52)
 
-            Text("Quiz").font(.title3.bold()).foregroundStyle(Theme.ink)
+            Text(loc: "Quiz").font(.title3.bold()).foregroundStyle(Theme.ink)
 
-            Text("Answer privately, then compare — topic packs from cute to deep, plus a daily question.")
+            Text(loc: "Answer privately, then compare — topic packs from cute to deep, plus a daily question.")
                 .font(.subheadline).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 6) {
-                Text("Browse quizzes").font(.subheadline.bold()).foregroundStyle(accent)
+                Text(loc: "Browse quizzes").font(.subheadline.bold()).foregroundStyle(accent)
                 Image(systemName: "chevron.right").font(.caption2.bold()).foregroundStyle(accent)
             }
             .padding(.top, 2)

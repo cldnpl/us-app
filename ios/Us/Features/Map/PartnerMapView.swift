@@ -39,7 +39,7 @@ struct PartnerMapView: View {
 
             controlCard
         }
-        .navigationTitle("Map")
+        .navigationTitle(Text(loc: "Map"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadPartner() }
         .task { await pollPartner() }
@@ -104,15 +104,15 @@ struct PartnerMapView: View {
     private var controlCard: some View {
         VStack(spacing: 12) {
             if let km = distanceKm {
-                Text("\(Int(km.rounded())) km apart")
+                Text(loc: "\(Int(km.rounded())) km apart")
                     .font(.system(.headline, design: .rounded).bold())
                     .foregroundStyle(Theme.rose)
             }
             if let p = partner, p.sharing {
-                Label("\(partnerName) is sharing 💜", systemImage: "location.fill")
+                Label(loc: "\(partnerName) is sharing 💜", systemImage: "location.fill")
                     .font(.subheadline)
             } else {
-                Text("\(partnerName) isn't sharing their location right now.")
+                Text(loc: "\(partnerName) isn't sharing their location right now.")
                     .font(.subheadline).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -126,7 +126,7 @@ struct PartnerMapView: View {
             .tint(Theme.rose)
 
             if location.authorizationStatus == .denied {
-                Text("Enable location access in Settings to share.")
+                Text(loc: "Enable location access in Settings to share.")
                     .font(.caption).foregroundStyle(.red)
             } else if location.isSharing && !location.updatesInBackground {
                 // Without "Always", our own position only moves while the app is
@@ -134,14 +134,13 @@ struct PartnerMapView: View {
                 Button {
                     location.requestAlwaysIfPossible()
                 } label: {
-                    Label("Keep the distance updating when Us is closed",
-                          systemImage: "arrow.triangle.2.circlepath")
+                    Label(loc: "Keep the distance updating when Us is closed", systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption.weight(.semibold))
                         .multilineTextAlignment(.center)
                 }
                 .tint(Theme.rose)
             }
-            Text("Off unless you turn it on.")
+            Text(loc: "Off unless you turn it on.")
                 .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }
         .padding()

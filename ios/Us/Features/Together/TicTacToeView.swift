@@ -15,7 +15,7 @@ struct TicTacToeView: View {
                 statusText
                 board
                 if game?.status == "finished" {
-                    Button("New game") { Task { await newGame() } }
+                    Button(loc: "New game") { Task { await newGame() } }
                         .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, 40)
                 }
@@ -25,7 +25,7 @@ struct TicTacToeView: View {
             }
             .padding()
         }
-        .navigationTitle("Tic-Tac-Toe")
+        .navigationTitle(Text(loc: "Tic-Tac-Toe"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .onReceive(poll) { _ in
@@ -47,14 +47,14 @@ struct TicTacToeView: View {
         if let g = game {
             if g.status == "finished" {
                 switch g.state.winner {
-                case "draw": Text("It's a draw 🤝").font(.title2.bold())
-                case mySymbol: Text("You won! 🎉").font(.title2.bold()).foregroundStyle(Theme.coral)
-                default: Text("\(session.partner?.displayName ?? "Your partner") won 💛").font(.title2.bold())
+                case "draw": Text(loc: "It's a draw 🤝").font(.title2.bold())
+                case mySymbol: Text(loc: "You won! 🎉").font(.title2.bold()).foregroundStyle(Theme.coral)
+                default: Text(verbatim: "%@ won 💛".loc(session.partner?.displayName ?? "Your partner".loc)).font(.title2.bold())
                 }
             } else if myTurn {
-                Text("Your turn  (\(mySymbol))").font(.title2.bold())
+                Text(verbatim: "Your turn  (%@)".loc(mySymbol)).font(.title2.bold())
             } else {
-                Text("\(session.partner?.displayName ?? "Partner")'s turn…").font(.title2.bold()).foregroundStyle(.secondary)
+                Text(verbatim: "%@'s turn…".loc(session.partner?.displayName ?? "Partner".loc)).font(.title2.bold()).foregroundStyle(.secondary)
             }
         } else {
             ProgressView()

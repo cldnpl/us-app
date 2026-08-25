@@ -71,7 +71,7 @@ struct JournalDayCard: View {
     @ViewBuilder
     private func block(_ entry: JournalEntry) -> some View {
         let body = VStack(alignment: .leading, spacing: 8) {
-            Text("\(authorName(entry.authorId)):")
+            Text(loc: "\(authorName(entry.authorId)):")
                 .font(.subheadline.bold())
                 .foregroundStyle(isMine(entry.authorId) ? Theme.coral : Theme.ink)
 
@@ -98,9 +98,9 @@ struct JournalDayCard: View {
                 body
             }
             .contextMenu {
-                Button { onEdit(entry) } label: { Label("Edit", systemImage: "pencil") }
+                Button { onEdit(entry) } label: { Label(loc: "Edit", systemImage: "pencil") }
                 Button(role: .destructive) { onDelete(entry) } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(loc: "Delete", systemImage: "trash")
                 }
             }
         } else {
@@ -138,7 +138,7 @@ struct PhotoStackView: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 if photos.count > shown.count {
-                    Text("+\(photos.count - shown.count)")
+                    Text(loc: "+\(photos.count - shown.count)")
                         .font(.caption.bold()).foregroundStyle(.white)
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(Theme.coral, in: Capsule())

@@ -162,7 +162,7 @@ func (d Deps) handleGetDebatePack(w http.ResponseWriter, r *http.Request) {
 		if _, done := verdicts[m.ID]; done {
 			continue
 		}
-		verdicts[m.ID] = j.Score(r.Context(), m.Prompt, argA, argB)
+		verdicts[m.ID] = j.Score(r.Context(), m.Prompt, argA, argB, langParam(r))
 		dirty = true
 	}
 	if dirty {

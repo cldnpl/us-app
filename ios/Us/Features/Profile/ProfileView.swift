@@ -10,7 +10,7 @@ struct ProfileEditorSheet: View {
             ProfileEditView()
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
+                        Button(loc: "Done") { dismiss() }
                     }
                 }
         }
@@ -28,7 +28,7 @@ struct ProfileEditView: View {
     var body: some View {
         Form {
             Section {
-                TextField("Your name", text: $nameDraft)
+                TextField("Your name".loc, text: $nameDraft)
                     .textContentType(.name)
                     .submitLabel(.done)
                     .focused($nameFocused)
@@ -36,7 +36,7 @@ struct ProfileEditView: View {
 
                 Button { showEmailChange = true } label: {
                     HStack {
-                        Text("Email")
+                        Text(loc: "Email")
                         Spacer()
                         Text(session.user?.email ?? "Add")
                             .foregroundStyle(.secondary)
@@ -47,10 +47,10 @@ struct ProfileEditView: View {
                 }
                 .tint(.primary)
             } header: {
-                Text("Profile")
+                Text(loc: "Profile")
             }
         }
-        .navigationTitle("Edit")
+        .navigationTitle(Text(loc: "Edit"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { nameDraft = session.user?.displayName ?? "" }
         .onChange(of: nameFocused) { focused in

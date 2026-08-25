@@ -43,11 +43,11 @@ struct SetupFlowView: View {
             Image(systemName: "hand.wave.fill")
                 .font(.system(size: 52)).foregroundStyle(.white)
             VStack(spacing: 8) {
-                Text("A little about \(partnerName)")
+                Text(loc: "A little about \(partnerName)")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("How should we refer to \(partnerName)? We'll use it in little messages like “thinking of them”.")
+                Text(loc: "How should we refer to \(partnerName)? We'll use it in little messages like “thinking of them”.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
@@ -68,7 +68,7 @@ struct SetupFlowView: View {
                 } else {
                     withAnimation { step = .startDate }
                 }
-            } label: { Text("Continue") }
+            } label: { Text(loc: "Continue") }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(selectedPronoun == nil)
                 .opacity(selectedPronoun == nil ? 0.6 : 1)
@@ -105,16 +105,16 @@ struct SetupFlowView: View {
             Image(systemName: "heart.text.square.fill")
                 .font(.system(size: 50)).foregroundStyle(.white)
             VStack(spacing: 6) {
-                Text("How long have you been together?")
+                Text(loc: "How long have you been together?")
                     .font(.system(.title, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("Pick the day it all began.")
+                Text(loc: "Pick the day it all began.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
             }
 
-            DatePicker("", selection: $startDate,
+            DatePicker("".loc, selection: $startDate,
                        in: ...Date(), displayedComponents: .date)
                 .datePickerStyle(.graphical)
                 .tint(Theme.rose)
@@ -125,14 +125,14 @@ struct SetupFlowView: View {
                 // day numbers turn white-on-white in dark mode.
                 .environment(\.colorScheme, .light)
 
-            Text("\(daysTogether) days together 💜")
+            Text(loc: "\(daysTogether) days together 💜")
                 .font(.headline)
                 .foregroundStyle(.white)
 
             Spacer(minLength: 12)
 
             Button { Task { await finish() } } label: {
-                if saving { ProgressView().tint(.white) } else { Text("Finish") }
+                if saving { ProgressView().tint(.white) } else { Text(loc: "Finish") }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(saving)

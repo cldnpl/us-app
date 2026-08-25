@@ -50,26 +50,26 @@ struct AddJournalEntrySheet: View {
         NavigationStack {
             Form {
                 Section {
-                    DatePicker("Day", selection: $date, in: ...Date(), displayedComponents: .date)
+                    DatePicker("Day".loc, selection: $date, in: ...Date(), displayedComponents: .date)
                         .disabled(isEditing)
                 }
 
-                Section("Words") {
-                    TextField("What happened today?", text: $text, axis: .vertical)
+                Section(header: Text(loc: "Words")) {
+                    TextField("What happened today?".loc, text: $text, axis: .vertical)
                         .lineLimit(4...12)
                 }
 
-                Section("Photos") {
+                Section(header: Text(loc: "Photos")) {
                     if !existingPhotos.isEmpty || !newPhotos.isEmpty || loadingPicks {
                         photoStrip
                     }
                     PhotosPicker(selection: $picks, maxSelectionCount: 12, matching: .images) {
-                        Label("Choose from library", systemImage: "photo.on.rectangle")
+                        Label(loc: "Choose from library", systemImage: "photo.on.rectangle")
                     }
                     .disabled(loadingPicks)
                     if UIImagePickerController.isSourceTypeAvailable(.camera) {
                         Button { showCamera = true } label: {
-                            Label("Take a photo", systemImage: "camera.fill")
+                            Label(loc: "Take a photo", systemImage: "camera.fill")
                         }
                         .disabled(loadingPicks)
                     }
@@ -83,7 +83,7 @@ struct AddJournalEntrySheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }.disabled(saving)
+                    Button(loc: "Cancel") { dismiss() }.disabled(saving)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(saving ? (progress ?? "Saving…") : "Save") { Task { await save() } }

@@ -25,7 +25,7 @@ struct DailyQuizView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Question of the Day")
+        .navigationTitle(Text(loc: "Question of the Day"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }
@@ -79,7 +79,7 @@ struct DailyQuizView: View {
                     .buttonStyle(.plain).disabled(submitting)
                 }
             } else {
-                TextField("Your answer", text: $draft, axis: .vertical)
+                TextField("Your answer".loc, text: $draft, axis: .vertical)
                     .lineLimit(3...6)
                     .padding(14)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -91,7 +91,7 @@ struct DailyQuizView: View {
             Button {
                 Task { await submit(selection ?? "") }
             } label: {
-                if submitting { ProgressView() } else { Text("Submit answer") }
+                if submitting { ProgressView() } else { Text(loc: "Submit answer") }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled((selection?.trimmingCharacters(in: .whitespaces).isEmpty ?? true) || submitting)
@@ -112,10 +112,10 @@ struct DailyQuizView: View {
                         .foregroundStyle(q.myAnswer == partner ? Theme.coral : .secondary)
                 }
             } else {
-                Label("Waiting for \(partnerName) to answer…", systemImage: "clock.fill")
+                Label(loc: "Waiting for \(partnerName) to answer…", systemImage: "clock.fill")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Text("Come back tomorrow for a new question 💫")
+            Text(loc: "Come back tomorrow for a new question 💫")
                 .font(.footnote).foregroundStyle(.secondary).padding(.top, 6)
         }
     }

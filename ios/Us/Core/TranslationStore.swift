@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// A plain, lock-protected snapshot of the current language's UI strings.
 ///
@@ -148,5 +149,44 @@ extension Bundle {
     /// fallback rung on top. Safe to call from any thread.
     static func translatedString(forKey key: String) -> String? {
         TranslationSnapshot.shared.string(forKey: key)
+    }
+}
+
+extension String {
+    /// Explicit translation lookup, resolved right now against the current
+    /// language snapshot. Prefer over `Text("literal")` when you can't be sure
+    /// SwiftUI will route the literal through `LocalizedBundle` (Text/Label
+    /// with an xcstrings catalog on iOS 17+ sometimes bypasses the swizzled
+    /// `Bundle.main`, leaving the string in the source language).
+    var loc: String {
+        Bundle.translatedString(forKey: self) ?? self
+    }
+
+    /// Same as `loc` but with printf-style substitutions applied on top of the
+    /// translated template. Use with format keys like `"%@ days together 💜"`.
+    func loc(_ args: CVarArg...) -> String {
+        let template = Bundle.translatedString(forKey: self) ?? self
+        return withVaList(args) { NSString(format: template, arguments: $0) as String }
+    }
+}
+
+extension Text {
+    /// `Text` initializer that resolves against the current-language snapshot
+    /// at render time. Guaranteed to translate as long as the snapshot has the
+    /// key, regardless of SwiftUI's bundle-lookup behavior.
+    init(loc key: String) {
+        self.init(verbatim: key.loc)
+    }
+}
+
+extension Label where Title == Text, Icon == Image {
+    init(loc key: String, systemImage name: String) {
+        self.init { Text(loc: key) } icon: { Image(systemName: name) }
+    }
+}
+
+extension Button where Label == Text {
+    init(loc key: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
+        self.init(role: role, action: action) { Text(loc: key) }
     }
 }

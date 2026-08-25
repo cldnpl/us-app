@@ -18,9 +18,9 @@ struct PairingView: View {
                         Image(systemName: "link")
                             .font(.system(size: 44))
                             .foregroundStyle(Theme.coral)
-                        Text("Connect with your partner")
+                        Text(loc: "Connect with your partner")
                             .font(.title2.bold())
-                        Text("Share a code, or enter the one your partner gives you.")
+                        Text(loc: "Share a code, or enter the one your partner gives you.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -29,22 +29,22 @@ struct PairingView: View {
 
                     Card {
                         VStack(spacing: 14) {
-                            Text("Invite your partner").font(.headline)
+                            Text(loc: "Invite your partner").font(.headline)
                             if let code = generatedCode {
                                 Text(code)
                                     .font(.system(size: 40, weight: .bold, design: .rounded))
                                     .kerning(6)
                                     .foregroundStyle(Theme.coral)
-                                Text("Share this code with your partner")
+                                Text(loc: "Share this code with your partner")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                                 ShareLink(item: "Join me on Us. 💜 Use my pairing code: \(code)") {
-                                    Label("Share code", systemImage: "square.and.arrow.up")
+                                    Label(loc: "Share code", systemImage: "square.and.arrow.up")
                                 }
                             } else {
                                 ProgressView()
                                     .padding(.vertical, 10)
-                                Text("Preparing your code…")
+                                Text(loc: "Preparing your code…")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
@@ -53,8 +53,8 @@ struct PairingView: View {
 
                     Card {
                         VStack(spacing: 14) {
-                            Text("I have a code").font(.headline)
-                            TextField("Enter code", text: $enteredCode)
+                            Text(loc: "I have a code").font(.headline)
+                            TextField("Enter code".loc, text: $enteredCode)
                                 .textInputAutocapitalization(.characters)
                                 .autocorrectionDisabled()
                                 .multilineTextAlignment(.center)
@@ -64,7 +64,7 @@ struct PairingView: View {
                             Button {
                                 Task { await redeem() }
                             } label: {
-                                if isLoading { ProgressView() } else { Text("Connect") }
+                                if isLoading { ProgressView() } else { Text(loc: "Connect") }
                             }
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(!canConnect || isLoading)
@@ -75,7 +75,7 @@ struct PairingView: View {
                         Text(errorMessage).foregroundStyle(.red).font(.footnote)
                     }
 
-                    Button("Sign out") { Task { await session.signOut() } }
+                    Button(loc: "Sign out") { Task { await session.signOut() } }
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)

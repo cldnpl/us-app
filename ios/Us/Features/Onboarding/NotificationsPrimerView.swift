@@ -36,11 +36,11 @@ struct NotificationsPrimerView: View {
                     .foregroundStyle(.white)
 
                 VStack(spacing: 10) {
-                    Text("Don't miss each other")
+                    Text(loc: "Don't miss each other")
                         .font(.system(.largeTitle, design: .rounded).bold())
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
-                    Text("Us only notifies you when \(partnerName) does something you'd want to know about.")
+                    Text(loc: "Us only notifies you when \(partnerName) does something you'd want to know about.")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.95))
                         .multilineTextAlignment(.center)
@@ -64,18 +64,18 @@ struct NotificationsPrimerView: View {
                         if asking {
                             ProgressView().tint(.white).frame(maxWidth: .infinity)
                         } else {
-                            Text("Turn on notifications").frame(maxWidth: .infinity)
+                            Text(loc: "Turn on notifications").frame(maxWidth: .infinity)
                         }
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(asking)
 
-                    Button("Not now") { dismiss() }
+                    Button(loc: "Not now") { dismiss() }
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.9))
                 }
 
-                Text("You can change this anytime in Settings.")
+                Text(loc: "You can change this anytime in Settings.")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.8))
                     .padding(.bottom, 8)

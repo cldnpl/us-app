@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // SnapImage is one photo to judge in a Snap Hunt round.
@@ -35,16 +36,21 @@ Crown the cleverest, most creative, best-fitting find — reward wit, originalit
 Choose "a" or "b", or "tie" if they are equally good.
 Keep the reason to one or two upbeat, playful sentences the couple will enjoy. Never be mean or judge the people in the photos.`
 
-// ScoreSnaps judges two Snap Hunt photos against a clue. It never errors: with
-// no API key (or any failure) it declares a tie, since cleverness can't be
-// assessed offline.
-func (j *Judge) ScoreSnaps(ctx context.Context, clue string, a, b SnapImage) SnapVerdict {
+// ScoreSnaps judges two Snap Hunt photos against a clue. `lang` is the
+// couple's app language, so the reason lands in the language they're reading
+// the game in (empty falls through to English). It never errors: with no API
+// key (or any failure) it declares a tie, since cleverness can't be assessed
+// offline.
+func (j *Judge) ScoreSnaps(ctx context.Context, clue, lang string, a, b SnapImage) SnapVerdict {
 	if j.apiKey != "" {
-		if v, ok := j.snapWithClaude(ctx, clue, a, b); ok {
+		if v, ok := j.snapWithClaude(ctx, clue, lang, a, b); ok {
 			return v
 		}
 	}
-	return SnapVerdict{Winner: "tie", Reason: "Two brilliant finds — the judge can't pick a favourite. It's a tie! 🤝"}
+	return SnapVerdict{
+		Winner: "tie",
+		Reason: localizedReason(lang, "Two brilliant finds — the judge can't pick a favourite. It's a tie! 🤝"),
+	}
 }
 
 func imageBlock(img SnapImage) map[string]any {
@@ -62,12 +68,16 @@ func imageBlock(img SnapImage) map[string]any {
 	}
 }
 
-func (j *Judge) snapWithClaude(ctx context.Context, clue string, a, b SnapImage) (SnapVerdict, bool) {
+func (j *Judge) snapWithClaude(ctx context.Context, clue, lang string, a, b SnapImage) (SnapVerdict, bool) {
 	text := fmt.Sprintf("Clue: %q\nPhoto A is the first image, Photo B is the second. Which find is cleverest? Pick a, b, or tie, and say why.", clue)
+	system := snapSystem
+	if normalized := strings.TrimSpace(lang); normalized != "" && normalized != "en" {
+		system += fmt.Sprintf("\nWrite the `reason` field in the language with BCP-47 code %q. Everything else stays JSON.", normalized)
+	}
 	body := map[string]any{
 		"model":      j.model,
 		"max_tokens": 1024,
-		"system":     snapSystem,
+		"system":     system,
 		"messages": []map[string]any{
 			{"role": "user", "content": []map[string]any{
 				{"type": "text", "text": text},

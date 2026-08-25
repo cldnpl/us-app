@@ -33,7 +33,7 @@ struct HwdykmPackListView: View {
                 }
             }
         }
-        .navigationTitle("Know Me")
+        .navigationTitle(Text(loc: "Know Me"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
@@ -63,14 +63,14 @@ struct HwdykmPackCard: View {
                 if pack.isMyTurn {
                     YourTurnHint(partnerName: partnerName, accent: accent)
                 } else {
-                    Text("\(pack.questionCount) questions").font(.caption).foregroundStyle(.secondary)
+                    Text(loc: "\(pack.questionCount) questions").font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer()
             if pack.bothDone {
-                Label("Results", systemImage: "checkmark.seal.fill").font(.caption.bold()).foregroundStyle(accent)
+                Label(loc: "Results", systemImage: "checkmark.seal.fill").font(.caption.bold()).foregroundStyle(accent)
             } else if pack.myDone {
-                Label("Waiting", systemImage: "hourglass").font(.caption.bold()).foregroundStyle(accent)
+                Label(loc: "Waiting", systemImage: "hourglass").font(.caption.bold()).foregroundStyle(accent)
             } else {
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.secondary)
             }
@@ -153,7 +153,7 @@ struct HwdykmPlayView: View {
         let isLast = index == (pack?.questions.count ?? 1) - 1
         return HStack(spacing: 14) {
             if index > 0 {
-                Button { back() } label: { Label("Back", systemImage: "chevron.left").font(.subheadline.bold()) }
+                Button { back() } label: { Label(loc: "Back", systemImage: "chevron.left").font(.subheadline.bold()) }
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -180,21 +180,21 @@ struct HwdykmPlayView: View {
                         ScoreRing(score: pack.score, color: accent).padding(.top, 12)
                         Text(pack.score >= 70 ? "You really know each other! 💖" : pack.score >= 40 ? "Not bad — room to learn 😊" : "Opposites attract 😅")
                             .font(.headline).foregroundStyle(Theme.ink)
-                        Text("Matched on \(matches) of \(pack.questions.count)")
+                        Text(loc: "Matched on \(matches) of \(pack.questions.count)")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     ForEach(pack.questions) { revealRow($0) }
                 } else {
                     VStack(spacing: 14) {
                         QuizIconTile(systemName: "hourglass", colorKey: colorKey, size: 72).padding(.top, 40)
-                        Text("Waiting for results").font(.title2.bold()).foregroundStyle(Theme.ink)
-                        Text("You're all locked in! We'll reveal your compatibility once \(partnerName) finishes this pack too.")
+                        Text(loc: "Waiting for results").font(.title2.bold()).foregroundStyle(Theme.ink)
+                        Text(loc: "You're all locked in! We'll reveal your compatibility once \(partnerName) finishes this pack too.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
                 }
                 Button { Task { await reload() } } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
+                    Label(loc: "Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
                 }
                 .foregroundStyle(accent).padding(.top, 8)
             }
@@ -211,8 +211,8 @@ struct HwdykmPlayView: View {
                 Image(systemName: q.matched ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundStyle(q.matched ? Theme.coral : .secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Real answer: \(q.option(for: q.honestAnswer)?.label ?? "—")").font(.footnote).foregroundStyle(Theme.ink)
-                    Text("Guess: \(q.option(for: q.guess)?.label ?? "—")").font(.footnote).foregroundStyle(.secondary)
+                    Text(verbatim: "Real answer: %@".loc(q.option(for: q.honestAnswer)?.label ?? "—")).font(.footnote).foregroundStyle(Theme.ink)
+                    Text(verbatim: "Guess: %@".loc(q.option(for: q.guess)?.label ?? "—")).font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }
@@ -304,8 +304,8 @@ struct ScoreRing: View {
                 .stroke(color, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 0) {
-                Text("\(score)%").font(.system(size: 34, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
-                Text("match").font(.caption).foregroundStyle(.secondary)
+                Text(loc: "\(score)%").font(.system(size: 34, weight: .bold, design: .rounded)).foregroundStyle(Theme.ink)
+                Text(loc: "match").font(.caption).foregroundStyle(.secondary)
             }
         }
         .frame(width: 130, height: 130)

@@ -24,7 +24,7 @@ struct MilestonesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                Text("Milestones").font(.title2.weight(.heavy)).foregroundStyle(Theme.ink)
+                Text(loc: "Milestones").font(.title2.weight(.heavy)).foregroundStyle(Theme.ink)
                 Image(systemName: "heart.fill").font(.headline).foregroundStyle(Theme.rose)
                 Spacer()
             }
@@ -32,7 +32,7 @@ struct MilestonesSection: View {
             Card {
                 VStack(alignment: .leading, spacing: 0) {
                     if milestones.isEmpty && editingID != "" {
-                        Text("Add your firsts — first date, first kiss, the day you met…")
+                        Text(loc: "Add your firsts — first date, first kiss, the day you met…")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .padding(.vertical, 6)
                     }
@@ -98,7 +98,7 @@ struct MilestonesSection: View {
         }
         .contextMenu {
             Button(role: .destructive) { Task { await onDelete(m.id) } } label: {
-                Label("Delete", systemImage: "trash")
+                Label(loc: "Delete", systemImage: "trash")
             }
         }
     }
@@ -107,7 +107,7 @@ struct MilestonesSection: View {
         Button { beginAdd() } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus.circle.fill").font(.title3)
-                Text("Add milestone").font(.subheadline.weight(.semibold))
+                Text(loc: "Add milestone").font(.subheadline.weight(.semibold))
                 Spacer()
             }
             .foregroundStyle(Theme.coral)
@@ -121,7 +121,7 @@ struct MilestonesSection: View {
     @ViewBuilder
     private func editor(saveTitle: String, save: @escaping () async -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("Milestone (e.g. First date)", text: $draftTitle)
+            TextField("Milestone (e.g. First date)".loc, text: $draftTitle)
                 .textFieldStyle(.roundedBorder)
                 .submitLabel(.done)
 
@@ -140,11 +140,11 @@ struct MilestonesSection: View {
                 .padding(.vertical, 2)
             }
 
-            DatePicker("Date", selection: $draftDate, displayedComponents: .date)
+            DatePicker("Date".loc, selection: $draftDate, displayedComponents: .date)
                 .font(.subheadline)
 
             HStack {
-                Button("Cancel") { finishEditing() }
+                Button(loc: "Cancel") { finishEditing() }
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button {

@@ -45,11 +45,11 @@ struct AddWidgetGuideView: View {
                 .padding(20)
             }
             .background(Theme.softBackground.ignoresSafeArea())
-            .navigationTitle("Add widget")
+            .navigationTitle(Text(loc: "Add widget"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(loc: "Done") { dismiss() }
                 }
             }
             .onAppear { player.play() }
@@ -82,16 +82,16 @@ struct AddWidgetGuideView: View {
     private var widgetPreview: some View {
         VStack(spacing: 6) {
             Image(systemName: "heart.fill").font(.title3).foregroundStyle(.white)
-            Text("342")
+            Text(loc: "342")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-            Text("days together").font(.caption).foregroundStyle(.white.opacity(0.9))
+            Text(loc: "days together").font(.caption).foregroundStyle(.white.opacity(0.9))
         }
         .frame(width: 150, height: 150)
         .background(Theme.roseGradient, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Theme.rose.opacity(0.35), radius: 16, y: 8)
         .overlay(alignment: .bottom) {
-            Text("Us.")
+            Text(loc: "Us.")
                 .font(.caption2.bold())
                 .foregroundStyle(.secondary)
                 .offset(y: 22)
@@ -100,7 +100,7 @@ struct AddWidgetGuideView: View {
 
     private func step(_ number: Int, _ text: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
-            Text("\(number)")
+            Text(loc: "\(number)")
                 .font(.headline.bold())
                 .foregroundStyle(.white)
                 .frame(width: 30, height: 30)

@@ -14,7 +14,7 @@ struct DailyQuestionView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     if let q = question {
-                        Text("💭").font(.system(size: 40))
+                        Text(loc: "💭").font(.system(size: 40))
                         Text(q.question)
                             .font(.title2.bold())
                             .multilineTextAlignment(.center)
@@ -24,23 +24,23 @@ struct DailyQuestionView: View {
                             if let partner = q.partnerAnswer {
                                 answerCard(name: session.partner?.displayName ?? "Partner", answer: partner)
                             } else {
-                                Text("Waiting for \(session.partner?.displayName ?? "your partner") to answer…")
+                                Text(verbatim: "Waiting for %@ to answer…".loc(session.partner?.displayName ?? "your partner".loc))
                                     .font(.footnote).foregroundStyle(.secondary)
                             }
-                            Button("Change my answer") {
+                            Button(loc: "Change my answer") {
                                 draft = mine
                                 editing = true
                             }
                             .font(.footnote)
                         } else {
-                            TextField("Your answer", text: $draft, axis: .vertical)
+                            TextField("Your answer".loc, text: $draft, axis: .vertical)
                                 .lineLimit(2...5)
                                 .padding(12)
                                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
                             Button {
                                 Task { await submit() }
                             } label: {
-                                if submitting { ProgressView() } else { Text("Submit") }
+                                if submitting { ProgressView() } else { Text(loc: "Submit") }
                             }
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty || submitting)
@@ -56,7 +56,7 @@ struct DailyQuestionView: View {
                 .padding(24)
             }
         }
-        .navigationTitle("Daily Question")
+        .navigationTitle(Text(loc: "Daily Question"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }

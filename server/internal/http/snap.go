@@ -136,7 +136,7 @@ func (d Deps) buildSnapView(r *http.Request, round store.GameSession, userID, pa
 			imgA, errA := os.ReadFile(d.Media.Abs(a.FilePath))
 			imgB, errB := os.ReadFile(d.Media.Abs(b.FilePath))
 			if errA == nil && errB == nil {
-				v := d.snapJudge().ScoreSnaps(r.Context(), st.Clue,
+				v := d.snapJudge().ScoreSnaps(r.Context(), st.Clue, langParam(r),
 					judge.SnapImage{Data: imgA, MediaType: "image/jpeg"},
 					judge.SnapImage{Data: imgB, MediaType: "image/jpeg"})
 				winner := "tie"

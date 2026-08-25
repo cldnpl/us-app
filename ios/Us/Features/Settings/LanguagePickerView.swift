@@ -23,8 +23,8 @@ struct LanguagePickerView: View {
             .tint(.primary)
             .disabled(translations.isLoading)
         }
-        .searchable(text: $query, prompt: Text("Search languages"))
-        .navigationTitle(Text("Language"))
+        .searchable(text: $query, prompt: Text(loc: "Search languages"))
+        .navigationTitle(Text(loc: "Language"))
         .navigationBarTitleDisplayMode(.inline)
         .overlay {
             // Blocking, not inline: every string on screen is about to change

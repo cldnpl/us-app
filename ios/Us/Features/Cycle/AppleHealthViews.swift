@@ -42,7 +42,7 @@ struct AppleHealthCard: View {
                         .foregroundStyle(Theme.rose)
                         .frame(width: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Apple Health").font(.headline)
+                        Text(loc: "Apple Health").font(.headline)
                         Text(statusDetail ?? (isConnected ? "Connected — your cycle is read from Health"
                                                           : "Not connected"))
                             .font(.subheadline).foregroundStyle(.secondary)
@@ -65,7 +65,7 @@ struct AppleHealthCard: View {
                 if let onConnect, !isConnected {
                     Button(action: onConnect) {
                         if isBusy { ProgressView().tint(.white).frame(maxWidth: .infinity) }
-                        else { Label("Connect Apple Health", systemImage: "heart.text.square.fill") }
+                        else { Label(loc: "Connect Apple Health", systemImage: "heart.text.square.fill") }
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(isBusy)
@@ -76,7 +76,7 @@ struct AppleHealthCard: View {
                         Task { await onRefresh() }
                     } label: {
                         if isBusy { ProgressView().frame(maxWidth: .infinity) }
-                        else { Label("Check Health again", systemImage: "arrow.clockwise") }
+                        else { Label(loc: "Check Health again", systemImage: "arrow.clockwise") }
                     }
                     .font(.subheadline.weight(.semibold))
                     .tint(Theme.rose)
@@ -84,7 +84,7 @@ struct AppleHealthCard: View {
                 }
 
                 Link(destination: AppleHealth.appURL) {
-                    Label("Open the Health app", systemImage: "arrow.up.forward.app")
+                    Label(loc: "Open the Health app", systemImage: "arrow.up.forward.app")
                         .font(.subheadline.weight(.semibold))
                 }
                 .tint(Theme.rose)
@@ -121,7 +121,7 @@ struct AppleHealthRow: View {
                         .font(.system(size: 22))
                         .foregroundStyle(Theme.rose)
                         .frame(width: 28)
-                    Text("Apple Health").font(.subheadline.weight(.semibold))
+                    Text(loc: "Apple Health").font(.subheadline.weight(.semibold))
                     Spacer(minLength: 8)
                     Text(statusDetail ?? (isConnected ? "Connected" : "Not connected"))
                         .font(.subheadline).foregroundStyle(.secondary)
@@ -151,7 +151,7 @@ struct AppleHealthDetailView: View {
                     .padding(.vertical, 16)
             }
         }
-        .navigationTitle("Apple Health")
+        .navigationTitle(Text(loc: "Apple Health"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

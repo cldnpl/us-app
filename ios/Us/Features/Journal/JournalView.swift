@@ -34,7 +34,7 @@ struct JournalView: View {
                 .padding(.bottom, 40)
             }
             .background(Theme.softBackground.ignoresSafeArea())
-            .navigationTitle("Journal")
+            .navigationTitle(Text(loc: "Journal"))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { showGallery = true } label: {
@@ -102,9 +102,9 @@ struct JournalView: View {
         VStack(spacing: 12) {
             Image(systemName: "book.closed")
                 .font(.system(size: 46)).foregroundStyle(Theme.coral)
-            Text("Your story starts here")
+            Text(loc: "Your story starts here")
                 .font(.title3.bold()).foregroundStyle(Theme.ink)
-            Text("Tap ✎ to write about today — add a few words, some photos, or both.")
+            Text(loc: "Tap ✎ to write about today — add a few words, some photos, or both.")
                 .font(.subheadline).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

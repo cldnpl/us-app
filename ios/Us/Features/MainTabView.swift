@@ -8,16 +8,16 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             HomeView()
-                .tabItem { Label("Home", systemImage: "house.fill") }
+                .tabItem { Label(loc: "Home", systemImage: "house.fill") }
 
             TogetherView()
-                .tabItem { Label("Games", systemImage: "sparkles") }
+                .tabItem { Label(loc: "Games", systemImage: "sparkles") }
 
             JournalView()
-                .tabItem { Label("Journal", systemImage: "book.closed.fill") }
+                .tabItem { Label(loc: "Journal", systemImage: "book.closed.fill") }
 
             SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+                .tabItem { Label(loc: "Settings", systemImage: "gearshape.fill") }
         }
         // First run after pairing: pick partner pronoun + grant location.
         .fullScreenCover(isPresented: $showSetup) {
@@ -57,12 +57,12 @@ struct ComingSoonView: View {
                     Image(systemName: symbol)
                         .font(.system(size: 52))
                         .foregroundStyle(Theme.coral)
-                    Text(title).font(.title.bold())
-                    Text(blurb)
+                    Text(verbatim: title).font(.title.bold())
+                    Text(verbatim: blurb)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                    Text("Coming soon")
+                    Text(loc: "Coming soon")
                         .font(.caption.bold())
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Theme.coral.opacity(0.15), in: Capsule())

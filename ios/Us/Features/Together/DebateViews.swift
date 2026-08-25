@@ -20,9 +20,9 @@ struct DebatePackListView: View {
                 } else {
                     LazyVStack(alignment: .leading, spacing: 14) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Choose a topic to debate!")
+                            Text(loc: "Choose a topic to debate!")
                                 .font(.title2.bold()).foregroundStyle(Theme.ink)
-                            Text("Pick a pack — you'll each argue a side and an AI judge crowns a winner.")
+                            Text(loc: "Pick a pack — you'll each argue a side and an AI judge crowns a winner.")
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -41,7 +41,7 @@ struct DebatePackListView: View {
                 }
             }
         }
-        .navigationTitle("Couples Debate")
+        .navigationTitle(Text(loc: "Couples Debate"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
@@ -71,14 +71,14 @@ struct DebatePackCard: View {
                 if pack.isMyTurn {
                     YourTurnHint(partnerName: partnerName, accent: accent)
                 } else {
-                    Text("\(pack.roundCount) rounds").font(.caption).foregroundStyle(.secondary)
+                    Text(loc: "\(pack.roundCount) rounds").font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer()
             if pack.bothDone {
-                Label("Results", systemImage: "trophy.fill").font(.caption.bold()).foregroundStyle(accent)
+                Label(loc: "Results", systemImage: "trophy.fill").font(.caption.bold()).foregroundStyle(accent)
             } else if pack.myDone {
-                Label("Waiting", systemImage: "hourglass").font(.caption.bold()).foregroundStyle(accent)
+                Label(loc: "Waiting", systemImage: "hourglass").font(.caption.bold()).foregroundStyle(accent)
             } else {
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.secondary)
             }
@@ -144,17 +144,17 @@ struct DebatePlayView: View {
                     // Both of you get this exact prompt — nobody is handed a
                     // side, so the judge is comparing two answers to the same
                     // question rather than to opposite ones.
-                    Text("YOU BOTH ARGUE THIS")
+                    Text(loc: "YOU BOTH ARGUE THIS")
                         .font(.caption.bold()).tracking(1)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Theme.coral, in: Capsule())
 
-                    Text("“\(round.motion)”")
+                    Text(loc: "“\(round.motion)”")
                         .font(.title2.bold()).multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink).padding(.horizontal)
 
-                    Text("Agree or disagree — make your case. \(partnerName) answers the same one, and the judge picks the better argument.")
+                    Text(loc: "Agree or disagree — make your case. \(partnerName) answers the same one, and the judge picks the better argument.")
                         .font(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -162,7 +162,7 @@ struct DebatePlayView: View {
 
                     ZStack(alignment: .topLeading) {
                         if draft.isEmpty {
-                            Text("Make your case…")
+                            Text(loc: "Make your case…")
                                 .font(.body).foregroundStyle(.secondary)
                                 .padding(.horizontal, 16).padding(.vertical, 16)
                         }
@@ -188,7 +188,7 @@ struct DebatePlayView: View {
         let isLast = index == (pack?.rounds.count ?? 1) - 1
         return HStack(spacing: 14) {
             if index > 0 {
-                Button { back() } label: { Label("Back", systemImage: "chevron.left").font(.subheadline.bold()) }
+                Button { back() } label: { Label(loc: "Back", systemImage: "chevron.left").font(.subheadline.bold()) }
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -215,22 +215,22 @@ struct DebatePlayView: View {
                             .font(.system(size: 54)).foregroundStyle(accent).padding(.top, 12)
                         Text(crownTitle(pack.overallWinner))
                             .font(.title2.bold()).foregroundStyle(Theme.ink)
-                        Text("\(pack.myWins)–\(pack.partnerWins) · you vs \(partnerName)")
+                        Text(loc: "\(pack.myWins)–\(pack.partnerWins) · you vs \(partnerName)")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     ForEach(pack.rounds) { revealRow($0) }
                 } else {
                     VStack(spacing: 14) {
                         QuizIconTile(systemName: "hourglass", colorKey: colorKey, size: 72).padding(.top, 40)
-                        Text("Waiting for the rebuttal").font(.title2.bold()).foregroundStyle(Theme.ink)
-                        Text("Your case is locked in! The judge compares it with \(partnerName)'s answer to the same prompt once they've argued too.")
+                        Text(loc: "Waiting for the rebuttal").font(.title2.bold()).foregroundStyle(Theme.ink)
+                        Text(loc: "Your case is locked in! The judge compares it with \(partnerName)'s answer to the same prompt once they've argued too.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
                     ForEach(pack.rounds) { pendingRow($0) }
                 }
                 Button { Task { await reload() } } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
+                    Label(loc: "Refresh", systemImage: "arrow.clockwise").font(.subheadline.bold())
                 }
                 .foregroundStyle(accent).padding(.top, 8)
             }
@@ -241,7 +241,7 @@ struct DebatePlayView: View {
     private func revealRow(_ round: DebateRound) -> some View {
         let iWon = round.roundWinner == "me"
         return VStack(alignment: .leading, spacing: 10) {
-            Text("“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
+            Text(loc: "“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
 
             DebateArgumentBlock(title: "You",
                                 text: round.myArgument, score: round.myScore,
@@ -267,8 +267,8 @@ struct DebatePlayView: View {
 
     private func pendingRow(_ round: DebateRound) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
-            Text("Your case").font(.caption2.bold()).foregroundStyle(.secondary)
+            Text(loc: "“\(round.motion)”").font(.subheadline.bold()).foregroundStyle(Theme.ink)
+            Text(loc: "Your case").font(.caption2.bold()).foregroundStyle(.secondary)
             Text(round.myArgument ?? "—").font(.footnote).foregroundStyle(Theme.ink)
         }
         .padding(14)
@@ -346,7 +346,7 @@ struct DebateArgumentBlock: View {
                 Text(title).font(.caption2.bold()).foregroundStyle(.secondary)
                 Spacer()
                 if let score {
-                    Text("\(score)/10").font(.caption2.bold())
+                    Text(loc: "\(score)/10").font(.caption2.bold())
                         .foregroundStyle(highlight ? accent : .secondary)
                 }
             }

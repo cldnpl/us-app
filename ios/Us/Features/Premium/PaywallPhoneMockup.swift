@@ -164,7 +164,7 @@ private struct PaywallDemoScreenView: View {
 
     private var statusBar: some View {
         HStack {
-            Text("9:41").font(.system(size: 15, weight: .semibold))
+            Text(loc: "9:41").font(.system(size: 15, weight: .semibold))
             Spacer()
             HStack(spacing: 5) {
                 Image(systemName: "cellularbars")
@@ -195,7 +195,7 @@ private struct PaywallDemoScreenView: View {
 
     private var quizPacks: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Answer on your own, then compare your answers.")
+            Text(loc: "Answer on your own, then compare your answers.")
                 .font(.subheadline).foregroundStyle(.secondary)
 
             ForEach(Array(PaywallSampleData.categories.enumerated()), id: \.element.id) { i, category in
@@ -218,7 +218,7 @@ private struct PaywallDemoScreenView: View {
                 QuizIconTile(systemName: "flame.fill", colorKey: "red", size: 60).padding(.top, 8)
 
                 StepDots(total: 6, index: 2, accent: accent) { $0 < 2 }
-                Text("Question 3 of 6").font(.caption.bold()).foregroundStyle(.secondary)
+                Text(loc: "Question 3 of 6").font(.caption.bold()).foregroundStyle(.secondary)
 
                 Text(quiz.prompt)
                     .font(.title2.bold()).multilineTextAlignment(.center)
@@ -236,10 +236,10 @@ private struct PaywallDemoScreenView: View {
             Spacer(minLength: 0)
 
             HStack(spacing: 14) {
-                Label("Back", systemImage: "chevron.left")
+                Label(loc: "Back", systemImage: "chevron.left")
                     .font(.subheadline.bold()).foregroundStyle(.secondary)
                 Spacer()
-                Label("Next", systemImage: "chevron.right")
+                Label(loc: "Next", systemImage: "chevron.right")
                     .font(.headline).foregroundStyle(.white)
                     .padding(.horizontal, 26).padding(.vertical, 12)
                     .background(accent, in: Capsule())
@@ -259,9 +259,9 @@ private struct PaywallDemoScreenView: View {
             ScoreRing(score: play ? 87 : 0, color: accent)
                 .animation(.easeOut(duration: 1.2), value: play)
                 .padding(.top, 12)
-            Text("You really know each other! 💖")
+            Text(loc: "You really know each other! 💖")
                 .font(.headline).foregroundStyle(Theme.ink)
-            Text("Matched on 7 of 8").font(.subheadline).foregroundStyle(.secondary)
+            Text(loc: "Matched on 7 of 8").font(.subheadline).foregroundStyle(.secondary)
 
             ForEach(Array(PaywallSampleData.knowMeReveals.enumerated()), id: \.offset) { i, reveal in
                 knowMeRevealRow(reveal)
@@ -276,13 +276,13 @@ private struct PaywallDemoScreenView: View {
     private func knowMeRevealRow(_ reveal: PaywallSampleData.Reveal) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(reveal.prompt).font(.subheadline.bold()).foregroundStyle(Theme.ink)
-            Text("About you").font(.caption2.bold()).foregroundStyle(.secondary)
+            Text(loc: "About you").font(.caption2.bold()).foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 Image(systemName: reveal.matched ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundStyle(reveal.matched ? Theme.coral : .secondary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Real answer: \(reveal.honest)").font(.footnote).foregroundStyle(Theme.ink)
-                    Text("Guess: \(reveal.guess)").font(.footnote).foregroundStyle(.secondary)
+                    Text(loc: "Real answer: \(reveal.honest)").font(.footnote).foregroundStyle(Theme.ink)
+                    Text(loc: "Guess: \(reveal.guess)").font(.footnote).foregroundStyle(.secondary)
                 }
             }
         }
@@ -345,8 +345,8 @@ private struct PaywallDemoScreenView: View {
                     .scaleEffect(play ? 1 : 0.7)
                     .animation(.spring(response: 0.55, dampingFraction: 0.6), value: play)
                     .padding(.top, 12)
-                Text("You won the debate! 🏆").font(.title2.bold()).foregroundStyle(Theme.ink)
-                Text("2–1 · you vs Alex").font(.subheadline).foregroundStyle(.secondary)
+                Text(loc: "You won the debate! 🏆").font(.title2.bold()).foregroundStyle(Theme.ink)
+                Text(loc: "2–1 · you vs Alex").font(.subheadline).foregroundStyle(.secondary)
             }
 
             ForEach(Array(PaywallSampleData.debateRounds.enumerated()), id: \.offset) { i, round in
@@ -361,7 +361,7 @@ private struct PaywallDemoScreenView: View {
 
     private func debateRow(_ round: PaywallSampleData.Round, accent: Color) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("“\(round.motion)”")
+            Text(loc: "“\(round.motion)”")
                 .font(.subheadline.bold()).foregroundStyle(Theme.ink)
 
             DebateArgumentBlock(title: "You", text: round.mine,

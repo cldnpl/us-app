@@ -26,60 +26,60 @@ struct SettingsView: View {
                     NavigationLink {
                         ProfileEditView()
                     } label: {
-                        Label("Profile", systemImage: "person.crop.circle")
+                        Label(loc: "Profile", systemImage: "person.crop.circle")
                     }
 
-                    Toggle("I have a menstrual cycle", isOn: Binding(
+                    Toggle("I have a menstrual cycle".loc, isOn: Binding(
                         get: { cycle.userHasCycle == true },
                         set: { cycle.setUserHasCycle($0) }
                     ))
                 } header: {
-                    Text("You")
+                    Text(loc: "You")
                 } footer: {
-                    Text("Off if you're supporting a partner who has one.")
+                    Text(loc: "Off if you're supporting a partner who has one.")
                 }
 
-                Section("Your relationship") {
-                    LabeledContent("Partner", value: session.partner?.displayName ?? "—")
-                    Picker("Refer to \(partnerFirstName) as", selection: $pronoun) {
+                Section(header: Text(loc: "Your relationship")) {
+                    LabeledContent("Partner".loc, value: session.partner?.displayName ?? "—")
+                    Picker("Refer to \(partnerFirstName) as".loc, selection: $pronoun) {
                         ForEach(PartnerPronoun.allCases) { Text($0.label).tag($0) }
                     }
-                    DatePicker("Together since", selection: $startDate,
+                    DatePicker("Together since".loc, selection: $startDate,
                                in: ...Date(), displayedComponents: .date)
-                    LabeledContent("Days together", value: "\(liveDays)")
+                    LabeledContent("Days together".loc, value: "\(liveDays)")
                 }
 
                 appleHealthSection
 
-                Section("App") {
+                Section(header: Text(loc: "App")) {
                     NavigationLink {
                         LanguagePickerView()
                     } label: {
-                        LabeledContent("Language") {
+                        LabeledContent("Language".loc) {
                             Text(verbatim: languages.current.endonym)
                         }
                     }
                     notificationsRow
                 }
 
-                Section("Home Screen") {
+                Section(header: Text(loc: "Home Screen")) {
                     Button {
                         showAddWidget = true
                     } label: {
-                        Label("Add the Us. widget", systemImage: "plus.square.on.square")
+                        Label(loc: "Add the Us. widget", systemImage: "plus.square.on.square")
                     }
                 }
 
                 Section {
                     if premium.isPremium {
                         HStack {
-                            Label("Us. Premium", systemImage: "sparkles")
+                            Label(loc: "Us. Premium", systemImage: "sparkles")
                             Spacer()
                             Text(PremiumStore.isTestFlightBuild ? "Beta" : "Active")
                                 .foregroundStyle(.secondary)
                         }
                         if !PremiumStore.isTestFlightBuild {
-                            Link("Manage subscription",
+                            Link("Manage subscription".loc,
                                  destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
                         }
                     } else {
@@ -87,39 +87,39 @@ struct SettingsView: View {
                             showPaywall = true
                         } label: {
                             HStack {
-                                Label("Unlock Us. Premium", systemImage: "sparkles")
+                                Label(loc: "Unlock Us. Premium", systemImage: "sparkles")
                                 Spacer()
                                 Text(premium.priceLine).foregroundStyle(.secondary)
                             }
                         }
-                        Button("Restore purchase") { Task { await premium.restore() } }
+                        Button(loc: "Restore purchase") { Task { await premium.restore() } }
                             .disabled(premium.isRestoring)
                     }
                     #if DEBUG
-                    Toggle("Dev: unlock Premium", isOn: Binding(
+                    Toggle("Dev: unlock Premium".loc, isOn: Binding(
                         get: { PremiumStore.devUnlock },
                         set: { premium.setDevUnlock($0) }
                     ))
                     #endif
                 } header: {
-                    Text("Premium")
+                    Text(loc: "Premium")
                 } footer: {
                     if PremiumStore.isTestFlightBuild {
-                        Text("Thanks for testing Us. — every quiz pack and game is unlocked for you while the app is in beta.")
+                        Text(loc: "Thanks for testing Us. — every quiz pack and game is unlocked for you while the app is in beta.")
                     } else if premium.isPremium {
-                        Text("Every quiz pack and game is unlocked for both of you.")
+                        Text(loc: "Every quiz pack and game is unlocked for both of you.")
                     } else {
-                        Text("Starters, Relationship and How Well Do You Know Me? are free. Premium unlocks every other pack and game, for both of you.")
+                        Text(loc: "Starters, Relationship and How Well Do You Know Me? are free. Premium unlocks every other pack and game, for both of you.")
                     }
                 }
 
                 Section {
-                    Button("Sign out") { Task { await session.signOut() } }
-                    Button("Unpair", role: .destructive) { showUnpairConfirm = true }
-                    Button("Delete account", role: .destructive) { showDeleteConfirm = true }
+                    Button(loc: "Sign out") { Task { await session.signOut() } }
+                    Button(loc: "Unpair", role: .destructive) { showUnpairConfirm = true }
+                    Button(loc: "Delete account", role: .destructive) { showDeleteConfirm = true }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(Text(loc: "Settings"))
             .task { await cycle.refreshOnAppear() }
             .onAppear {
                 if let existing = session.couple?.startDate { startDate = existing }
@@ -143,17 +143,17 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .sheet(isPresented: $showPaywall) { PaywallView() }
-            .confirmationDialog("Unpair from your partner?", isPresented: $showUnpairConfirm, titleVisibility: .visible) {
-                Button("Unpair", role: .destructive) { Task { await unpair() } }
-                Button("Cancel", role: .cancel) {}
+            .confirmationDialog(Text(loc: "Unpair from your partner?"), isPresented: $showUnpairConfirm, titleVisibility: .visible) {
+                Button(loc: "Unpair", role: .destructive) { Task { await unpair() } }
+                Button(loc: "Cancel", role: .cancel) {}
             } message: {
-                Text("You'll both need to pair again to reconnect.")
+                Text(loc: "You'll both need to pair again to reconnect.")
             }
-            .confirmationDialog("Delete your account?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("Delete forever", role: .destructive) { Task { await deleteAccount() } }
-                Button("Cancel", role: .cancel) {}
+            .confirmationDialog(Text(loc: "Delete your account?"), isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button(loc: "Delete forever", role: .destructive) { Task { await deleteAccount() } }
+                Button(loc: "Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently removes your account, journal entries and photos. It can't be undone.")
+                Text(loc: "This permanently removes your account, journal entries and photos. It can't be undone.")
             }
         }
     }
@@ -165,18 +165,18 @@ struct SettingsView: View {
     private var notificationsRow: some View {
         switch notificationsAllowed {
         case .some(true):
-            LabeledContent("Notifications") { Text("On").foregroundStyle(.secondary) }
+            LabeledContent("Notifications".loc) { Text(loc: "On").foregroundStyle(.secondary) }
         case .some(false):
             Button {
                 Task { await enableNotifications() }
             } label: {
-                LabeledContent("Notifications") {
-                    Text("Off").foregroundStyle(Theme.rose)
+                LabeledContent("Notifications".loc) {
+                    Text(loc: "Off").foregroundStyle(Theme.rose)
                 }
             }
             .tint(.primary)
         case nil:
-            LabeledContent("Notifications") { ProgressView() }
+            LabeledContent("Notifications".loc) { ProgressView() }
         }
     }
 
@@ -203,7 +203,7 @@ struct SettingsView: View {
     /// they answered about having a cycle — because the app ships the capability.
     private var appleHealthSection: some View {
         Section {
-            LabeledContent("Apple Health") {
+            LabeledContent("Apple Health".loc) {
                 Text(healthConnected ? "Connected" : "Not connected")
                     .foregroundStyle(.secondary)
             }
@@ -211,16 +211,16 @@ struct SettingsView: View {
                 Button {
                     Task { await cycle.connectHealth() }
                 } label: {
-                    Label("Connect Apple Health", systemImage: "heart.text.square.fill")
+                    Label(loc: "Connect Apple Health", systemImage: "heart.text.square.fill")
                 }
             }
             Link(destination: AppleHealth.appURL) {
-                Label("Open the Health app", systemImage: "arrow.up.forward.app")
+                Label(loc: "Open the Health app", systemImage: "arrow.up.forward.app")
             }
         } header: {
-            Text("Apple Health")
+            Text(loc: "Apple Health")
         } footer: {
-            Text("\(AppleHealth.readsLine) \(AppleHealth.neverWritesLine) \(AppleHealth.manageLine)")
+            Text(loc: "\(AppleHealth.readsLine) \(AppleHealth.neverWritesLine) \(AppleHealth.manageLine)")
         }
     }
 

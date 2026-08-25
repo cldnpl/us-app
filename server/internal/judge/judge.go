@@ -16,6 +16,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/sharepact/us/internal/i18n"
 )
 
 // Verdict is one round's result. Scores are 0..10. Winner is "a", "b", or
@@ -49,16 +51,18 @@ func New(apiKey, model string) *Judge {
 }
 
 // Score judges one round: `prompt` is the question both partners answered, and
-// argA/argB are their two answers to it. It never returns an error — any problem
-// reaching or parsing the model degrades to the heuristic, so a verdict always
-// exists.
-func (j *Judge) Score(ctx context.Context, prompt, argA, argB string) Verdict {
+// argA/argB are their two answers to it. `lang` is the BCP-47 code of the
+// couple's app language, so the verdict `reason` comes back in the language
+// they're reading the game in (empty falls through to English). It never
+// returns an error — any problem reaching or parsing the model degrades to the
+// heuristic, so a verdict always exists.
+func (j *Judge) Score(ctx context.Context, prompt, argA, argB, lang string) Verdict {
 	if j.apiKey != "" {
-		if v, ok := j.scoreWithClaude(ctx, prompt, argA, argB); ok {
+		if v, ok := j.scoreWithClaude(ctx, prompt, argA, argB, lang); ok {
 			return v
 		}
 	}
-	return heuristic(prompt, argA, argB)
+	return heuristic(prompt, argA, argB, lang)
 }
 
 // ---- Claude ----
@@ -86,15 +90,22 @@ Score partner A and partner B from 0 to 10 on how persuasive, clear, and creativ
 Pick the better case, or "tie" if they are within a point of each other.
 Keep the reason to one or two upbeat, playful sentences the couple will enjoy reading. Never take real relationship sides or give relationship advice.`
 
-func (j *Judge) scoreWithClaude(ctx context.Context, topic, argA, argB string) (Verdict, bool) {
+func (j *Judge) scoreWithClaude(ctx context.Context, topic, argA, argB, lang string) (Verdict, bool) {
 	prompt := fmt.Sprintf(
 		"Prompt both partners answered: %q\n\nPARTNER A:\n%s\n\nPARTNER B:\n%s\n\nScore both cases and say who argued it better.",
 		topic, strings.TrimSpace(argA), strings.TrimSpace(argB))
 
+	system := judgeSystem
+	if normalized := strings.TrimSpace(lang); normalized != "" && normalized != "en" {
+		// Force the verdict `reason` to land in the couple's app language even
+		// when the debate answers themselves came in another language.
+		system += fmt.Sprintf("\nWrite the `reason` field in the language with BCP-47 code %q. Everything else stays JSON.", normalized)
+	}
+
 	body := map[string]any{
 		"model":      j.model,
 		"max_tokens": 1024,
-		"system":     judgeSystem,
+		"system":     system,
 		"messages": []map[string]any{
 			{"role": "user", "content": prompt},
 		},
@@ -162,7 +173,9 @@ func (j *Judge) requestText(ctx context.Context, body map[string]any) (string, b
 
 // heuristic scores each case on substance signals: length within reason,
 // reasoning connectives, concrete examples, and acknowledging the other side.
-func heuristic(topic, argA, argB string) Verdict {
+// Reason strings are localized via i18n so the offline path speaks the same
+// language as the Claude one.
+func heuristic(topic, argA, argB, lang string) Verdict {
 	a := scoreText(argA)
 	b := scoreText(argB)
 	v := Verdict{AScore: a, BScore: b}
@@ -175,13 +188,31 @@ func heuristic(topic, argA, argB string) Verdict {
 		v.Winner = "tie"
 	}
 	if v.Winner == "tie" {
-		v.Reason = "Too close to call — you both made a strong case. It's a tie! 🤝"
+		v.Reason = localizedReason(lang, "Too close to call — you both made a strong case. It's a tie! 🤝")
 	} else {
 		// The app names the winner; the reason stays about the argument itself,
 		// since "a" and "b" mean nothing to the couple reading it.
-		v.Reason = "This one landed harder — clearer points and more to back them up. Nicely argued! 🏆"
+		v.Reason = localizedReason(lang, "This one landed harder — clearer points and more to back them up. Nicely argued! 🏆")
 	}
 	return v
+}
+
+// localizedReason resolves a fallback verdict string against the shared UI
+// translation table so the offline path matches the app language. Unknown
+// language or missing key falls through to the English source string.
+func localizedReason(lang, source string) string {
+	lang = strings.TrimSpace(lang)
+	if lang == "" || lang == "en" {
+		return source
+	}
+	table, ok := i18n.Strings(lang)
+	if !ok {
+		return source
+	}
+	if v, present := table[source]; present && v != "" {
+		return v
+	}
+	return source
 }
 
 func scoreText(s string) int {

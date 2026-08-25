@@ -48,7 +48,7 @@ struct PersonalOnboardingView: View {
     private var welcomeStep: some View {
         VStack(spacing: 0) {
             IntroCarousel()
-            Button { withAnimation { step = .name } } label: { Text("Get started") }
+            Button { withAnimation { step = .name } } label: { Text(loc: "Get started") }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(.horizontal, 28)
                 .padding(.top, 12)
@@ -75,17 +75,17 @@ struct PersonalOnboardingView: View {
             Image(systemName: "person.fill")
                 .font(.system(size: 52)).foregroundStyle(.white)
             VStack(spacing: 8) {
-                Text("What's your name?")
+                Text(loc: "What's your name?")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("This is how your partner will see you in Us.")
+                Text(loc: "This is how your partner will see you in Us.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
             }
 
-            TextField("Your name", text: $name)
+            TextField("Your name".loc, text: $name)
                 .textContentType(.givenName)
                 .autocorrectionDisabled()
                 .font(.title3)
@@ -98,7 +98,7 @@ struct PersonalOnboardingView: View {
             Spacer()
 
             Button { Task { await advanceFromName() } } label: {
-                if saving { ProgressView().tint(.white) } else { Text("Continue") }
+                if saving { ProgressView().tint(.white) } else { Text(loc: "Continue") }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(trimmedName.isEmpty || saving)
@@ -124,17 +124,16 @@ struct PersonalOnboardingView: View {
             Image(systemName: "heart.circle.fill")
                 .font(.system(size: 60)).foregroundStyle(.white)
             VStack(spacing: 10) {
-                Text("Do you have a\nmenstrual cycle?")
+                Text(loc: "Do you have a\nmenstrual cycle?")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("This tailors Us. for you — track your own cycle, or get gentle tips to support your partner's. You can change it anytime.")
+                Text(loc: "This tailors Us. for you — track your own cycle, or get gentle tips to support your partner's. You can change it anytime.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
                 // Says up front that cycle tracking is powered by Apple Health.
-                Label("If you do, Us reads your cycle from Apple Health — only after you allow it. Nothing is written to Health.",
-                      systemImage: "heart.text.square.fill")
+                Label(loc: "If you do, Us reads your cycle from Apple Health — only after you allow it. Nothing is written to Health.", systemImage: "heart.text.square.fill")
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(0.9))
                     .multilineTextAlignment(.leading)
@@ -143,10 +142,10 @@ struct PersonalOnboardingView: View {
             Spacer()
 
             VStack(spacing: 12) {
-                Button { chooseCycle(true) } label: { Text("Yes, I do") }
+                Button { chooseCycle(true) } label: { Text(loc: "Yes, I do") }
                     .buttonStyle(PrimaryButtonStyle())
                 Button { chooseCycle(false) } label: {
-                    Text("No, I don't")
+                    Text(loc: "No, I don't")
                         .font(.headline).foregroundStyle(.white)
                         .frame(maxWidth: .infinity).padding(.vertical, 16)
                         .background(.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -170,11 +169,11 @@ struct PersonalOnboardingView: View {
             Image(systemName: "location.circle.fill")
                 .font(.system(size: 60)).foregroundStyle(.white)
             VStack(spacing: 10) {
-                Text("Location for distance")
+                Text(loc: "Location for distance")
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text("When you and your partner both turn it on, Us. shows how far apart you are and powers the distance widgets. You're in control — you can turn it off anytime.")
+                Text(loc: "When you and your partner both turn it on, Us. shows how far apart you are and powers the distance widgets. You're in control — you can turn it off anytime.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
@@ -182,7 +181,7 @@ struct PersonalOnboardingView: View {
             Spacer()
 
             VStack(spacing: 12) {
-                Button { enableLocation() } label: { Text("Continue") }
+                Button { enableLocation() } label: { Text(loc: "Continue") }
                     .buttonStyle(PrimaryButtonStyle())
             }
         }

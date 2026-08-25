@@ -18,7 +18,7 @@ struct SignInView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Email", text: $email)
+                    TextField("Email".loc, text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
@@ -27,7 +27,7 @@ struct SignInView: View {
                         .textContentType(isSignUp ? .newPassword : .password)
                 } footer: {
                     if isSignUp {
-                        Text("At least 8 characters. You'll choose your name in the next step.")
+                        Text(loc: "At least 8 characters. You'll choose your name in the next step.")
                     }
                 }
 
@@ -54,7 +54,7 @@ struct SignInView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(loc: "Cancel") { dismiss() }
                 }
             }
         }

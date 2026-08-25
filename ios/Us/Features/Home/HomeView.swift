@@ -97,7 +97,7 @@ struct HomeView: View {
         Button { showAddWidget = true } label: {
             HStack(spacing: 4) {
                 Image(systemName: "plus")
-                Text("add widget")
+                Text(loc: "add widget")
             }
             .font(.footnote.weight(.semibold))
             .foregroundStyle(Theme.rose)
@@ -174,9 +174,9 @@ struct HomeView: View {
         } label: {
             VStack(spacing: 10) {
                 Image(systemName: "map.fill").font(.title).foregroundStyle(Theme.rose)
-                Text("See each other on the map")
+                Text(loc: "See each other on the map")
                     .font(.headline).foregroundStyle(.primary)
-                Text("Turn on location so you and \(partnerName) appear here.")
+                Text(loc: "Turn on location so you and \(partnerName) appear here.")
                     .font(.footnote).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }

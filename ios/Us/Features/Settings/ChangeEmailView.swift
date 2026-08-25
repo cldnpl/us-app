@@ -39,11 +39,11 @@ struct ChangeEmailView: View {
                     }
                 }
             }
-            .navigationTitle("Change email")
+            .navigationTitle(Text(loc: "Change email"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(loc: "Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if busy {
@@ -62,40 +62,40 @@ struct ChangeEmailView: View {
 
     private var addressStep: some View {
         Section {
-            TextField("new@email.com", text: $newEmail)
+            TextField("new@email.com".loc, text: $newEmail)
                 .textContentType(.emailAddress)
                 .keyboardType(.emailAddress)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .focused($focused)
         } header: {
-            Text("New email")
+            Text(loc: "New email")
         } footer: {
-            Text("We'll send a code there to confirm it's yours.")
+            Text(loc: "We'll send a code there to confirm it's yours.")
         }
     }
 
     private var codeStep: some View {
         Section {
-            TextField("123456", text: $code)
+            TextField("123456".loc, text: $code)
                 .keyboardType(.numberPad)
                 .textContentType(.oneTimeCode)
                 .focused($focused)
 
-            Button("Send a new code") {
+            Button(loc: "Send a new code") {
                 Task { await sendCode() }
             }
             .font(.footnote)
             .disabled(busy)
         } header: {
-            Text("Code sent to \(sentTo)")
+            Text(loc: "Code sent to \(sentTo)")
         } footer: {
             if let devCode {
                 // No mail provider is configured on this server, so there is no
                 // inbox to read — show the code rather than dead-ending.
-                Text("Dev server: no email configured. Your code is \(devCode).")
+                Text(loc: "Dev server: no email configured. Your code is \(devCode).")
             } else {
-                Text("Check your inbox. The code expires in 15 minutes.")
+                Text(loc: "Check your inbox. The code expires in 15 minutes.")
             }
         }
     }

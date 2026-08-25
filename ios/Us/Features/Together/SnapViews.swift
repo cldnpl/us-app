@@ -29,7 +29,7 @@ struct SnapHuntView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Snap Hunt")
+        .navigationTitle(Text(loc: "Snap Hunt"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: session.remoteChangeID) { await load() }
         .fullScreenCover(isPresented: $showPicker) {
@@ -47,8 +47,8 @@ struct SnapHuntView: View {
 
             VStack(spacing: 22) {
                 VStack(spacing: 8) {
-                    Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
-                    Text("“\(round.clue)”")
+                    Text(loc: "FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+                    Text(loc: "“\(round.clue)”")
                         .font(.title.bold()).multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink)
                     Text(round.partnerSubmitted
@@ -69,14 +69,14 @@ struct SnapHuntView: View {
                     VStack(spacing: 10) {
                         Button { Task { await submit(picked, roundID: round.roundId) } } label: {
                             if submitting { ProgressView() }
-                            else { Label("Use this photo", systemImage: "checkmark").font(.subheadline.bold()) }
+                            else { Label(loc: "Use this photo", systemImage: "checkmark").font(.subheadline.bold()) }
                         }
                         .buttonStyle(PillButtonStyle(color: accent))
                         .frame(maxWidth: .infinity)
                         .disabled(submitting)
 
                         Button { showPicker = true } label: {
-                            Label("Retake", systemImage: "camera.rotate").font(.footnote.bold())
+                            Label(loc: "Retake", systemImage: "camera.rotate").font(.footnote.bold())
                         }
                         .foregroundStyle(accent)
                     }
@@ -84,7 +84,7 @@ struct SnapHuntView: View {
                     Button { showPicker = true } label: {
                         VStack(spacing: 10) {
                             Image(systemName: "camera.viewfinder").font(.system(size: 44))
-                            Text("Snap a photo").font(.headline)
+                            Text(loc: "Snap a photo").font(.headline)
                         }
                         .foregroundStyle(accent)
                         .frame(maxWidth: .infinity).padding(.vertical, 36)
@@ -113,7 +113,7 @@ struct SnapHuntView: View {
     private func revealScreen(_ round: SnapRound) -> some View {
         ScrollView {
             VStack(spacing: 18) {
-                Text("“\(round.clue)”")
+                Text(loc: "“\(round.clue)”")
                     .font(.title3.bold()).multilineTextAlignment(.center)
                     .foregroundStyle(Theme.ink).padding(.top, 8)
 
@@ -131,8 +131,8 @@ struct SnapHuntView: View {
                 } else {
                     VStack(spacing: 12) {
                         QuizIconTile(systemName: "hourglass", colorKey: "green", size: 64).padding(.top, 8)
-                        Text("Got it! 📸").font(.title3.bold()).foregroundStyle(Theme.ink)
-                        Text("Your find is locked in. The judge crowns a winner once \(partnerName) snaps theirs too.")
+                        Text(loc: "Got it! 📸").font(.title3.bold()).foregroundStyle(Theme.ink)
+                        Text(loc: "Your find is locked in. The judge crowns a winner once \(partnerName) snaps theirs too.")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center).padding(.horizontal, 24)
                     }
@@ -141,12 +141,12 @@ struct SnapHuntView: View {
 
                 VStack(spacing: 10) {
                     Button { Task { await newRound() } } label: {
-                        Label("New hunt", systemImage: "arrow.clockwise").font(.subheadline.bold())
+                        Label(loc: "New hunt", systemImage: "arrow.clockwise").font(.subheadline.bold())
                     }
                     .buttonStyle(PillButtonStyle(color: accent))
                     if !round.revealed {
                         Button { Task { await reload() } } label: {
-                            Label("Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
+                            Label(loc: "Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
                         }
                         .foregroundStyle(accent)
                     }
@@ -163,7 +163,7 @@ struct SnapHuntView: View {
                 Text(title).font(.caption.bold()).foregroundStyle(.secondary)
                 if winner {
                     Spacer()
-                    Label("Cleverest", systemImage: "crown.fill").font(.caption2.bold()).foregroundStyle(accent)
+                    Label(loc: "Cleverest", systemImage: "crown.fill").font(.caption2.bold()).foregroundStyle(accent)
                 }
             }
             Group {
@@ -295,8 +295,8 @@ struct SnapClueHeader: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
-            Text("“\(clue)”")
+            Text(loc: "FIND").font(.caption2.bold()).tracking(2).foregroundStyle(accent)
+            Text(loc: "“\(clue)”")
                 .font(.title.bold()).multilineTextAlignment(.center)
                 .foregroundStyle(Theme.ink)
             Text(subtitle)
@@ -313,7 +313,7 @@ struct SnapCameraTarget: View {
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: "camera.viewfinder").font(.system(size: 44))
-            Text("Snap a photo").font(.headline)
+            Text(loc: "Snap a photo").font(.headline)
         }
         .foregroundStyle(accent)
         .frame(maxWidth: .infinity).padding(.vertical, 36)

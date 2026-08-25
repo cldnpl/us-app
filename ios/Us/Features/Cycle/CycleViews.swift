@@ -23,7 +23,7 @@ struct PhaseRing: View {
                     .foregroundStyle(phase.color)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Day \(cycleDay)")
+                Text(loc: "Day \(cycleDay)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(nextPhaseText)
@@ -65,10 +65,10 @@ struct PregnancyRing: View {
                 .stroke(Theme.rose, style: StrokeStyle(lineWidth: 18, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 4) {
-                Text("Week \(week)")
+                Text(loc: "Week \(week)")
                     .font(.system(.largeTitle, design: .rounded).weight(.bold))
                     .foregroundStyle(Theme.rose)
-                Text("of 40")
+                Text(loc: "of 40")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(daysToDue <= 0 ? "due any day now" : "\(daysToDue) days to go")
@@ -98,10 +98,10 @@ struct SelfCycleCard: View {
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(insights.phase.title).font(.headline)
-                    Text("Day \(insights.cycleDay) · next period \(nextPeriodText)")
+                    Text(loc: "Day \(insights.cycleDay) · next period \(nextPeriodText)")
                         .font(.subheadline).foregroundStyle(.secondary)
                     // Names the data source right where the numbers are shown.
-                    Label("from Apple Health", systemImage: "heart.text.square.fill")
+                    Label(loc: "from Apple Health", systemImage: "heart.text.square.fill")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
@@ -134,12 +134,12 @@ struct PartnerPeriodCard: View {
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     if let phase {
-                        Text("\(partnerName) · \(phase.title)").font(.headline)
+                        Text(loc: "\(partnerName) · \(phase.title)").font(.headline)
                         Text(phase.partnerTips.first ?? phase.partnerHint)
                             .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                     } else {
-                        Text("Check \(partnerName)'s cycle").font(.headline)
-                        Text("Gentle tips to support her — once she shares her cycle.")
+                        Text(loc: "Check \(partnerName)'s cycle").font(.headline)
+                        Text(loc: "Gentle tips to support her — once she shares her cycle.")
                             .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
                     }
                 }
@@ -166,8 +166,8 @@ struct CycleSetupCard: View {
                     .foregroundStyle(Theme.rose)
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Cycle & health").font(.headline)
-                    Text("Track your cycle with Apple Health, or get tips to support your partner's.")
+                    Text(loc: "Cycle & health").font(.headline)
+                    Text(loc: "Track your cycle with Apple Health, or get tips to support your partner's.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
@@ -232,7 +232,7 @@ struct CycleDetailView: View {
                 .padding(.vertical, 16)
             }
         }
-        .navigationTitle("Cycle & health")
+        .navigationTitle(Text(loc: "Cycle & health"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await cycle.refreshOnAppear()
@@ -249,14 +249,14 @@ struct CycleDetailView: View {
             ZStack {
                 Theme.softBackground.ignoresSafeArea()
                 VStack(spacing: 20) {
-                    Text("When's your due date?")
+                    Text(loc: "When's your due date?")
                         .font(.title2.bold())
                         .padding(.top, 12)
-                    DatePicker("Due date", selection: $pickedDue, in: Date()..., displayedComponents: .date)
+                    DatePicker("Due date".loc, selection: $pickedDue, in: Date()..., displayedComponents: .date)
                         .datePickerStyle(.graphical)
                         .tint(Theme.rose)
                         .padding(.horizontal, 6)
-                    Button("Start tracking") {
+                    Button(loc: "Start tracking") {
                         Task { await cycle.startPregnancy(dueDate: pickedDue) }
                         showDuePicker = false
                     }
@@ -267,7 +267,7 @@ struct CycleDetailView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showDuePicker = false }
+                    Button(loc: "Cancel") { showDuePicker = false }
                 }
             }
         }
@@ -279,14 +279,14 @@ struct CycleDetailView: View {
         VStack(spacing: 16) {
             Card {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Cycle & health").font(.headline)
-                    Text("Track your own cycle, or get tips to support your partner's.")
+                    Text(loc: "Cycle & health").font(.headline)
+                    Text(loc: "Track your own cycle, or get tips to support your partner's.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Label(AppleHealth.readsLine, systemImage: "heart.text.square.fill")
                         .font(.footnote).foregroundStyle(.secondary)
-                    Button("Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
+                    Button(loc: "Yes, I have a cycle") { withAnimation { cycle.setUserHasCycle(true) } }
                         .buttonStyle(PrimaryButtonStyle())
-                    Button("No — I want to support \(partnerName)") { withAnimation { cycle.setUserHasCycle(false) } }
+                    Button(loc: "No — I want to support \(partnerName)") { withAnimation { cycle.setUserHasCycle(false) } }
                         .font(.subheadline).foregroundStyle(Theme.rose)
                         .frame(maxWidth: .infinity)
                 }
@@ -315,7 +315,7 @@ struct CycleDetailView: View {
             VStack(spacing: 12) {
                 PhaseRing(phase: i.phase, cycleDay: i.cycleDay, cycleLength: i.cycleLength)
                     .padding(.top, 10)
-                Text("Next period \(i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted)) · ~\(i.cycleLength)-day cycle")
+                Text(loc: "Next period \(i.predictedNextPeriod.formatted(date: .abbreviated, time: .omitted)) · ~\(i.cycleLength)-day cycle")
                     .font(.footnote).foregroundStyle(.secondary)
                     .padding(.top, 20)
                 AppleHealthSourceNote()
@@ -340,14 +340,14 @@ struct CycleDetailView: View {
         VStack(spacing: 16) {
             Card {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("No period logged yet").font(.headline)
-                    Text("Us is connected to Apple Health but hasn't found a period in the last 12 months. Log one in Health — or in the app you already use, like Flo or Clue, with Health sharing turned on — and your cycle appears here on its own.")
+                    Text(loc: "No period logged yet").font(.headline)
+                    Text(loc: "Us is connected to Apple Health but hasn't found a period in the last 12 months. Log one in Health — or in the app you already use, like Flo or Clue, with Health sharing turned on — and your cycle appears here on its own.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Button {
                         Task { await refreshFromHealth() }
                     } label: {
                         if connecting { ProgressView().frame(maxWidth: .infinity) }
-                        else { Label("Check Health again", systemImage: "arrow.clockwise") }
+                        else { Label(loc: "Check Health again", systemImage: "arrow.clockwise") }
                     }
                     .font(.subheadline.weight(.semibold))
                     .tint(Theme.rose)
@@ -374,7 +374,7 @@ struct CycleDetailView: View {
             VStack(spacing: 12) {
                 PregnancyRing(week: pg.week, daysToDue: pg.daysToDue)
                     .padding(.top, 10)
-                Text("Due \(pg.dueDate.formatted(date: .abbreviated, time: .omitted)) · \(PregnancyEngine.trimesterTitle(pg.trimester))")
+                Text(loc: "Due \(pg.dueDate.formatted(date: .abbreviated, time: .omitted)) · \(PregnancyEngine.trimesterTitle(pg.trimester))")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding(.bottom, 4)
@@ -384,8 +384,8 @@ struct CycleDetailView: View {
                     Image(systemName: "carrot.fill")
                         .font(.system(size: 24)).foregroundStyle(Theme.rose).frame(width: 40)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("This week").font(.headline)
-                        Text("Your baby is about the size of \(pg.babySize).")
+                        Text(loc: "This week").font(.headline)
+                        Text(loc: "Your baby is about the size of \(pg.babySize).")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
@@ -399,9 +399,9 @@ struct CycleDetailView: View {
                 }
             }
 
-            Text("\(partnerName) can see your progress.")
+            Text(loc: "\(partnerName) can see your progress.")
                 .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity)
-            Button("End pregnancy tracking") { Task { await cycle.endPregnancy() } }
+            Button(loc: "End pregnancy tracking") { Task { await cycle.endPregnancy() } }
                 .font(.footnote).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity).padding(.top, 2)
         }
@@ -417,8 +417,8 @@ struct CycleDetailView: View {
                     Image(systemName: "figure.child.circle.fill")
                         .font(.system(size: 26)).foregroundStyle(Theme.rose).frame(width: 40)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Expecting a baby?").font(.headline)
-                        Text("Switch to pregnancy tracking.")
+                        Text(loc: "Expecting a baby?").font(.headline)
+                        Text(loc: "Switch to pregnancy tracking.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
@@ -433,8 +433,8 @@ struct CycleDetailView: View {
         VStack(spacing: 16) {
             Card {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Your cycle").font(.headline)
-                    Text("Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health — including periods synced there from Flo, Clue or any other app. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
+                    Text(loc: "Your cycle").font(.headline)
+                    Text(loc: "Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health — including periods synced there from Flo, Clue or any other app. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
             }
@@ -448,14 +448,14 @@ struct CycleDetailView: View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("Today's thoughts").font(.headline)
+                    Text(loc: "Today's thoughts").font(.headline)
                     Spacer()
                     Text(Date().formatted(date: .abbreviated, time: .omitted))
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 ZStack(alignment: .topLeading) {
                     if noteText.isEmpty {
-                        Text("How are you feeling today? Jot down a thought…")
+                        Text(loc: "How are you feeling today? Jot down a thought…")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .padding(.top, 8).padding(.leading, 6)
                     }
@@ -473,9 +473,9 @@ struct CycleDetailView: View {
     private var sharingCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Share with \(partnerName)").font(.headline)
+                Text(loc: "Share with \(partnerName)").font(.headline)
                 Menu {
-                    Picker("", selection: $level) {
+                    Picker("".loc, selection: $level) {
                         ForEach(CycleShareLevel.allCases, id: \.self) { Text($0.title).tag($0) }
                     }
                 } label: {
@@ -514,9 +514,9 @@ struct CycleDetailView: View {
         // where the data comes from and that nothing is read from this iPhone.
         Card {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Apple Health", systemImage: "heart.text.square.fill")
+                Label(loc: "Apple Health", systemImage: "heart.text.square.fill")
                     .font(.headline).foregroundStyle(Theme.rose)
-                Text("What you see here comes from the cycle \(partnerName) tracks in Apple Health on her own iPhone, and only the part she chooses to share. Us doesn't read any health data from this iPhone unless you turn on your own cycle tracking.")
+                Text(loc: "What you see here comes from the cycle \(partnerName) tracks in Apple Health on her own iPhone, and only the part she chooses to share. Us doesn't read any health data from this iPhone unless you turn on your own cycle tracking.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
         }
@@ -547,7 +547,7 @@ struct CycleDetailView: View {
         }
         Card {
             VStack(alignment: .leading, spacing: 12) {
-                Text("How to support her now").font(.headline)
+                Text(loc: "How to support her now").font(.headline)
                 ForEach(phase.partnerTips, id: \.self) { tip in
                     Label {
                         Text(tip).font(.subheadline)
@@ -560,7 +560,7 @@ struct CycleDetailView: View {
         if let note = p.note, !note.isEmpty {
             Card {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("\(partnerName)'s thoughts today").font(.headline)
+                    Text(loc: "\(partnerName)'s thoughts today").font(.headline)
                     Text(note).font(.subheadline).foregroundStyle(.secondary)
                 }
             }
@@ -574,9 +574,9 @@ struct CycleDetailView: View {
             .padding(.top, 10).padding(.bottom, 4)
         Card {
             VStack(alignment: .leading, spacing: 10) {
-                Label("\(partnerName) is expecting", systemImage: "figure.child.circle.fill")
+                Label(loc: "\(partnerName) is expecting", systemImage: "figure.child.circle.fill")
                     .font(.headline).foregroundStyle(Theme.rose)
-                Text("Week \(pg.week) · the baby is about the size of \(pg.babySize).")
+                Text(loc: "Week \(pg.week) · the baby is about the size of \(pg.babySize).")
                     .font(.subheadline).foregroundStyle(.secondary)
                 Divider()
                 Text(PregnancyEngine.trimesterAbout(pg.trimester))
@@ -585,7 +585,7 @@ struct CycleDetailView: View {
         }
         Card {
             VStack(alignment: .leading, spacing: 12) {
-                Text("How to support her now").font(.headline)
+                Text(loc: "How to support her now").font(.headline)
                 ForEach(PregnancyEngine.trimesterSupport(pg.trimester), id: \.self) { tip in
                     Label {
                         Text(tip).font(.subheadline)
@@ -622,7 +622,7 @@ struct CycleDetailView: View {
     }
 
     private var privacyNote: some View {
-        Text("Cycle predictions are estimates, not medical advice. Us reads menstrual cycle data from Apple Health only with your permission, never writes to Health, and never uploads it.")
+        Text(loc: "Cycle predictions are estimates, not medical advice. Us reads menstrual cycle data from Apple Health only with your permission, never writes to Health, and never uploads it.")
             .font(.caption).foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 8)

@@ -40,7 +40,7 @@ struct GalleryView: View {
                 }
             }
         }
-        .navigationTitle("Photos")
+        .navigationTitle(Text(loc: "Photos"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
@@ -56,7 +56,7 @@ struct GalleryView: View {
                 Text(month.label)
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Theme.ink)
-                Text("\(month.photos.count)")
+                Text(loc: "\(month.photos.count)")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
             }
@@ -86,8 +86,8 @@ struct GalleryView: View {
         VStack(spacing: 12) {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 52)).foregroundStyle(Theme.coral)
-            Text("No photos yet").font(.title3.bold()).foregroundStyle(Theme.ink)
-            Text("Photos you add to a diary entry show up here, month by month.")
+            Text(loc: "No photos yet").font(.title3.bold()).foregroundStyle(Theme.ink)
+            Text(loc: "Photos you add to a diary entry show up here, month by month.")
                 .font(.subheadline).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

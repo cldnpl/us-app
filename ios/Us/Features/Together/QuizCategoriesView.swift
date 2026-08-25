@@ -51,7 +51,7 @@ struct QuizCategoriesView: View {
                 }
             }
         }
-        .navigationTitle("Quiz")
+        .navigationTitle(Text(loc: "Quiz"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
