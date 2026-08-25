@@ -63,7 +63,7 @@ type APNSConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{
 		Env:             env("APP_ENV", "dev"),
-		HTTPPort:        env("HTTP_PORT", "8080"),
+		HTTPPort:        env("HTTP_PORT", env("PORT", "8080")),
 		DatabaseURL:     env("DATABASE_URL", ""),
 		JWTSecret:       []byte(env("JWT_SECRET", "")),
 		AccessTokenTTL:  envDuration("ACCESS_TOKEN_TTL", 15*time.Minute),
