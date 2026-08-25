@@ -103,7 +103,7 @@ def main():
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"loading tokenizer for {MODEL_NAME} on {device}", file=sys.stderr, flush=True)
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, local_files_only=False)
 
     if args.output_dir is not None:
         args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -127,7 +127,7 @@ def main():
             for chunk_start in range(0, len(items), args.chunk_size):
                 chunk_end = min(chunk_start + args.chunk_size, len(items))
                 print(f"  loading model chunk {chunk_start}/{len(items)}", file=sys.stderr, flush=True)
-                model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, local_files_only=True).to(device)
+                model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, local_files_only=False).to(device)
                 model.eval()
                 for start in range(chunk_start, chunk_end, args.batch_size):
                     batch = items[start : min(start + args.batch_size, chunk_end)]
