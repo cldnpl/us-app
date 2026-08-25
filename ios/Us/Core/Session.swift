@@ -17,6 +17,9 @@ final class Session: ObservableObject {
     @Published var user: User?
     @Published var partner: User?
     @Published var couple: Couple?
+    /// Bumps whenever a connected partner changes shared data. Feature views
+    /// use it as a task identity to re-fetch their authoritative payload.
+    @Published private(set) var remoteChangeID = UUID()
 
     /// Called on launch to restore an existing session.
     ///
@@ -54,6 +57,7 @@ final class Session: ObservableObject {
             syncCycleSettingsFromServer()
             try await refreshCouple()
             await PushManager.shared.onAuthenticated()
+            connectRealtime()
         } catch APIClientError.unauthorized {
             // Refresh token was rejected: the only unrecoverable case, and the
             // only place bootstrap is allowed to drop the session.
@@ -180,6 +184,7 @@ final class Session: ObservableObject {
         syncCycleSettingsFromServer()
         await loadCouple()
         await PushManager.shared.onAuthenticated()
+        connectRealtime()
     }
 
     func signOut() async {
@@ -187,6 +192,7 @@ final class Session: ObservableObject {
         // signed in on it, and the account leaving must stop being able to
         // notify this handset. Needs the tokens, so it runs before they go.
         await PushManager.shared.unregisterCurrentDevice()
+        RealtimeClient.shared.disconnect()
         try? await APIClient.shared.logout()
         TokenStore.clear()
         SessionCache.clear()
@@ -203,6 +209,14 @@ final class Session: ObservableObject {
         partner = nil
         couple = nil
         state = .signedOut
+    }
+
+    private func connectRealtime() {
+        RealtimeClient.shared.connect { [weak self] in
+            guard let self else { return }
+            self.remoteChangeID = UUID()
+            Task { await self.refreshFromServer() }
+        }
     }
 
     /// Days since the relationship start date, if set.
@@ -343,5 +357,73 @@ enum SessionCache {
 
     static func clear() {
         UserDefaults.standard.removeObject(forKey: key)
+    }
+}
+
+/// Lightweight couple-scoped WebSocket listener. Events carry no app data;
+/// each screen simply re-fetches its existing REST model, keeping one source of
+/// truth for conflict handling and offline recovery.
+@MainActor
+final class RealtimeClient {
+    static let shared = RealtimeClient()
+
+    private var task: URLSessionWebSocketTask?
+    private var reconnectTask: Task<Void, Never>?
+    private var onChange: (() -> Void)?
+
+    private init() {}
+
+    func connect(onChange: @escaping () -> Void) {
+        self.onChange = onChange
+        disconnectConnection()
+        guard let token = TokenStore.accessToken,
+              var components = URLComponents(url: APIConfig.baseURL.appendingPathComponent("/v1/events"), resolvingAgainstBaseURL: false)
+        else { return }
+        components.scheme = components.scheme == "https" ? "wss" : "ws"
+        guard let url = components.url else { return }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let socket = URLSession.shared.webSocketTask(with: request)
+        task = socket
+        socket.resume()
+        receive(from: socket)
+    }
+
+    func disconnect() {
+        onChange = nil
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        disconnectConnection()
+    }
+
+    private func disconnectConnection() {
+        task?.cancel(with: .goingAway, reason: nil)
+        task = nil
+    }
+
+    private func receive(from socket: URLSessionWebSocketTask) {
+        socket.receive { [weak self, weak socket] result in
+            Task { @MainActor in
+                guard let self, let socket, let active = self.task, active === socket else { return }
+                switch result {
+                case .success:
+                    self.onChange?()
+                    self.receive(from: socket)
+                case .failure:
+                    self.scheduleReconnect()
+                }
+            }
+        }
+    }
+
+    private func scheduleReconnect() {
+        guard onChange != nil, reconnectTask == nil else { return }
+        reconnectTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled, let self else { return }
+            self.reconnectTask = nil
+            if let onChange = self.onChange { self.connect(onChange: onChange) }
+        }
     }
 }

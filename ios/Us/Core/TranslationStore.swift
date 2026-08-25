@@ -68,6 +68,12 @@ final class TranslationStore: ObservableObject {
             if let cached = Self.readCache(for: lang) {
                 strings = cached
                 TranslationSnapshot.shared.update(cached)
+            } else if let fallback = BundledTranslationFallback.strings(for: lang) {
+                // The public translation endpoint may lag behind an iOS release.
+                // Keep the primary navigation and settings visibly translated
+                // instead of silently reverting the whole app to English.
+                strings = fallback
+                TranslationSnapshot.shared.update(fallback)
             } else {
                 // Do not leave the previous language's snapshot active after
                 // a failed switch. LocalizedBundle will then fall through to
@@ -99,6 +105,41 @@ final class TranslationStore: ObservableObject {
         else { return }
         try? data.write(to: url, options: .atomic)
     }
+}
+
+/// A small offline catalog for the persistent app chrome. The complete catalog
+/// still arrives from the API when it is available, but these keys make the
+/// selected language immediately apparent during a backend rollout or offline.
+private enum BundledTranslationFallback {
+    static func strings(for language: String) -> [String: String]? { values[language] }
+
+    private static let values: [String: [String: String]] = [
+        "ar": ["Home": "الرئيسية", "Games": "الألعاب", "Journal": "المذكرات", "Settings": "الإعدادات", "Language": "اللغة", "You": "أنت", "Partner": "الشريك"],
+        "bn": ["Home": "হোম", "Games": "গেম", "Journal": "ডায়েরি", "Settings": "সেটিংস", "Language": "ভাষা", "You": "আপনি", "Partner": "সঙ্গী"],
+        "da": ["Home": "Hjem", "Games": "Spil", "Journal": "Dagbog", "Settings": "Indstillinger", "Language": "Sprog", "You": "Dig", "Partner": "Partner"],
+        "de": ["Home": "Start", "Games": "Spiele", "Journal": "Tagebuch", "Settings": "Einstellungen", "Language": "Sprache", "You": "Du", "Partner": "Partner"],
+        "es": ["Home": "Inicio", "Games": "Juegos", "Journal": "Diario", "Settings": "Ajustes", "Language": "Idioma", "You": "Tú", "Partner": "Pareja"],
+        "fa": ["Home": "خانه", "Games": "بازی‌ها", "Journal": "دفترچه", "Settings": "تنظیمات", "Language": "زبان", "You": "شما", "Partner": "همراه"],
+        "fil": ["Home": "Home", "Games": "Mga Laro", "Journal": "Talaarawan", "Settings": "Mga Setting", "Language": "Wika", "You": "Ikaw", "Partner": "Partner"],
+        "fr": ["Home": "Accueil", "Games": "Jeux", "Journal": "Journal", "Settings": "Réglages", "Language": "Langue", "You": "Vous", "Partner": "Partenaire"],
+        "hi": ["Home": "होम", "Games": "गेम", "Journal": "डायरी", "Settings": "सेटिंग्स", "Language": "भाषा", "You": "आप", "Partner": "साथी"],
+        "id": ["Home": "Beranda", "Games": "Permainan", "Journal": "Jurnal", "Settings": "Pengaturan", "Language": "Bahasa", "You": "Kamu", "Partner": "Pasangan"],
+        "it": ["Home": "Home", "Games": "Giochi", "Journal": "Diario", "Settings": "Impostazioni", "Language": "Lingua", "You": "Tu", "Partner": "Partner"],
+        "ja": ["Home": "ホーム", "Games": "ゲーム", "Journal": "日記", "Settings": "設定", "Language": "言語", "You": "あなた", "Partner": "パートナー"],
+        "ko": ["Home": "홈", "Games": "게임", "Journal": "일기", "Settings": "설정", "Language": "언어", "You": "나", "Partner": "파트너"],
+        "nl": ["Home": "Start", "Games": "Spellen", "Journal": "Dagboek", "Settings": "Instellingen", "Language": "Taal", "You": "Jij", "Partner": "Partner"],
+        "pl": ["Home": "Główna", "Games": "Gry", "Journal": "Dziennik", "Settings": "Ustawienia", "Language": "Język", "You": "Ty", "Partner": "Partner"],
+        "pt-BR": ["Home": "Início", "Games": "Jogos", "Journal": "Diário", "Settings": "Ajustes", "Language": "Idioma", "You": "Você", "Partner": "Parceiro"],
+        "ru": ["Home": "Главная", "Games": "Игры", "Journal": "Дневник", "Settings": "Настройки", "Language": "Язык", "You": "Вы", "Partner": "Партнёр"],
+        "sw": ["Home": "Mwanzo", "Games": "Michezo", "Journal": "Shajara", "Settings": "Mipangilio", "Language": "Lugha", "You": "Wewe", "Partner": "Mwenzi"],
+        "th": ["Home": "หน้าแรก", "Games": "เกม", "Journal": "ไดอารี่", "Settings": "ตั้งค่า", "Language": "ภาษา", "You": "คุณ", "Partner": "คู่ของคุณ"],
+        "tr": ["Home": "Ana Sayfa", "Games": "Oyunlar", "Journal": "Günlük", "Settings": "Ayarlar", "Language": "Dil", "You": "Sen", "Partner": "Partner"],
+        "uk": ["Home": "Головна", "Games": "Ігри", "Journal": "Щоденник", "Settings": "Налаштування", "Language": "Мова", "You": "Ви", "Partner": "Партнер"],
+        "ur": ["Home": "ہوم", "Games": "گیمز", "Journal": "ڈائری", "Settings": "ترتیبات", "Language": "زبان", "You": "آپ", "Partner": "ساتھی"],
+        "uz": ["Home": "Bosh sahifa", "Games": "O‘yinlar", "Journal": "Kundalik", "Settings": "Sozlamalar", "Language": "Til", "You": "Siz", "Partner": "Sherik"],
+        "vi": ["Home": "Trang chủ", "Games": "Trò chơi", "Journal": "Nhật ký", "Settings": "Cài đặt", "Language": "Ngôn ngữ", "You": "Bạn", "Partner": "Người ấy"],
+        "zh-Hans": ["Home": "主页", "Games": "游戏", "Journal": "日记", "Settings": "设置", "Language": "语言", "You": "你", "Partner": "伴侣"]
+    ]
 }
 
 extension Bundle {

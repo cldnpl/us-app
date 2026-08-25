@@ -31,7 +31,7 @@ struct SnapHuntView: View {
         }
         .navigationTitle("Snap Hunt")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
+        .task(id: session.remoteChangeID) { await load() }
         .fullScreenCover(isPresented: $showPicker) {
             CameraPicker { image in picked = image }
                 .ignoresSafeArea()

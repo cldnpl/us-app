@@ -49,7 +49,7 @@ struct JournalView: View {
                     .accessibilityLabel("Write in journal")
                 }
             }
-            .task { await load() }
+            .task(id: session.remoteChangeID) { await load() }
             .refreshable { await load() }
             // The diary's own photo wall: every photo written into the journal,
             // month by month, in the same order as the pages behind it.

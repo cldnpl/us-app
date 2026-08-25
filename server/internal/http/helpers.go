@@ -33,6 +33,11 @@ func (d Deps) coupleForRequest(w http.ResponseWriter, r *http.Request) (store.Co
 // sendPartnerPush delivers a notification to the other member of the couple.
 // `build` receives the sender's display name so callers can compose the body.
 func (d Deps) sendPartnerPush(ctx context.Context, coupleID, senderID string, build func(senderName string) push.Notification) {
+	// Live clients refresh immediately; the APNs notification remains the
+	// durable fallback for a partner whose app is suspended or disconnected.
+	if d.Changes != nil {
+		d.Changes.Publish(coupleID, ChangeEvent{Type: "partner_changed", SenderID: senderID})
+	}
 	sender, _ := d.Store.GetUserByID(ctx, senderID)
 	partner, err := d.Store.GetPartner(ctx, coupleID, senderID)
 	if err != nil {

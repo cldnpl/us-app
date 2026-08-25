@@ -38,7 +38,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showProfileEditor) { ProfileEditorSheet() }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
-            .task { await loadPartnerLocation() }
+            .task(id: session.remoteChangeID) { await loadPartnerLocation() }
             .task { await pollPartnerLocation() }
             .task { await cycle.refreshOnAppear() }
             .refreshable { await loadPartnerLocation() }

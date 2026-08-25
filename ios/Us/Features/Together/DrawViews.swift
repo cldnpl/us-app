@@ -29,7 +29,7 @@ struct DrawTogetherView: View {
         }
         .navigationTitle("Draw Together")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
+        .task(id: session.remoteChangeID) { await load() }
     }
 
     // MARK: reveal / waiting
@@ -201,6 +201,10 @@ struct DrawingPad: View {
                         onDone: { doSubmit() })
         }
         .background(Color.white.ignoresSafeArea(.container, edges: [.leading, .trailing]))
+        // The canvas is intentionally a white sheet. Keep its text and UIKit
+        // controls in the matching light appearance, instead of resolving
+        // `Theme.ink` to the off-white dark-mode color on a white background.
+        .environment(\.colorScheme, .light)
         .onReceive(timer) { _ in
             guard !submitting else { return }
             if remaining > 0 { remaining -= 1 }
@@ -401,7 +405,7 @@ struct DrawPaletteColor: Identifiable {
     let uiColor: UIColor
 
     static let all: [DrawPaletteColor] = [
-        DrawPaletteColor(id: "black", name: "Black", color: Color(red: 0, green: 0, blue: 0), uiColor: .black),
+        DrawPaletteColor(id: "black", name: "Black", color: Color(red: 0.02, green: 0.02, blue: 0.02), uiColor: canvasBlack),
         DrawPaletteColor(id: "red", name: "Red", color: .red, uiColor: .systemRed),
         DrawPaletteColor(id: "orange", name: "Orange", color: .orange, uiColor: .systemOrange),
         DrawPaletteColor(id: "yellow", name: "Yellow", color: .yellow, uiColor: .systemYellow),
@@ -410,7 +414,10 @@ struct DrawPaletteColor: Identifiable {
         DrawPaletteColor(id: "purple", name: "Purple", color: .purple, uiColor: .systemPurple)
     ]
 
-    static let black = DrawPaletteColor(id: "black", name: "Black", color: Color(red: 0, green: 0, blue: 0), uiColor: .black)
+    /// Explicit RGB black — unlike a semantic/dynamic system colour this can
+    /// never resolve to white when the drawing view inherits dark appearance.
+    static let canvasBlack = UIColor(red: 0.02, green: 0.02, blue: 0.02, alpha: 1)
+    static let black = DrawPaletteColor(id: "black", name: "Black", color: Color(red: 0.02, green: 0.02, blue: 0.02), uiColor: canvasBlack)
 }
 
 private extension UIImage {
@@ -502,8 +509,11 @@ private extension UIColor {
 final class DrawingCanvasView: PKCanvasView {
     override func layoutSubviews() {
         super.layoutSubviews()
-        backgroundColor = .clear
-        isOpaque = false
+        // A stable white backing keeps PencilKit's opaque RGB stroke colours
+        // independent of the app's current dark/light appearance.
+        backgroundColor = .white
+        isOpaque = true
+        overrideUserInterfaceStyle = .light
         contentInset = .zero
         contentOffset = .zero
         minimumZoomScale = 1
@@ -520,8 +530,9 @@ struct PencilCanvas: UIViewRepresentable {
 
     func makeUIView(context: Context) -> DrawingCanvasView {
         canvas.drawingPolicy = .anyInput
-        canvas.backgroundColor = .clear
-        canvas.isOpaque = false
+        canvas.backgroundColor = .white
+        canvas.isOpaque = true
+        canvas.overrideUserInterfaceStyle = .light
         canvas.tool = tool
         return canvas
     }

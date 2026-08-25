@@ -21,14 +21,15 @@ import (
 
 // Deps carries the shared dependencies every handler needs.
 type Deps struct {
-	Config *config.Config
-	Pool   *pgxpool.Pool
-	Logger *slog.Logger
-	Store  *store.Store
-	Apple  *auth.AppleVerifier
-	Push   push.Sender
-	Mail   mail.Sender
-	Media  *media.Storage
+	Config  *config.Config
+	Pool    *pgxpool.Pool
+	Logger  *slog.Logger
+	Store   *store.Store
+	Apple   *auth.AppleVerifier
+	Push    push.Sender
+	Mail    mail.Sender
+	Media   *media.Storage
+	Changes *ChangeHub
 
 	MissYouLimiter   *middleware.RateLimiter
 	EmailCodeLimiter *middleware.RateLimiter
@@ -36,6 +37,9 @@ type Deps struct {
 
 // NewRouter builds the top-level HTTP handler with global middleware and routes.
 func NewRouter(d Deps) http.Handler {
+	if d.Changes == nil {
+		d.Changes = NewChangeHub()
+	}
 	// Per-user throttle for the Miss You button (~1 every 2s, burst 10).
 	d.MissYouLimiter = middleware.NewRateLimiter(0.5, 10)
 	// Email codes cost real money to send and are a spam vector: ~1 per minute,
@@ -86,6 +90,7 @@ func NewRouter(d Deps) http.Handler {
 		// Protected endpoints (require a valid access token).
 		r.Group(func(r chi.Router) {
 			r.Use(requireAuth)
+			r.Get("/events", d.handleEvents)
 
 			r.Get("/me", d.handleGetMe)
 			r.Delete("/me", d.handleDeleteMe)
