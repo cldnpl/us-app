@@ -83,6 +83,7 @@ type snapView struct {
 	PartnerImagePath *string `json:"partnerImagePath"`
 	Outcome          *string `json:"outcome"` // "me" | "partner" | "tie", when revealed
 	Reason           *string `json:"reason"`
+	StartedByMe      bool    `json:"startedByMe"`
 }
 
 func snapImagePath(id string) string { return "/v1/games/snap/submissions/" + id + "/file" }
@@ -95,6 +96,11 @@ func (d Deps) currentHunt(w http.ResponseWriter, r *http.Request, coupleID, user
 	raw, _ := json.Marshal(snapState{Clue: pickClue("")})
 	g, err = d.Store.CreateGame(r.Context(), coupleID, snapGameType, raw, userID)
 	if err != nil {
+		// If both phones arrive before the first hunt exists, use the one that
+		// won the single-active-round constraint rather than creating two clues.
+		if current, currentErr := d.Store.GetLatestGame(r.Context(), coupleID, snapGameType); currentErr == nil && current.Status == "active" {
+			return current, true
+		}
 		d.serverError(w, "snap: create hunt", err)
 		return store.GameSession{}, false
 	}
@@ -154,6 +160,9 @@ func (d Deps) buildSnapView(r *http.Request, round store.GameSession, userID, pa
 		RoundID: round.ID, Clue: st.Clue,
 		MySubmitted: iSubmitted, PartnerSubmitted: partnerSubmitted, Revealed: revealed,
 	}
+	if round.TurnUserID != nil {
+		v.StartedByMe = *round.TurnUserID == userID
+	}
 	if iSubmitted {
 		p := snapImagePath(mine.ID)
 		v.MyImagePath = &p
@@ -191,8 +200,19 @@ func (d Deps) handleGetSnap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
-	round, ok := d.currentHunt(w, r, c.ID, userID)
-	if !ok {
+	roundID := r.URL.Query().Get("roundId")
+	if roundID == "" {
+		writeError(w, http.StatusBadRequest, "missing_round_id", "the hunt round is required")
+		return
+	}
+	round, err := d.Store.GetGame(r.Context(), roundID)
+	if err != nil || round.CoupleID != c.ID || round.GameType != snapGameType || round.Status != "active" {
+		writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
+		return
+	}
+	latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType)
+	if latestErr != nil || latest.ID != round.ID {
+		writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
 		return
 	}
 	v, err := d.buildSnapView(r, round, userID, partner.ID)
@@ -277,6 +297,17 @@ func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 
 	prev := ""
 	if g, err := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType); err == nil {
+		if g.Status == "active" {
+			current, viewErr := d.buildSnapView(r, g, userID, partner.ID)
+			if viewErr != nil {
+				d.serverError(w, "snap: current hunt", viewErr)
+				return
+			}
+			if !current.Revealed {
+				writeError(w, http.StatusConflict, "snap_waiting", "join your partner and finish this hunt first")
+				return
+			}
+		}
 		var st snapState
 		_ = json.Unmarshal(g.State, &st)
 		prev = st.Clue
@@ -286,6 +317,15 @@ func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 	raw, _ := json.Marshal(snapState{Clue: pickClue(prev)})
 	round, err := d.Store.CreateGame(r.Context(), c.ID, snapGameType, raw, userID)
 	if err != nil {
+		// Two partners can tap at the same time. Only one active hunt is valid;
+		// return that hunt so both phones receive the same clue.
+		if active, activeErr := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType); activeErr == nil && active.Status == "active" {
+			v, viewErr := d.buildSnapView(r, active, userID, partner.ID)
+			if viewErr == nil {
+				writeJSON(w, http.StatusOK, v)
+				return
+			}
+		}
 		d.serverError(w, "snap: new hunt", err)
 		return
 	}

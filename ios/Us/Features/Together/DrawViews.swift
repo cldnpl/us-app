@@ -19,6 +19,7 @@ struct DrawTogetherView: View {
                     revealScreen(round)
                 } else {
                     DrawingPad(prompt: round.prompt) { data in await submit(data, roundID: round.roundId) }
+                        .id(round.roundId)
                 }
             } else if let errorMessage {
                 Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
@@ -123,6 +124,10 @@ struct DrawTogetherView: View {
             round = try await APIClient.shared.newDrawRound()
             Haptics.tap(.light)
         } catch {
+            // The partner may still be working in the existing round. Re-read
+            // it so this phone enters the waiting state instead of offering a
+            // second, overlapping drawing.
+            await reload()
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
         }
     }
@@ -310,18 +315,23 @@ struct DrawToolbar: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 14) {
-                ForEach(palette) { swatch in
-                    Button { onColor(swatch.id) } label: {
-                        Circle().fill(swatch.color)
-                            .frame(width: 28, height: 28)
-                            .overlay(Circle().strokeBorder(.white,
-                                                            lineWidth: (!isEraser && !isBucket && selectedColorID == swatch.id) ? 3 : 0))
-                            .overlay(Circle().strokeBorder(.black.opacity(0.1), lineWidth: 1))
+            // Keep every colour reachable on compact phones. In particular the
+            // leading black and yellow swatches stay inside the safe area rather
+            // than being clipped by the toolbar's fixed controls below.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(palette) { swatch in
+                        Button { onColor(swatch.id) } label: {
+                            Circle().fill(swatch.color)
+                                .frame(width: 28, height: 28)
+                                .overlay(Circle().strokeBorder(.white,
+                                                                lineWidth: (!isEraser && !isBucket && selectedColorID == swatch.id) ? 3 : 0))
+                                .overlay(Circle().strokeBorder(.black.opacity(0.1), lineWidth: 1))
+                        }
+                        .accessibilityLabel(swatch.name)
                     }
-                    .accessibilityLabel(swatch.name)
                 }
-                Spacer()
+                .padding(.horizontal, 2)
             }
 
             HStack(spacing: 10) {

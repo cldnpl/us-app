@@ -53,7 +53,9 @@ struct SnapHuntView: View {
                         .foregroundStyle(Theme.ink)
                     Text(round.partnerSubmitted
                          ? "\(partnerName) already found theirs — quick!"
-                         : "Race around the house and snap your cleverest find.")
+                         : round.startedByMe
+                           ? "Race around the house and snap your cleverest find."
+                           : "\(partnerName) started this hunt — join them!")
                         .font(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -65,7 +67,7 @@ struct SnapHuntView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
                     VStack(spacing: 10) {
-                        Button { Task { await submit(picked) } } label: {
+                        Button { Task { await submit(picked, roundID: round.roundId) } } label: {
                             if submitting { ProgressView() }
                             else { Label("Use this photo", systemImage: "checkmark").font(.subheadline.bold()) }
                         }
@@ -96,7 +98,7 @@ struct SnapHuntView: View {
             }
             .padding(24)
             .frame(maxWidth: .infinity)
-            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
             .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
             .padding(.horizontal, 20)
@@ -206,12 +208,12 @@ struct SnapHuntView: View {
 
     private func reload() async { round = try? await APIClient.shared.getSnap() }
 
-    private func submit(_ image: UIImage) async {
+    private func submit(_ image: UIImage, roundID: String) async {
         guard !submitting, let data = image.jpegData(compressionQuality: 0.85) else { return }
         submitting = true; errorMessage = nil
         defer { submitting = false }
         do {
-            round = try await APIClient.shared.submitSnap(data)
+            round = try await APIClient.shared.submitSnap(data, roundID: roundID)
             picked = nil
             Haptics.success()
         } catch {
@@ -225,6 +227,10 @@ struct SnapHuntView: View {
             picked = nil
             Haptics.tap(.light)
         } catch {
+            // A partner may have just started the next hunt. Reload the single
+            // shared round so this phone can join it rather than showing a
+            // stale clue or trying to create another one.
+            await reload()
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
         }
     }

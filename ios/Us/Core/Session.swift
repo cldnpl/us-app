@@ -174,8 +174,7 @@ final class Session: ObservableObject {
     }
 
     func handleAuth(_ resp: AuthResponse) async {
-        TokenStore.accessToken = resp.accessToken
-        TokenStore.refreshToken = resp.refreshToken
+        TokenStore.save(accessToken: resp.accessToken, refreshToken: resp.refreshToken)
         user = resp.user
         syncPronounFromServer()
         syncCycleSettingsFromServer()

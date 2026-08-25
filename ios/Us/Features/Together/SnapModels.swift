@@ -10,4 +10,5 @@ struct SnapRound: Codable {
     let partnerImagePath: String?
     let outcome: String?   // "me" | "partner" | "tie", when revealed
     let reason: String?
+    let startedByMe: Bool
 }

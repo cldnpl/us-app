@@ -61,8 +61,8 @@ enum SharedAPI {
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let access = json["accessToken"] as? String else { return false }
 
-        SharedTokenStore.accessToken = access
-        if let newRefresh = json["refreshToken"] as? String { SharedTokenStore.refreshToken = newRefresh }
+        guard let newRefresh = json["refreshToken"] as? String, !newRefresh.isEmpty else { return false }
+        SharedTokenStore.setTokens(accessToken: access, refreshToken: newRefresh)
         return true
     }
 }

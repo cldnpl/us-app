@@ -180,10 +180,14 @@ private final class WidgetLocation: NSObject, CLLocationManagerDelegate {
             manager.delegate = self
             manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
             manager.requestLocation()
-            // CoreLocation can stay silent — neither a fix nor an error — so
-            // this may never resume. That's survivable only because the caller
-            // runs it under `withDeadline`, which stops waiting and falls back
-            // to the app's last known position.
+            // CoreLocation can stay silent — neither a fix nor an error. A
+            // task group cannot force a checked continuation to finish, so the
+            // provider used to remain stuck here and never publish its next
+            // timeline. Finish the request ourselves and render the cached
+            // distance instead.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
+                self?.finish(nil)
+            }
         }
     }
 

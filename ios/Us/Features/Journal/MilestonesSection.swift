@@ -56,6 +56,13 @@ struct MilestonesSection: View {
                 }
             }
         }
+        // Tab views keep their child views alive. Close a half-completed inline
+        // editor when Journal is no longer visible so it cannot linger when the
+        // person comes back from another page.
+        .onDisappear {
+            guard editingID != nil else { return }
+            finishEditing()
+        }
     }
 
     // MARK: - Rows
@@ -73,6 +80,17 @@ struct MilestonesSection: View {
                 Spacer()
                 Image(systemName: "pencil").font(.footnote).foregroundStyle(.tertiary)
                     .padding(.top, 4)
+                Button {
+                    Task { await onDelete(m.id) }
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .padding(8)
+                        .background(.red.opacity(0.10), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Delete \(m.title)")
             }
             .padding(.vertical, 12)
             .contentShape(Rectangle())

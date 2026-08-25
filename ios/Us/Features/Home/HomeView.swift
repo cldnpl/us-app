@@ -15,7 +15,7 @@ struct HomeView: View {
     @State private var missYouSent = false
     @State private var isSending = false
     @State private var errorMessage: String?
-    @State private var showProfile = false
+    @State private var showProfileEditor = false
     @State private var showAddWidget = false
     @State private var partnerLoc: PartnerLocation?
 
@@ -30,13 +30,13 @@ struct HomeView: View {
                 ToolbarItem(placement: .topBarLeading) { BrandLogo() }
                 ToolbarItem(placement: .principal) { addWidgetPill }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showProfile = true } label: {
+                    Button { showProfileEditor = true } label: {
                         Image(systemName: "person.crop.circle").font(.system(size: 24))
                     }
-                    .accessibilityLabel("Profile")
+                    .accessibilityLabel("Edit profile")
                 }
             }
-            .sheet(isPresented: $showProfile) { ProfileView() }
+            .sheet(isPresented: $showProfileEditor) { ProfileEditorSheet() }
             .sheet(isPresented: $showAddWidget) { AddWidgetGuideView() }
             .task { await loadPartnerLocation() }
             .task { await pollPartnerLocation() }

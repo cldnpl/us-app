@@ -88,6 +88,11 @@ func (d Deps) currentRound(w http.ResponseWriter, r *http.Request, coupleID, use
 	raw, _ := json.Marshal(drawState{Prompt: pickPrompt("")})
 	g, err = d.Store.CreateGame(r.Context(), coupleID, drawGameType, raw, userID)
 	if err != nil {
+		// Two first-load requests can arrive together. The database permits only
+		// one active round, so join the winner instead of failing one phone.
+		if current, currentErr := d.Store.GetLatestGame(r.Context(), coupleID, drawGameType); currentErr == nil && current.Status == "active" {
+			return current, true
+		}
 		d.serverError(w, "draw: create round", err)
 		return store.GameSession{}, false
 	}
@@ -134,26 +139,11 @@ func (d Deps) handleGetDraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
-	roundID := r.URL.Query().Get("roundId")
-	if roundID == "" {
-		writeError(w, http.StatusBadRequest, "missing_round_id", "the drawing round is required")
-		return
-	}
-	round, err := d.Store.GetGame(r.Context(), roundID)
-	if err != nil || round.CoupleID != c.ID || round.GameType != drawGameType {
-		writeError(w, http.StatusNotFound, "draw_round_not_found", "that drawing round is no longer available")
-		return
-	}
-	if round.Status != "active" {
-		writeError(w, http.StatusConflict, "draw_round_finished", "that drawing round is already finished")
-		return
-	}
-	// A stale upload from an older round must never land in the newest round.
-	// This protects against a slow image upload completing after the couple has
-	// already revealed the previous round and started another one.
-	latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, drawGameType)
-	if latestErr != nil || latest.ID != round.ID {
-		writeError(w, http.StatusConflict, "draw_round_stale", "that drawing round has ended")
+	// Both partners always enter the couple's current round. The client does
+	// not know an id on first load, so requiring one here stranded it on the
+	// loading screen and encouraged stale clients to start overlapping rounds.
+	round, ok := d.currentRound(w, r, c.ID, userID)
+	if !ok {
 		return
 	}
 	v, err := d.buildDrawView(r, round, userID, partner.ID)
@@ -175,8 +165,21 @@ func (d Deps) handleSubmitDraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
-	round, ok := d.currentRound(w, r, c.ID, userID)
-	if !ok {
+	roundID := r.URL.Query().Get("roundId")
+	if roundID == "" {
+		writeError(w, http.StatusBadRequest, "missing_round_id", "the drawing round is required")
+		return
+	}
+	round, err := d.Store.GetGame(r.Context(), roundID)
+	if err != nil || round.CoupleID != c.ID || round.GameType != drawGameType || round.Status != "active" {
+		writeError(w, http.StatusConflict, "draw_round_stale", "that drawing round has ended")
+		return
+	}
+	// A slow upload is only allowed to complete for the round it was made in.
+	// Never silently redirect it to a newer round.
+	latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, drawGameType)
+	if latestErr != nil || latest.ID != round.ID {
+		writeError(w, http.StatusConflict, "draw_round_stale", "that drawing round has ended")
 		return
 	}
 
@@ -265,6 +268,15 @@ func (d Deps) handleNewDraw(w http.ResponseWriter, r *http.Request) {
 	raw, _ := json.Marshal(drawState{Prompt: pickPrompt(prev)})
 	round, err := d.Store.CreateGame(r.Context(), c.ID, drawGameType, raw, userID)
 	if err != nil {
+		// A simultaneous tap can race with the partner's new round. The unique
+		// active-round constraint leaves their round authoritative; join it.
+		if active, activeErr := d.Store.GetLatestGame(r.Context(), c.ID, drawGameType); activeErr == nil && active.Status == "active" {
+			v, viewErr := d.buildDrawView(r, active, userID, partner.ID)
+			if viewErr == nil {
+				writeJSON(w, http.StatusOK, v)
+				return
+			}
+		}
 		d.serverError(w, "draw: new round", err)
 		return
 	}

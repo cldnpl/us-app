@@ -97,8 +97,10 @@ final class APIClient {
         guard let http = response as? HTTPURLResponse else { throw APIClientError.invalidResponse }
         // Only a definitive rejection of the refresh token is a real sign-out.
         if http.statusCode == 401 || http.statusCode == 403 {
-            TokenStore.clear()
-            return false
+            // A widget (or another in-flight app request) may have rotated this
+            // exact token moments earlier. Import its newer App Group pair and
+            // retry the original request before declaring the session invalid.
+            return TokenStore.adoptSharedTokensIfNewer()
         }
         // Any other non-2xx (5xx, gateway, etc.) is transient: keep the tokens
         // and surface a non-auth error so callers don't sign the user out.
@@ -106,8 +108,7 @@ final class APIClient {
             throw APIClientError.http(http.statusCode)
         }
         let auth = try decoder.decode(AuthResponse.self, from: data)
-        TokenStore.accessToken = auth.accessToken
-        TokenStore.refreshToken = auth.refreshToken
+        TokenStore.save(accessToken: auth.accessToken, refreshToken: auth.refreshToken)
         return true
     }
 
