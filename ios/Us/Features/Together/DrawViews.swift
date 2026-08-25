@@ -223,12 +223,19 @@ struct DrawingPad: View {
         guard bounds.width > 1, bounds.height > 1 else { return nil }
         let scale = UIScreen.main.scale
         let strokes = canvas.drawing.image(from: bounds, scale: scale)
-        let renderer = UIGraphicsImageRenderer(size: bounds.size)
+        // The server normalizes this image to JPEG. Give it an already-opaque
+        // standard RGB bitmap so PencilKit's black pixels cannot be treated as
+        // transparent/dynamic when the image is decoded for the reveal screen.
+        let format = UIGraphicsImageRendererFormat()
+        format.opaque = true
+        format.scale = scale
+        format.preferredRange = .standard
+        let renderer = UIGraphicsImageRenderer(size: bounds.size, format: format)
         let composed = renderer.image { ctx in
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: bounds.size))
             fillImage?.draw(in: CGRect(origin: .zero, size: bounds.size))
-            strokes.draw(in: CGRect(origin: .zero, size: bounds.size))
+            strokes.withRenderingMode(.alwaysOriginal).draw(in: CGRect(origin: .zero, size: bounds.size))
         }
         return composed.jpegData(compressionQuality: 0.9)
     }

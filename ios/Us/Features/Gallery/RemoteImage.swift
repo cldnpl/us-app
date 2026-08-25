@@ -20,7 +20,9 @@ struct RemoteImage: View {
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image)
+                // Draw/snap submissions must never inherit template or tint
+                // rendering from a dark comparison screen.
+                Image(uiImage: image.withRenderingMode(.alwaysOriginal))
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
             } else {
