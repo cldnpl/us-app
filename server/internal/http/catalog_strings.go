@@ -2,7 +2,8 @@ package httpapi
 
 // CatalogString is one translatable piece of text from the quiz/hwdykm/debate
 // catalogs, addressed the same way content_translations rows are keyed.
-// Exported for cmd/translate, which enumerates these to drive translation.
+// Exported for the offline catalog translation tooling, which enumerates these
+// to drive translation.
 type CatalogString struct {
 	ContentType string `json:"contentType"` // "quiz_category" | "quiz" | "quiz_question" | "hwdykm_pack" | "hwdykm_question" | "debate_pack" | "debate_motion"
 	ContentID   string `json:"contentID"`

@@ -145,7 +145,10 @@ def main():
                             **encoded,
                             forced_bos_token_id=tokenizer.convert_tokens_to_ids(target),
                             max_length=args.max_length,
-                            num_beams=2,
+                            # Greedy decoding is substantially faster on the
+                            # local model and is sufficient for a checked-in
+                            # catalog. There is no paid/provider fallback.
+                            num_beams=1,
                         )
                     values = tokenizer.batch_decode(generated, skip_special_tokens=True)
                     for item, value in zip(batch, values):

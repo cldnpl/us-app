@@ -1,7 +1,7 @@
 // Package i18n serves the app's UI string translations. Values are embedded
 // in the binary (translations.json, generated once from the iOS String
-// Catalog plus a Claude-translated fill for languages it didn't yet cover —
-// see cmd/translate-ui-strings) rather than stored in Postgres: at this scale
+// Catalog plus a locally generated fill for languages it didn't yet cover)
+// rather than stored in Postgres: at this scale
 // (a few thousand short strings) embedding is simpler than a DB round trip,
 // and "seed data baked into the binary" already matches how this codebase
 // treats the quiz/hwdykm/debate catalogs.

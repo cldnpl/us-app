@@ -13,9 +13,8 @@ type ContentTranslation struct {
 	Value       string
 }
 
-// UpsertContentTranslation writes or updates one translated field. Used by
-// cmd/translate; safe to rerun (ON CONFLICT DO UPDATE), so an interrupted
-// batch run can resume without re-spending on already-translated rows.
+// UpsertContentTranslation writes or updates one translated field. It is safe
+// to rerun for imports from the local, offline catalog translation tool.
 func (s *Store) UpsertContentTranslation(ctx context.Context, t ContentTranslation) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO content_translations (content_type, content_id, field, lang, value)
