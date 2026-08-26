@@ -172,7 +172,7 @@ struct DailyQuestionCard: View {
                         .foregroundStyle(accent)
                 }
             }
-            Text(daily.question.prompt)
+            Text(verbatim: daily.question.prompt.loc)
                 .font(.title3.bold())
                 .foregroundStyle(Theme.ink)
                 .lineLimit(3)
@@ -208,7 +208,7 @@ struct CategoryCard: View {
         HStack(spacing: 16) {
             QuizIconTile(systemName: locked ? "lock.fill" : category.icon, colorKey: category.colorKey)
             VStack(alignment: .leading, spacing: 8) {
-                Text(category.title).font(.headline).foregroundStyle(Theme.ink)
+                Text(verbatim: category.title.loc).font(.headline).foregroundStyle(Theme.ink)
                 if locked {
                     Text(loc: "\(category.quizCount) quizzes · Premium")
                         .font(.caption.bold()).foregroundStyle(accent)

@@ -76,7 +76,7 @@ struct JournalDayCard: View {
                 .foregroundStyle(isMine(entry.authorId) ? Theme.coral : Theme.ink)
 
             if !entry.body.isEmpty {
-                Text(entry.body)
+                Text(verbatim: entry.body.loc)
                     .font(.body)
                     .foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)

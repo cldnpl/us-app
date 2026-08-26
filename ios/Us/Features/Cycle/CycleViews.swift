@@ -18,7 +18,7 @@ struct PhaseRing: View {
                 .stroke(phase.color, style: StrokeStyle(lineWidth: 18, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 6) {
-                Text(phase.title)
+                Text(verbatim: phase.title.loc)
                     .font(.system(.title2, design: .rounded).weight(.bold))
                     .foregroundStyle(phase.color)
                     .multilineTextAlignment(.center)
@@ -97,7 +97,7 @@ struct SelfCycleCard: View {
                     .foregroundStyle(insights.phase.color)
                     .frame(width: 40)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(insights.phase.title).font(.headline)
+                    Text(verbatim: insights.phase.title.loc).font(.headline)
                     Text(loc: "Day \(insights.cycleDay) · next period \(nextPeriodText)")
                         .font(.subheadline).foregroundStyle(.secondary)
                     // Names the data source right where the numbers are shown.
@@ -480,7 +480,7 @@ struct CycleDetailView: View {
                     }
                 } label: {
                     HStack {
-                        Text(level.title)
+                        Text(verbatim: level.title.loc)
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(Theme.rose)
                             .lineLimit(1)

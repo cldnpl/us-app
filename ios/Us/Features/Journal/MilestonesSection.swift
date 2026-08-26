@@ -73,7 +73,7 @@ struct MilestonesSection: View {
                 Circle().fill(Theme.rose).frame(width: 7, height: 7)
                     .padding(.top, 8) // aligns the bullet with the title's center
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(m.title).font(.headline).foregroundStyle(Theme.ink)
+                    Text(verbatim: m.title.loc).font(.headline).foregroundStyle(Theme.ink)
                     Text(dayString(m.date))
                         .font(.subheadline).foregroundStyle(Theme.coral)
                 }

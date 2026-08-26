@@ -121,11 +121,11 @@ struct IntroPageView: View {
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
             VStack(spacing: 12) {
-                Text(page.title)
+                Text(verbatim: page.title.loc)
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text(page.subtitle)
+                Text(verbatim: page.subtitle.loc)
                     .font(.title3)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)

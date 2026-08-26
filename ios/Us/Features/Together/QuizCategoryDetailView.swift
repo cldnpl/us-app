@@ -71,7 +71,7 @@ struct QuizCard: View {
                             .font(.caption2.bold())
                             .foregroundStyle(accent)
                     }
-                    Text(quiz.title)
+                    Text(verbatim: quiz.title.loc)
                         .font(.title3.bold())
                         .foregroundStyle(Theme.ink)
                 }

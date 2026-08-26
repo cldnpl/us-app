@@ -83,7 +83,7 @@ struct SetupFlowView: View {
             Haptics.tap(.light)
         } label: {
             HStack {
-                Text(pronoun.label)
+                Text(verbatim: pronoun.label.loc)
                     .font(.headline)
                     .foregroundStyle(isSelected ? Theme.rose : .white)
                 Spacer()

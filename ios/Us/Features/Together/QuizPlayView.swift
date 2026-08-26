@@ -57,7 +57,7 @@ struct QuizPlayView: View {
                     Text(loc: "Question \(index + 1) of \(quiz.questions.count)")
                         .font(.caption.bold()).foregroundStyle(.secondary)
 
-                    Text(q.prompt)
+                    Text(verbatim: q.prompt.loc)
                         .font(.title2.bold()).multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink).padding(.horizontal)
 
@@ -181,7 +181,7 @@ struct QuizPlayView: View {
     private func resultRow(_ q: QuizQuestion) -> some View {
         let match = q.myAnswer != nil && q.myAnswer == q.partnerAnswer
         return VStack(alignment: .leading, spacing: 12) {
-            Text(q.prompt).font(.subheadline.bold()).foregroundStyle(Theme.ink)
+            Text(verbatim: q.prompt.loc).font(.subheadline.bold()).foregroundStyle(Theme.ink)
             // Picked options are short labels and read well next to each other.
             // Written answers get a full-width row each — squeezed into half the
             // screen, a long answer becomes a narrow column of single words.
@@ -342,7 +342,7 @@ struct PhotoChoiceCard: View {
             LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: .center, endPoint: .bottom)
 
             HStack {
-                Text(option.label).font(.title3.bold()).foregroundStyle(.white).shadow(radius: 4)
+                Text(verbatim: option.label.loc).font(.title3.bold()).foregroundStyle(.white).shadow(radius: 4)
                 Spacer()
                 if selected {
                     Image(systemName: "checkmark.circle.fill").font(.title2)
@@ -373,7 +373,7 @@ struct IconChoiceRow: View {
                 .foregroundStyle(selected ? .white : accent)
                 .frame(width: 44, height: 44)
                 .background(selected ? accent : accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            Text(option.label).font(.headline).foregroundStyle(Theme.ink)
+            Text(verbatim: option.label.loc).font(.headline).foregroundStyle(Theme.ink)
             Spacer()
             if selected {
                 Image(systemName: "checkmark.circle.fill").font(.title3).foregroundStyle(accent)

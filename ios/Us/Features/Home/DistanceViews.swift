@@ -45,7 +45,7 @@ struct DistanceMapCard: View {
                     Image(systemName: "heart.circle.fill")
                         .font(.title2).foregroundStyle(Theme.rose)
                         .background(Circle().fill(.background).padding(2))
-                    Text(pin.name)
+                    Text(verbatim: pin.name.loc)
                         .font(.caption2).bold()
                         .lineLimit(1)
                         .padding(.horizontal, 5).padding(.vertical, 1)

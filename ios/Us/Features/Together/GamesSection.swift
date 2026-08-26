@@ -54,10 +54,10 @@ struct GameCard: View {
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Theme.warmGradient, in: Capsule())
                 }
-                Text(game.title).font(.title3.bold()).foregroundStyle(Theme.ink)
+                Text(verbatim: game.title.loc).font(.title3.bold()).foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text(game.subtitle)
+            Text(verbatim: game.subtitle.loc)
                 .font(.subheadline).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -87,10 +87,10 @@ struct ComingSoonGameView: View {
             Theme.softBackground.ignoresSafeArea()
             VStack(spacing: 20) {
                 QuizIconTile(systemName: game.icon, colorKey: game.colorKey, size: 84)
-                Text(game.title).font(.title.bold()).foregroundStyle(Theme.ink)
+                Text(verbatim: game.title.loc).font(.title.bold()).foregroundStyle(Theme.ink)
                 Text(loc: "COMING SOON").font(.caption.bold()).tracking(2)
                     .foregroundStyle(QuizPalette.accent(game.colorKey))
-                Text(game.subtitle)
+                Text(verbatim: game.subtitle.loc)
                     .font(.body).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center).padding(.horizontal, 32)
                 Text(loc: "We're building this one to work at your own pace — play now, your partner catches up whenever.")

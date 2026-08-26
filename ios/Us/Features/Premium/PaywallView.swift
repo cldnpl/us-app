@@ -46,7 +46,7 @@ struct PaywallView: View {
                 .font(.caption.bold()).tracking(2.5)
                 .foregroundStyle(Theme.rose)
 
-            Text(trigger.headline)
+            Text(verbatim: trigger.headline.loc)
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(Theme.ink)
                 .multilineTextAlignment(.center)

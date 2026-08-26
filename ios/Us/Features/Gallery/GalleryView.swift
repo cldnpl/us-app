@@ -53,7 +53,7 @@ struct GalleryView: View {
     private func monthSection(_ month: JournalPhotoMonth) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(month.label)
+                Text(verbatim: month.label.loc)
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Theme.ink)
                 Text(loc: "\(month.photos.count)")

@@ -220,7 +220,7 @@ private struct PaywallDemoScreenView: View {
                 StepDots(total: 6, index: 2, accent: accent) { $0 < 2 }
                 Text(loc: "Question 3 of 6").font(.caption.bold()).foregroundStyle(.secondary)
 
-                Text(quiz.prompt)
+                Text(verbatim: quiz.prompt.loc)
                     .font(.title2.bold()).multilineTextAlignment(.center)
                     .foregroundStyle(Theme.ink).padding(.horizontal)
 
@@ -275,7 +275,7 @@ private struct PaywallDemoScreenView: View {
 
     private func knowMeRevealRow(_ reveal: PaywallSampleData.Reveal) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(reveal.prompt).font(.subheadline.bold()).foregroundStyle(Theme.ink)
+            Text(verbatim: reveal.prompt.loc).font(.subheadline.bold()).foregroundStyle(Theme.ink)
             Text(loc: "About you").font(.caption2.bold()).foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 Image(systemName: reveal.matched ? "checkmark.circle.fill" : "xmark.circle.fill")

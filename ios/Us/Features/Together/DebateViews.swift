@@ -63,7 +63,7 @@ struct DebatePackCard: View {
             QuizIconTile(systemName: pack.icon, colorKey: pack.colorKey)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    Text(pack.title).font(.headline).foregroundStyle(Theme.ink)
+                    Text(verbatim: pack.title.loc).font(.headline).foregroundStyle(Theme.ink)
                     if !pack.tag.isEmpty {
                         Text(pack.tag).font(.caption2.bold()).foregroundStyle(accent)
                     }

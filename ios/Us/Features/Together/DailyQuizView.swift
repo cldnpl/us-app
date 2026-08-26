@@ -41,7 +41,7 @@ struct DailyQuizView: View {
                     Text(daily.categoryTitle.uppercased())
                         .font(.caption.bold()).foregroundStyle(accent)
                         .tracking(1)
-                    Text(q.prompt)
+                    Text(verbatim: q.prompt.loc)
                         .font(.title2.bold())
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink)

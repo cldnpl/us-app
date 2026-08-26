@@ -26,7 +26,7 @@ struct PartnerMapView: View {
                         Image(systemName: "heart.circle.fill")
                             .font(.title).foregroundStyle(Theme.rose)
                             .background(Circle().fill(.background).padding(4))
-                        Text(item.name)
+                        Text(verbatim: item.name.loc)
                             .font(.caption2).bold()
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             // See DistanceViews: a fixed white capsule under

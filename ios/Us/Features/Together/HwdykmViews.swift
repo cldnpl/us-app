@@ -55,7 +55,7 @@ struct HwdykmPackCard: View {
             QuizIconTile(systemName: pack.icon, colorKey: pack.colorKey)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    Text(pack.title).font(.headline).foregroundStyle(Theme.ink)
+                    Text(verbatim: pack.title.loc).font(.headline).foregroundStyle(Theme.ink)
                     if !pack.tag.isEmpty {
                         Text(pack.tag).font(.caption2.bold()).foregroundStyle(accent)
                     }
@@ -128,7 +128,7 @@ struct HwdykmPlayView: View {
 
                     HwdykmRolePill(subjectIsMe: q.subjectIsMe, partnerName: partnerName)
 
-                    Text(q.prompt)
+                    Text(verbatim: q.prompt.loc)
                         .font(.title2.bold()).multilineTextAlignment(.center)
                         .foregroundStyle(Theme.ink).padding(.horizontal)
 
@@ -204,7 +204,7 @@ struct HwdykmPlayView: View {
 
     private func revealRow(_ q: HwdykmQuestion) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(q.prompt).font(.subheadline.bold()).foregroundStyle(Theme.ink)
+            Text(verbatim: q.prompt.loc).font(.subheadline.bold()).foregroundStyle(Theme.ink)
             Text(q.subjectIsMe ? "About you" : "About \(partnerName)")
                 .font(.caption2.bold()).foregroundStyle(.secondary)
             HStack(spacing: 8) {
