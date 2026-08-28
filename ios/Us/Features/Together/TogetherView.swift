@@ -162,30 +162,25 @@ struct DailyQuestionCard: View {
     var body: some View {
         let accent = QuizPalette.accent(daily.colorKey)
         let answered = daily.question.myAnswer != nil
+        let both = daily.question.bothAnswered
+        // Turn label: waiting on partner, my move, or ready to compare.
+        let turn: String = both ? "COMPARE" : (answered ? "WAITING" : "YOUR TURN")
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Label(loc: "QUESTION OF THE DAY", systemImage: "sparkles")
                     .font(.caption.bold()).foregroundStyle(accent)
                 Spacer()
-                if answered {
-                    Image(systemName: daily.question.bothAnswered ? "checkmark.circle.fill" : "clock.fill")
-                        .foregroundStyle(accent)
-                }
+                TurnBadge(text: turn, accent: accent)
             }
             Text(verbatim: daily.question.prompt.loc)
                 .font(.title3.bold())
                 .foregroundStyle(Theme.ink)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if daily.question.isMyTurn {
-                YourTurnHint(partnerName: partnerName, accent: accent)
-            }
             HStack(spacing: 10) {
                 Image(systemName: daily.icon).font(.footnote.bold()).foregroundStyle(accent)
                 Text(daily.categoryTitle).font(.subheadline.bold()).foregroundStyle(accent)
                 Spacer()
-                Text(answered ? (daily.question.bothAnswered ? "COMPARE" : "WAITING") : "ANSWER")
-                    .font(.footnote.bold()).foregroundStyle(accent)
                 Image(systemName: "chevron.right").font(.caption2.bold()).foregroundStyle(accent)
             }
         }
@@ -271,6 +266,23 @@ struct QuizEntryCard: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
         .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
+    }
+}
+
+/// Prominent "WAITING" / "YOUR TURN" pill used on hero game cards so a glance
+/// tells you whose move it is without opening the game.
+struct TurnBadge: View {
+    let text: String
+    let accent: Color
+
+    var body: some View {
+        Text(text.loc)
+            .font(.caption2.bold())
+            .tracking(1)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(accent, in: Capsule())
     }
 }
 

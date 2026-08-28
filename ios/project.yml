@@ -57,6 +57,10 @@ targets:
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         NSCameraUsageDescription: "Take a photo for your shared diary or for Snap Hunt, so your partner can see it."
         NSHealthShareUsageDescription: "Us reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle & health screen. It is read-only \u2014 Us never writes to Health \u2014 and it stays on this iPhone unless you choose to share a gentle heads-up with your partner."
+        # App Review 2.5.1 requires this even though Us never writes to Health;
+        # HealthKit surfaces the key at permission time. Keep it in project.yml
+        # so xcodegen doesn't strip it out of the generated Info.plist.
+        NSHealthUpdateUsageDescription: "Us does not write or change Apple Health data. This description is included because HealthKit requires it for the app\u2019s Health access; your cycle data is only read to show your current phase, cycle day, and next-period estimate."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp

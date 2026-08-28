@@ -104,7 +104,7 @@ struct PartnerMapView: View {
     private var controlCard: some View {
         VStack(spacing: 12) {
             if let km = distanceKm {
-                Text(loc: "\(Int(km.rounded())) km apart")
+                Text(verbatim: "%@ km apart".loc(NSNumber(value: Int(km.rounded()))))
                     .font(.system(.headline, design: .rounded).bold())
                     .foregroundStyle(Theme.rose)
             }

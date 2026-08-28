@@ -234,7 +234,17 @@ struct HomeView: View {
     // MARK: - Copy
 
     private var heroTitle: String {
-        "Let \(partnerName) know you're thinking of \(session.partnerPronounObject)"
+        // Pronouns aren't isolated tokens across languages, so bake each
+        // pronoun into its own key. The whole sentence gets translated as one
+        // unit instead of stitching a translated template around an English
+        // "him"/"her"/"them".
+        let template: String
+        switch PartnerPrefs.pronoun {
+        case .she: template = "Let %@ know you're thinking of her"
+        case .he:  template = "Let %@ know you're thinking of him"
+        default:   template = "Let %@ know you're thinking of them"
+        }
+        return template.loc(partnerName)
     }
 
     // MARK: - Actions

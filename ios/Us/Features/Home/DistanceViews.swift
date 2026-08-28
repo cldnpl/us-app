@@ -83,8 +83,8 @@ struct DistanceConnector: View {
     }
 
     private var distanceText: String {
-        if km < 1 { return "Less than 1 km apart 💜" }
-        return "\(Int(km.rounded())) km apart"
+        if km < 1 { return "Less than 1 km apart 💜".loc }
+        return "%@ km apart".loc(NSNumber(value: Int(km.rounded())))
     }
 
     /// Line length scales with distance (with a cap so it always fits the card).

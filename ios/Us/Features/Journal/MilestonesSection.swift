@@ -80,17 +80,6 @@ struct MilestonesSection: View {
                 Spacer()
                 Image(systemName: "pencil").font(.footnote).foregroundStyle(.tertiary)
                     .padding(.top, 4)
-                Button {
-                    Task { await onDelete(m.id) }
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.red)
-                        .padding(8)
-                        .background(.red.opacity(0.10), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Delete \(m.title)")
             }
             .padding(.vertical, 12)
             .contentShape(Rectangle())

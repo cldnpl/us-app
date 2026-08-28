@@ -222,7 +222,13 @@ struct DrawingPad: View {
         let bounds = canvas.bounds
         guard bounds.width > 1, bounds.height > 1 else { return nil }
         let scale = UIScreen.main.scale
-        let strokes = canvas.drawing.image(from: bounds, scale: scale)
+        // PKDrawing resolves ink colors through the ambient trait collection —
+        // in dark mode black ink inverts to white. Force a light appearance so
+        // black stays black on the exported bitmap.
+        var strokes = UIImage()
+        UITraitCollection(userInterfaceStyle: .light).performAsCurrent {
+            strokes = canvas.drawing.image(from: bounds, scale: scale)
+        }
         // The server normalizes this image to JPEG. Give it an already-opaque
         // standard RGB bitmap so PencilKit's black pixels cannot be treated as
         // transparent/dynamic when the image is decoded for the reveal screen.

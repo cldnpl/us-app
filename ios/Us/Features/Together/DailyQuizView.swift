@@ -69,11 +69,11 @@ struct DailyQuizView: View {
         VStack(spacing: 14) {
             if q.isChoice, let options = q.options {
                 ForEach(options) { o in
-                    Button { selection = (selection == o.label) ? nil : o.label; Haptics.tap(.light) } label: {
+                    Button { selection = (selection == o.id) ? nil : o.id; Haptics.tap(.light) } label: {
                         if q.hasPhotos {
-                            PhotoChoiceCard(option: o, colorKey: key, selected: selection == o.label)
+                            PhotoChoiceCard(option: o, colorKey: key, selected: selection == o.id)
                         } else {
-                            IconChoiceRow(option: o, colorKey: key, selected: selection == o.label)
+                            IconChoiceRow(option: o, colorKey: key, selected: selection == o.id)
                         }
                     }
                     .buttonStyle(.plain).disabled(submitting)

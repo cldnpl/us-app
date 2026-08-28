@@ -94,11 +94,14 @@ struct SnapHuntView: View {
                     .buttonStyle(.plain)
                 }
 
-                if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                if let errorMessage {
+                    Text(errorMessage).font(.footnote)
+                        .foregroundStyle(Color(dynamic: .systemRed, dark: UIColor(red: 1.0, green: 0.55, blue: 0.55, alpha: 1)))
+                }
             }
             .padding(24)
             .frame(maxWidth: .infinity)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
             .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
             .padding(.horizontal, 20)
@@ -281,7 +284,7 @@ struct SnapHuntCard<Content: View>: View {
         VStack(spacing: 22) { content }
             .padding(24)
             .frame(maxWidth: .infinity)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
             .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
     }

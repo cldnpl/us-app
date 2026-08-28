@@ -201,23 +201,30 @@ func (d Deps) handleGetSnap(w http.ResponseWriter, r *http.Request) {
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 	roundID := r.URL.Query().Get("roundId")
+	var round store.GameSession
 	if roundID == "" {
-		writeError(w, http.StatusBadRequest, "missing_round_id", "the hunt round is required")
-		return
+		// First load has no round id yet; hand back (or create) the current hunt.
+		var ok bool
+		round, ok = d.currentHunt(w, r, c.ID, userID)
+		if !ok {
+			return
+		}
+	} else {
+		var err error
+		round, err = d.Store.GetGame(r.Context(), roundID)
+		if err != nil || round.CoupleID != c.ID || round.GameType != snapGameType || round.Status != "active" {
+			writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
+			return
+		}
+		latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType)
+		if latestErr != nil || latest.ID != round.ID {
+			writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
+			return
+		}
 	}
-	round, err := d.Store.GetGame(r.Context(), roundID)
-	if err != nil || round.CoupleID != c.ID || round.GameType != snapGameType || round.Status != "active" {
-		writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
-		return
-	}
-	latest, latestErr := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType)
-	if latestErr != nil || latest.ID != round.ID {
-		writeError(w, http.StatusConflict, "snap_round_stale", "that hunt round has ended")
-		return
-	}
-	v, err := d.buildSnapView(r, round, userID, partner.ID)
-	if err != nil {
-		d.serverError(w, "snap: view", err)
+	v, viewErr := d.buildSnapView(r, round, userID, partner.ID)
+	if viewErr != nil {
+		d.serverError(w, "snap: view", viewErr)
 		return
 	}
 	writeJSON(w, http.StatusOK, v)
