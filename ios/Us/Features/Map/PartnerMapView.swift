@@ -6,6 +6,7 @@ struct MapPin: Identifiable {
     let id = UUID()
     let name: String
     let coordinate: CLLocationCoordinate2D
+    let avatarPath: String?
 }
 
 struct PartnerMapView: View {
@@ -23,9 +24,10 @@ struct PartnerMapView: View {
             Map(coordinateRegion: $region, annotationItems: annotations) { item in
                 MapAnnotation(coordinate: item.coordinate) {
                     VStack(spacing: 2) {
-                        Image(systemName: "heart.circle.fill")
-                            .font(.title).foregroundStyle(Theme.rose)
-                            .background(Circle().fill(.background).padding(4))
+                        // Show the person's profile photo on the map when they've
+                        // uploaded one; keep the heart as the warm fallback.
+                        Avatar(path: item.avatarPath, name: item.name, size: 36)
+                            .background(Circle().fill(.background).padding(-3))
                         Text(verbatim: item.name.loc)
                             .font(.caption2).bold()
                             .padding(.horizontal, 6).padding(.vertical, 2)
@@ -78,8 +80,12 @@ struct PartnerMapView: View {
 
     private var annotations: [MapPin] {
         var pins: [MapPin] = []
-        if let m = myCoord { pins.append(MapPin(name: myName, coordinate: m)) }
-        if let pc = partnerCoord { pins.append(MapPin(name: partnerName, coordinate: pc)) }
+        if let m = myCoord {
+            pins.append(MapPin(name: myName, coordinate: m, avatarPath: session.user?.avatarPath))
+        }
+        if let pc = partnerCoord {
+            pins.append(MapPin(name: partnerName, coordinate: pc, avatarPath: session.partner?.avatarPath))
+        }
         return pins
     }
 

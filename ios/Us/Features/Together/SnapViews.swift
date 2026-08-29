@@ -162,7 +162,8 @@ struct SnapHuntView: View {
 
     private func photoCard(title: String, path: String?, winner: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 6) {
+                Avatar(path: avatarPath(for: title), name: title, size: 22)
                 Text(title).font(.caption.bold()).foregroundStyle(.secondary)
                 if winner {
                     Spacer()
@@ -184,6 +185,12 @@ struct SnapHuntView: View {
         .frame(maxWidth: .infinity)
         .background(QuizPalette.gradient("green").opacity(winner ? 0.6 : 0.35),
                     in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func avatarPath(for title: String) -> String? {
+        // "You" / "Your find" → my avatar; the partner label → theirs.
+        if title == "You" || title.starts(with: "Your") { return session.user?.avatarPath }
+        return session.partner?.avatarPath
     }
 
     private func crownIcon(_ outcome: String?) -> String {

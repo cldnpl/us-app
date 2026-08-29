@@ -45,6 +45,23 @@ extension APIClient {
                               body: Body(hasCycle: hasCycle, cycleShareLevel: shareLevel))
     }
 
+    // MARK: - Avatar
+
+    /// Uploads a new profile photo. The server saves it, sets `avatarPath` on
+    /// the account, and returns the refreshed user.
+    @discardableResult
+    func uploadAvatar(_ jpeg: Data) async throws -> User {
+        let data = try await uploadImage("/v1/me/avatar", imageData: jpeg,
+                                         filename: "avatar.jpg", caption: nil)
+        return try decoder.decode(User.self, from: data)
+    }
+
+    /// Clears the profile photo, reverting to the heart fallback.
+    @discardableResult
+    func deleteAvatar() async throws -> User {
+        try await send("/v1/me/avatar", method: "DELETE")
+    }
+
     // MARK: - Changing the account email
 
     /// Starts an email change: the server mails a one-time code to `newEmail`.

@@ -97,6 +97,9 @@ func NewRouter(d Deps) http.Handler {
 			r.Patch("/me", d.handlePatchMe)
 			r.Post("/me/email/request", d.handleRequestEmailChange)
 			r.Post("/me/email/confirm", d.handleConfirmEmailChange)
+			r.Post("/me/avatar", d.handleUploadAvatar)
+			r.Delete("/me/avatar", d.handleDeleteAvatar)
+			r.Get("/users/{userId}/avatar", d.handleServeAvatar)
 
 			r.Post("/pairing/code", d.handleCreatePairingCode)
 			r.Post("/pairing/redeem", d.handleRedeemPairing)

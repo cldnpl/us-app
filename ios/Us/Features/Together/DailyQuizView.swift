@@ -102,9 +102,11 @@ struct DailyQuizView: View {
     private func compareSection(_ daily: QuizDaily) -> some View {
         let q = daily.question
         VStack(spacing: 14) {
-            answerCard(name: "You", option: q.option(for: q.myAnswer), fallback: q.myAnswer ?? "", accent: Theme.coral)
+            answerCard(name: "You", avatarPath: session.user?.avatarPath,
+                       option: q.option(for: q.myAnswer), fallback: q.myAnswer ?? "", accent: Theme.coral)
             if let partner = q.partnerAnswer {
-                answerCard(name: partnerName, option: q.option(for: partner), fallback: partner, accent: Theme.rose)
+                answerCard(name: partnerName, avatarPath: session.partner?.avatarPath,
+                           option: q.option(for: partner), fallback: partner, accent: Theme.rose)
                 if q.isChoice {
                     Label(q.myAnswer == partner ? "You match!" : "Different picks",
                           systemImage: q.myAnswer == partner ? "heart.fill" : "sparkles")
@@ -120,8 +122,10 @@ struct DailyQuizView: View {
         }
     }
 
-    private func answerCard(name: String, option: QuizOption?, fallback: String, accent: Color) -> some View {
+    private func answerCard(name: String, avatarPath: String?,
+                            option: QuizOption?, fallback: String, accent: Color) -> some View {
         HStack(spacing: 14) {
+            Avatar(path: avatarPath, name: name, size: 32)
             if let url = option?.imageURL {
                 AsyncImage(url: url) { phase in
                     if let img = phase.image { img.resizable().scaledToFill() } else { Color.secondary.opacity(0.15) }

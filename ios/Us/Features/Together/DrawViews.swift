@@ -82,7 +82,12 @@ struct DrawTogetherView: View {
 
     private func drawingCard(title: String, path: String?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.caption.bold()).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                let mine = title == "You" || title.starts(with: "Your")
+                Avatar(path: mine ? session.user?.avatarPath : session.partner?.avatarPath,
+                       name: title, size: 22)
+                Text(title).font(.caption.bold()).foregroundStyle(.secondary)
+            }
             Group {
                 if let path {
                     RemoteImage(path: path, contentMode: .fit)

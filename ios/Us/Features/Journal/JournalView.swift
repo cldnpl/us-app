@@ -88,6 +88,7 @@ struct JournalView: View {
                     JournalDayCard(
                         day: day,
                         authorName: authorName,
+                        authorAvatarPath: authorAvatarPath,
                         isMine: isMine,
                         onOpenPhotos: { photos, start in pager = PhotoPagerContext(photos: photos, startIndex: start) },
                         onEdit: { editingEntry = $0 },
@@ -131,6 +132,11 @@ struct JournalView: View {
     }
 
     private func isMine(_ id: String) -> Bool { id == session.user?.id }
+
+    private func authorAvatarPath(_ id: String) -> String? {
+        if id == session.user?.id { return session.user?.avatarPath }
+        return session.partner?.avatarPath
+    }
 
     // MARK: - Data
 

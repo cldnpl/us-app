@@ -33,6 +33,7 @@ struct JournalDay: Identifiable {
 struct JournalDayCard: View {
     let day: JournalDay
     let authorName: (String) -> String
+    let authorAvatarPath: (String) -> String?
     let isMine: (String) -> Bool
     let onOpenPhotos: ([MediaItem], Int) -> Void
     let onEdit: (JournalEntry) -> Void
@@ -71,9 +72,13 @@ struct JournalDayCard: View {
     @ViewBuilder
     private func block(_ entry: JournalEntry) -> some View {
         let body = VStack(alignment: .leading, spacing: 8) {
-            Text(loc: "\(authorName(entry.authorId)):")
-                .font(.subheadline.bold())
-                .foregroundStyle(isMine(entry.authorId) ? Theme.coral : Theme.ink)
+            HStack(spacing: 8) {
+                Avatar(path: authorAvatarPath(entry.authorId),
+                       name: authorName(entry.authorId), size: 22)
+                Text(loc: "\(authorName(entry.authorId)):")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(isMine(entry.authorId) ? Theme.coral : Theme.ink)
+            }
 
             if !entry.body.isEmpty {
                 Text(verbatim: entry.body.loc)

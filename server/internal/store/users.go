@@ -94,6 +94,15 @@ func (s *Store) UpdateUserProfile(ctx context.Context, id string, p UpdateUserPr
 		id, p.DisplayName, p.Birthday, p.PartnerPronoun, p.HasCycle, p.CycleShareLevel))
 }
 
+// UpdateUserAvatar replaces the avatar_path (or clears it when nil).
+func (s *Store) UpdateUserAvatar(ctx context.Context, id string, path *string) (User, error) {
+	return scanUser(s.pool.QueryRow(ctx,
+		`UPDATE users SET avatar_path = $2, updated_at = now()
+		 WHERE id = $1
+		 RETURNING `+userCols,
+		id, path))
+}
+
 // EmailInUse reports whether an address belongs to an account other than the
 // given one. Compared case-insensitively, matching how addresses are stored.
 func (s *Store) EmailInUse(ctx context.Context, email, excludeUserID string) (bool, error) {

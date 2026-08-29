@@ -27,12 +27,21 @@ func (d Deps) serverError(w http.ResponseWriter, context string, err error) {
 }
 
 func toDomainUser(u store.User) domain.User {
+	// The DB stores the filesystem-relative path; the app never touches disk
+	// directly, so translate to the serve URL that GET /v1/users/{id}/avatar
+	// resolves. Nil means "no avatar", which the client renders as the heart
+	// fallback.
+	var avatarURL *string
+	if u.AvatarPath != nil && *u.AvatarPath != "" {
+		p := "/v1/users/" + u.ID + "/avatar"
+		avatarURL = &p
+	}
 	return domain.User{
 		ID:              u.ID,
 		Email:           u.Email,
 		EmailVerified:   u.EmailVerified,
 		DisplayName:     u.DisplayName,
-		AvatarPath:      u.AvatarPath,
+		AvatarPath:      avatarURL,
 		Birthday:        u.Birthday,
 		PartnerPronoun:  u.PartnerPronoun,
 		HasCycle:        u.HasCycle,
