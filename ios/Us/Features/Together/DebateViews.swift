@@ -104,6 +104,11 @@ struct DebatePlayView: View {
     @State private var submitting = false
     @State private var errorMessage: String?
     @FocusState private var editing: Bool
+    /// Set the first time we've shown the results with both partners done,
+    /// so we call markDebatePackSeen exactly once per visit. Once both users
+    /// have hit that endpoint the server retires the round and hands us
+    /// brand-new motions on the next load.
+    @State private var markedSeen = false
 
     private var partnerName: String { session.partner?.displayName ?? "your partner" }
     private var accent: Color { QuizPalette.accent(colorKey) }
@@ -122,6 +127,19 @@ struct DebatePlayView: View {
         .navigationTitle(pack?.title ?? "Debate")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
+        .task(id: bothDoneShown) { await maybeMarkSeen() }
+    }
+
+    /// True the moment the results screen is on-screen AND both partners have
+    /// argued every motion — the server-side gate we tick with
+    /// markDebatePackSeen. When both users tick, the pack rotates to fresh
+    /// motions on the next fetch.
+    private var bothDoneShown: Bool { showResults && pack?.bothDone == true }
+
+    private func maybeMarkSeen() async {
+        guard bothDoneShown, !markedSeen else { return }
+        markedSeen = true
+        _ = try? await APIClient.shared.markDebatePackSeen(packId)
     }
 
     // MARK: round

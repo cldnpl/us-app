@@ -16,4 +16,11 @@ extension APIClient {
         try await sendVoid("/v1/games/debate/packs/\(packId)/argue", method: "POST",
                            body: ["roundId": roundId, "argument": argument])
     }
+
+    /// Tells the server we've opened the results screen for this pack. Once
+    /// both partners have called this on the same round, the pack rotates on
+    /// the server — the next fetch returns brand-new motions.
+    func markDebatePackSeen(_ packId: String) async throws {
+        try await sendVoid("/v1/games/debate/packs/\(packId)/seen", method: "POST")
+    }
 }

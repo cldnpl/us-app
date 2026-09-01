@@ -95,6 +95,10 @@ struct HwdykmPlayView: View {
     @State private var showResults = false
     @State private var submitting = false
     @State private var errorMessage: String?
+    /// Set the first time we've actually shown the results with both partners
+    /// done, so the "mark this round as seen" call fires exactly once per
+    /// visit — the server rotates the pack when both users have done that.
+    @State private var markedSeen = false
 
     private var partnerName: String { session.partner?.displayName ?? "your partner" }
     private var accent: Color { QuizPalette.accent(colorKey) }
@@ -113,6 +117,18 @@ struct HwdykmPlayView: View {
         .navigationTitle(pack?.title ?? "Know Me")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
+        .task(id: bothDoneShown) { await maybeMarkSeen() }
+    }
+
+    /// True the moment the reveal screen is on-screen AND both partners have
+    /// answered every question — the server-side "both users have seen the
+    /// results" gate we tick with markHwdykmPackSeen.
+    private var bothDoneShown: Bool { showResults && pack?.bothDone == true }
+
+    private func maybeMarkSeen() async {
+        guard bothDoneShown, !markedSeen else { return }
+        markedSeen = true
+        _ = try? await APIClient.shared.markHwdykmPackSeen(packId)
     }
 
     @ViewBuilder

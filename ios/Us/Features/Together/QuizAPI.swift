@@ -42,4 +42,11 @@ extension APIClient {
         try await sendVoid("/v1/games/hwdykm/packs/\(packId)/answer", method: "POST",
                            body: ["questionId": questionId, "answer": answer])
     }
+
+    /// Tells the server we've opened the reveal screen for this pack. When
+    /// both partners have marked the current round as seen, the pack rotates
+    /// server-side and the next fetch returns brand-new questions.
+    func markHwdykmPackSeen(_ packId: String) async throws {
+        try await sendVoid("/v1/games/hwdykm/packs/\(packId)/seen", method: "POST")
+    }
 }
