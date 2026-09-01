@@ -183,6 +183,161 @@ func (g *Generator) HwdykmQuestions(ctx context.Context, packTitle, description 
 	return clean
 }
 
+// QuizQuestion is one generated quiz question. Type mirrors the catalog:
+// "open" for free-text prompts, "choice" for multiple-choice. Options carry
+// the plain labels — icons/photos from the original catalog are dropped from
+// regenerated content (the LLM can't reliably match SF-Symbol / photo bank
+// keywords), and the app already handles label-only rendering.
+type QuizQuestion struct {
+	Prompt  string   `json:"prompt"`
+	Type    string   `json:"type"` // "open" | "choice"
+	Options []string `json:"options,omitempty"`
+}
+
+// QuizQuestions asks Claude for `count` fresh questions in a given quiz's
+// theme. `format` is the quiz style (thisOrThat, whichDoYouPrefer,
+// deepConversation) which nudges tone. `seed` carries the current questions
+// (used both as an "avoid" hint and as the offline fallback). Every returned
+// question mirrors the shape of the corresponding seed slot: open stays open,
+// choice stays choice with the same number of options.
+func (g *Generator) QuizQuestions(ctx context.Context, quizTitle, format string,
+	count int, seed []QuizQuestion, lang string) []QuizQuestion {
+
+	if g.apiKey == "" || count <= 0 {
+		return trimQuizQuestions(seed, count)
+	}
+	// Describe the shape slot-by-slot so the model preserves open vs. choice
+	// and the choice option count. Empty seed falls back to plain open prompts.
+	slots := make([]map[string]any, 0, count)
+	avoid := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		var s QuizQuestion
+		if i < len(seed) {
+			s = seed[i]
+			avoid = append(avoid, s.Prompt)
+		}
+		typ := s.Type
+		if typ != "choice" {
+			typ = "open"
+		}
+		slot := map[string]any{"index": i, "type": typ}
+		if typ == "choice" {
+			n := len(s.Options)
+			if n < 2 {
+				n = 3
+			}
+			slot["optionCount"] = n
+		}
+		slots = append(slots, slot)
+	}
+
+	system := "You invent short, playful questions for a couples quiz app. Prompts are one line (max 80 characters) about the couple, their tastes or their shared world. Never NSFW unless the theme explicitly asks for it, never mean-spirited, never politically loaded. Return strict JSON."
+	langLine := ""
+	if lang != "" && lang != "en" {
+		langLine = fmt.Sprintf("\nWrite every prompt and every option in the language with BCP-47 code %q.", lang)
+	}
+	formatLine := ""
+	if format != "" {
+		formatLine = fmt.Sprintf("\nStyle: %q — tone should match that format.", format)
+	}
+	shapeJSON, _ := json.Marshal(slots)
+	avoidBlock := ""
+	if len(avoid) > 0 {
+		avoidBlock = "\nDo not repeat or paraphrase any of these prompts: " + strings.Join(quoteList(avoid), ", ")
+	}
+
+	user := fmt.Sprintf(
+		"Theme: %s.%s\nGenerate exactly %d brand-new questions.%s%s\nMatch this shape slot-by-slot — same index, same type; if a slot is type \"choice\", supply exactly `optionCount` short (max 30 chars) mutually exclusive options: %s\nReturn JSON of the form {\"questions\": [{\"prompt\": \"…\", \"type\": \"open\"|\"choice\", \"options\": [\"…\"]}]}.",
+		quizTitle, formatLine, count, avoidBlock, langLine, string(shapeJSON),
+	)
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"questions": map[string]any{
+				"type":     "array",
+				"minItems": count,
+				"maxItems": count,
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"prompt":  map[string]any{"type": "string"},
+						"type":    map[string]any{"type": "string", "enum": []string{"open", "choice"}},
+						"options": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+					},
+					"required":             []string{"prompt", "type"},
+					"additionalProperties": false,
+				},
+			},
+		},
+		"required":             []string{"questions"},
+		"additionalProperties": false,
+	}
+	var out struct {
+		Questions []QuizQuestion `json:"questions"`
+	}
+	if !g.jsonCall(ctx, system, user, schema, &out) || len(out.Questions) < count {
+		return trimQuizQuestions(seed, count)
+	}
+	clean := make([]QuizQuestion, 0, count)
+	for i, q := range out.Questions {
+		q.Prompt = strings.TrimSpace(q.Prompt)
+		if q.Prompt == "" {
+			continue
+		}
+		if q.Type != "choice" {
+			q.Type = "open"
+			q.Options = nil
+		} else {
+			opts := make([]string, 0, len(q.Options))
+			for _, o := range q.Options {
+				o = strings.TrimSpace(o)
+				if o != "" {
+					opts = append(opts, o)
+				}
+			}
+			// Drop malformed choice questions rather than serving zero options.
+			if len(opts) < 2 {
+				continue
+			}
+			q.Options = opts
+		}
+		// Keep the shape aligned with the seed slot's type where possible —
+		// falling back to whatever the model gave us if that slot's info is
+		// missing (short seed).
+		if i < len(seed) {
+			if seed[i].Type == "choice" && q.Type == "open" {
+				continue
+			}
+			if seed[i].Type == "open" && q.Type == "choice" {
+				continue
+			}
+		}
+		clean = append(clean, q)
+		if len(clean) == count {
+			break
+		}
+	}
+	if len(clean) < count {
+		return trimQuizQuestions(seed, count)
+	}
+	return clean
+}
+
+func trimQuizQuestions(items []QuizQuestion, n int) []QuizQuestion {
+	if n <= 0 || len(items) == 0 {
+		return nil
+	}
+	if len(items) >= n {
+		return append([]QuizQuestion(nil), items[:n]...)
+	}
+	out := append([]QuizQuestion(nil), items...)
+	for len(out) < n {
+		out = append(out, items[len(items)-1])
+	}
+	return out
+}
+
 // ---- shared plumbing ----
 
 func (g *Generator) jsonCall(ctx context.Context, system, user string, schema map[string]any, out any) bool {

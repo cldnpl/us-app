@@ -155,6 +155,19 @@ func findQuizIn(categories []catalogCategory, quizID string) (catalogQuiz, bool)
 	return catalogQuiz{}, false
 }
 
+// findQuizAndCategoryIn returns the quiz alongside its containing category —
+// used by rotation to key generation state per category rather than per quiz.
+func findQuizAndCategoryIn(categories []catalogCategory, quizID string) (catalogCategory, catalogQuiz, bool) {
+	for _, cat := range categories {
+		for _, q := range cat.Quizzes {
+			if q.ID == quizID {
+				return cat, q, true
+			}
+		}
+	}
+	return catalogCategory{}, catalogQuiz{}, false
+}
+
 func findHwdykmPackIn(packs []hwdykmPack, id string) (hwdykmPack, bool) {
 	for _, p := range packs {
 		if p.ID == id {

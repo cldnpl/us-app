@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,73 +11,182 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/sharepact/us/internal/generator"
 	"github.com/sharepact/us/internal/push"
 	"github.com/sharepact/us/internal/store"
 )
 
-// ---- catalog generation (per couple) ----------------------------------------
+// ---- per-category generation ------------------------------------------------
 //
-// Once a couple has completed every quiz in every category, the whole quiz
-// catalog rotates: a monotonic "generation" is bumped on their game_sessions
-// `quiz_catalog` row, and every quiz answer key gets prefixed with `qg<gen>:`
-// from that point on. Previous answers stay in the DB but no longer surface,
-// so the app shows the same catalog structure at 0% completion again. The
-// underlying questions are unchanged for now — the LLM per-quiz regeneration
-// hooks off the same generation number in a follow-up.
+// Every quiz category rotates independently. Once both partners have completed
+// every quiz in a category, the category's generation bumps on their
+// game_sessions row `quiz_cat:<catID>`, previously stored answers stop
+// resolving, and on the next fetch each quiz in that category regenerates its
+// questions via Claude (with the seed catalog as offline fallback). Fresh
+// questions are cached per (category, generation, quiz) on the same row so
+// callers pay the LLM cost at most once per quiz per rotation.
+//
+// Answer keys are composed as `qcat:<catID>:g<gen>:<quizID>`. For generation
+// 1 we keep the raw quizID (no prefix) so existing rows written before
+// rotation existed keep resolving without a migration.
 
-const quizCatalogGameType = "quiz_catalog"
+func quizCatGameType(catID string) string { return "quiz_cat:" + catID }
 
-type quizCatalogState struct {
+type quizCategoryState struct {
 	Generation int `json:"gen"`
+	// Content maps quizID → generated questions for the current generation.
+	// Populated lazily on the first fetch of each quiz after a bump.
+	Content map[string][]generatedQuizQuestion `json:"content,omitempty"`
 }
 
-// quizCatalogGen returns the couple's current catalog generation (>=1), the
-// game_sessions id that stores it (empty if no row exists yet), and whether a
-// row already exists at all.
-func (d Deps) quizCatalogGen(ctx context.Context, coupleID string) (int, string, error) {
-	g, err := d.Store.GetLatestGame(ctx, coupleID, quizCatalogGameType)
+// generatedQuizQuestion mirrors the wire shape (open vs. choice, labels only)
+// but with stable ids assigned once and reused across future fetches so
+// quiz_answers rows can still find their question.
+type generatedQuizQuestion struct {
+	ID      string          `json:"id"`
+	Prompt  string          `json:"prompt"`
+	Type    string          `json:"type"` // "open" | "choice"
+	Options []catalogOption `json:"options,omitempty"`
+}
+
+// loadQuizCategoryState fetches the couple's persisted state for a category —
+// generation defaults to 1, content nil if never regenerated. sessionID is
+// empty when no row exists yet.
+func (d Deps) loadQuizCategoryState(ctx context.Context, coupleID, catID string) (quizCategoryState, string, error) {
+	g, err := d.Store.GetLatestGame(ctx, coupleID, quizCatGameType(catID))
 	if err != nil {
-		if err == store.ErrNotFound {
-			return 1, "", nil
+		if errors.Is(err, store.ErrNotFound) {
+			return quizCategoryState{Generation: 1}, "", nil
 		}
-		return 1, "", err
+		return quizCategoryState{Generation: 1}, "", err
 	}
-	var st quizCatalogState
+	var st quizCategoryState
 	if len(g.State) > 0 {
 		_ = json.Unmarshal(g.State, &st)
 	}
 	if st.Generation < 1 {
 		st.Generation = 1
 	}
-	return st.Generation, g.ID, nil
+	return st, g.ID, nil
 }
 
-// bumpQuizCatalogGen persists gen+1 and returns the new value. Caller is
-// expected to have just verified that everything is bothDone under `gen`.
-func (d Deps) bumpQuizCatalogGen(ctx context.Context, coupleID, sessionID string, gen int) (int, error) {
-	next := gen + 1
-	raw, _ := json.Marshal(quizCatalogState{Generation: next})
+func (d Deps) saveQuizCategoryState(ctx context.Context, coupleID, catID, sessionID string, st quizCategoryState) (string, error) {
+	raw, _ := json.Marshal(st)
 	if sessionID == "" {
-		if _, err := d.Store.CreateGame(ctx, coupleID, quizCatalogGameType, raw, ""); err != nil {
-			return gen, err
+		g, err := d.Store.CreateGame(ctx, coupleID, quizCatGameType(catID), raw, "")
+		if err != nil {
+			return "", err
 		}
-		return next, nil
+		return g.ID, nil
 	}
 	if _, err := d.Store.UpdateGame(ctx, sessionID, raw, nil, "active"); err != nil {
-		return gen, err
+		return sessionID, err
 	}
-	return next, nil
+	return sessionID, nil
 }
 
-// quizAnswerKey composes the DB key for a quiz's answers under the current
-// catalog generation. Gen 1 is unprefixed for backwards compatibility with
-// answers stored before catalog rotation existed — those pre-rotation rows
-// still resolve as gen 1 without a migration.
-func quizAnswerKey(quizID string, gen int) string {
+// bumpQuizCategoryGen increments the category's generation and clears its
+// cached content, so the next fetch of any quiz in the category triggers a
+// fresh LLM regeneration.
+func (d Deps) bumpQuizCategoryGen(ctx context.Context, coupleID, catID, sessionID string, st quizCategoryState) (quizCategoryState, string, error) {
+	st.Generation++
+	if st.Generation < 1 {
+		st.Generation = 1
+	}
+	st.Content = nil
+	newID, err := d.saveQuizCategoryState(ctx, coupleID, catID, sessionID, st)
+	return st, newID, err
+}
+
+// quizAnswerKey composes the DB key for a quiz's answers under the category's
+// current generation. Generation 1 is unprefixed so pre-rotation rows resolve
+// unchanged; from generation 2 onward the key encodes both the category and
+// the generation so old answers linger without leaking into new rounds.
+func quizAnswerKey(catID, quizID string, gen int) string {
 	if gen <= 1 {
 		return quizID
 	}
-	return fmt.Sprintf("qg%d:%s", gen, quizID)
+	return fmt.Sprintf("qcat:%s:g%d:%s", catID, gen, quizID)
+}
+
+// resolveQuizQuestions returns the questions to serve for a specific quiz in a
+// category. On generation 1 (or when Claude / storage isn't ready) it falls
+// back to the seed catalog. On later generations it consults the cached
+// per-(category, gen, quiz) content; if the cache is cold it asks Claude for
+// a fresh set matching the seed's shape, persists, and returns them. Callers
+// pass the already-loaded state so a single request doesn't re-hit the row.
+func (d Deps) resolveQuizQuestions(ctx context.Context, coupleID, catID, sessionID string,
+	st *quizCategoryState, quiz catalogQuiz, lang string) []catalogQuestion {
+
+	if st.Generation <= 1 {
+		return quiz.Questions
+	}
+	if cached, ok := st.Content[quiz.ID]; ok && len(cached) >= len(quiz.Questions) {
+		return generatedToCatalog(cached)
+	}
+
+	// Ask Claude for a fresh set. Map the seed's shape (open vs choice, option
+	// counts) so the regenerated quiz stays playable the same way.
+	seed := make([]generator.QuizQuestion, 0, len(quiz.Questions))
+	for _, q := range quiz.Questions {
+		opts := make([]string, 0, len(q.Options))
+		for _, o := range q.Options {
+			opts = append(opts, o.Label)
+		}
+		seed = append(seed, generator.QuizQuestion{
+			Prompt: q.Prompt, Type: string(q.Type), Options: opts,
+		})
+	}
+	gen := generator.New(d.Config.AnthropicAPIKey, d.Config.AnthropicModel)
+	fresh := gen.QuizQuestions(ctx, quiz.Title, string(quiz.Format), len(quiz.Questions), seed, lang)
+
+	stored := make([]generatedQuizQuestion, 0, len(fresh))
+	for i, q := range fresh {
+		options := make([]catalogOption, 0, len(q.Options))
+		for j, label := range q.Options {
+			options = append(options, catalogOption{
+				ID:    fmt.Sprintf("opt%d", j),
+				Label: label,
+			})
+		}
+		stored = append(stored, generatedQuizQuestion{
+			ID:      fmt.Sprintf("%s_g%d_q%d", quiz.ID, st.Generation, i+1),
+			Prompt:  q.Prompt,
+			Type:    q.Type,
+			Options: options,
+		})
+	}
+
+	if st.Content == nil {
+		st.Content = make(map[string][]generatedQuizQuestion)
+	}
+	st.Content[quiz.ID] = stored
+	if newID, err := d.saveQuizCategoryState(ctx, coupleID, catID, sessionID, *st); err != nil {
+		// Persist failed — still serve the freshly generated questions this
+		// request; the next fetch will regenerate and try again to cache.
+		d.Logger.Warn("quiz: cache regenerated content", "err", err, "cat", catID, "quiz", quiz.ID)
+	} else if sessionID == "" {
+		sessionID = newID
+		_ = sessionID // keep for symmetry — caller isn't tracking the id back
+	}
+	return generatedToCatalog(stored)
+}
+
+func generatedToCatalog(qs []generatedQuizQuestion) []catalogQuestion {
+	out := make([]catalogQuestion, 0, len(qs))
+	for _, q := range qs {
+		typ := qTypeOpen
+		if q.Type == "choice" {
+			typ = qTypeChoice
+		}
+		out = append(out, catalogQuestion{
+			ID:      q.ID,
+			Prompt:  q.Prompt,
+			Type:    typ,
+			Options: q.Options,
+		})
+	}
+	return out
 }
 
 // resolveOptions maps catalog options to the wire shape, turning photo keywords
@@ -193,11 +303,6 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	gen, sessionID, err := d.quizCatalogGen(r.Context(), c.ID)
-	if err != nil {
-		d.serverError(w, "quiz: gen", err)
-		return
-	}
 	keys, err := d.Store.GetQuizAnswerKeys(r.Context(), c.ID)
 	if err != nil {
 		d.serverError(w, "quiz: keys", err)
@@ -207,39 +312,42 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 
 	categories := quizCategoriesFor(langParam(r))
+	out := make([]quizCategorySummary, 0, len(categories))
+	for _, cat := range categories {
+		st, sessionID, lerr := d.loadQuizCategoryState(r.Context(), c.ID, cat.ID)
+		if lerr != nil {
+			d.serverError(w, "quiz: cat state", lerr)
+			return
+		}
+		gen := st.Generation
 
-	// Whole-catalog rotation: once both partners have completed every quiz in
-	// every category under the current generation, bump the generation so the
-	// answer keys stop matching and every category is fresh again.
-	if partner.ID != "" {
-		allDone := true
-		for _, cat := range categories {
+		// Per-category rotation: once both partners have completed every quiz
+		// in this category under `gen`, bump the generation. On the next fetch
+		// the answer keys stop matching (progress resets to 0) and each quiz
+		// regenerates its questions via Claude on first access.
+		if partner.ID != "" {
+			allDone := true
 			for _, q := range cat.Quizzes {
-				key := quizAnswerKey(q.ID, gen)
+				key := quizAnswerKey(cat.ID, q.ID, gen)
 				if !quizDone(counts, key, userID, len(q.Questions)) ||
 					!quizDone(counts, key, partner.ID, len(q.Questions)) {
 					allDone = false
 					break
 				}
 			}
-			if !allDone {
-				break
+			if allDone {
+				bumped, _, berr := d.bumpQuizCategoryGen(r.Context(), c.ID, cat.ID, sessionID, st)
+				if berr != nil {
+					d.Logger.Warn("quiz: bump category", "err", berr, "cat", cat.ID)
+				} else {
+					gen = bumped.Generation
+				}
 			}
 		}
-		if allDone {
-			if next, berr := d.bumpQuizCatalogGen(r.Context(), c.ID, sessionID, gen); berr == nil {
-				gen = next
-			} else {
-				d.Logger.Warn("quiz: bump catalog", "err", berr)
-			}
-		}
-	}
 
-	out := make([]quizCategorySummary, 0, len(categories))
-	for _, cat := range categories {
 		done, partnerDone, yourTurn := 0, 0, 0
 		for _, q := range cat.Quizzes {
-			key := quizAnswerKey(q.ID, gen)
+			key := quizAnswerKey(cat.ID, q.ID, gen)
 			mine := quizDone(counts, key, userID, len(q.Questions))
 			theirs := partner.ID != "" && quizDone(counts, key, partner.ID, len(q.Questions))
 			if mine {
@@ -263,6 +371,7 @@ func (d Deps) handleListQuizCategories(w http.ResponseWriter, r *http.Request) {
 				progress = float64(done+partnerDone) / float64(2*n)
 			}
 		}
+		_ = sessionID // reserved for future per-request coalescing
 		out = append(out, quizCategorySummary{
 			ID: cat.ID, Title: cat.Title, Icon: cat.Icon, ColorKey: cat.ColorKey,
 			QuizCount: len(cat.Quizzes), CompletedCount: done,
@@ -297,11 +406,12 @@ func (d Deps) handleGetQuizCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gen, _, err := d.quizCatalogGen(r.Context(), c.ID)
+	st, sessionID, err := d.loadQuizCategoryState(r.Context(), c.ID, cat.ID)
 	if err != nil {
-		d.serverError(w, "quiz: gen", err)
+		d.serverError(w, "quiz: cat state", err)
 		return
 	}
+	gen := st.Generation
 	keys, err := d.Store.GetQuizAnswerKeys(r.Context(), c.ID)
 	if err != nil {
 		d.serverError(w, "quiz: keys", err)
@@ -310,10 +420,35 @@ func (d Deps) handleGetQuizCategory(w http.ResponseWriter, r *http.Request) {
 	counts := completionByUser(keys)
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 
+	// Same rotation trigger as the categories list — the app might arrive here
+	// straight from a deep link without a list refresh in between.
+	if partner.ID != "" {
+		allDone := true
+		for _, q := range cat.Quizzes {
+			key := quizAnswerKey(cat.ID, q.ID, gen)
+			if !quizDone(counts, key, userID, len(q.Questions)) ||
+				!quizDone(counts, key, partner.ID, len(q.Questions)) {
+				allDone = false
+				break
+			}
+		}
+		if allDone {
+			bumped, newID, berr := d.bumpQuizCategoryGen(r.Context(), c.ID, cat.ID, sessionID, st)
+			if berr != nil {
+				d.Logger.Warn("quiz: bump category", "err", berr, "cat", cat.ID)
+			} else {
+				st = bumped
+				gen = st.Generation
+				sessionID = newID
+			}
+		}
+	}
+
+	_ = sessionID
 	quizzes := make([]quizSummary, 0, len(cat.Quizzes))
 	for _, q := range cat.Quizzes {
 		total := len(q.Questions)
-		key := quizAnswerKey(q.ID, gen)
+		key := quizAnswerKey(cat.ID, q.ID, gen)
 		quizzes = append(quizzes, quizSummary{
 			ID: q.ID, Title: q.Title, Icon: q.Icon, Format: string(q.Format), Tag: q.Tag,
 			QuestionCount: total,
@@ -337,17 +472,20 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quizID := chi.URLParam(r, "quizId")
-	quiz, found := findQuizIn(quizCategoriesFor(langParam(r)), quizID)
+	cat, quiz, found := findQuizAndCategoryIn(quizCategoriesFor(langParam(r)), quizID)
 	if !found {
 		writeError(w, http.StatusNotFound, "unknown_quiz", "unknown quiz")
 		return
 	}
-	gen, _, gerr := d.quizCatalogGen(r.Context(), c.ID)
+	st, sessionID, gerr := d.loadQuizCategoryState(r.Context(), c.ID, cat.ID)
 	if gerr != nil {
-		d.serverError(w, "quiz: gen", gerr)
+		d.serverError(w, "quiz: cat state", gerr)
 		return
 	}
-	key := quizAnswerKey(quizID, gen)
+	// On generations past the first, questions come from the LLM-generated
+	// cache — regenerated on first fetch after each bump.
+	questions := d.resolveQuizQuestions(r.Context(), c.ID, cat.ID, sessionID, &st, quiz, langParam(r))
+	key := quizAnswerKey(cat.ID, quizID, st.Generation)
 
 	answers, err := d.Store.GetQuizAnswers(r.Context(), c.ID, key)
 	if err != nil {
@@ -365,8 +503,8 @@ func (d Deps) handleGetQuiz(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	views := make([]quizQuestionView, 0, len(quiz.Questions))
-	for _, q := range quiz.Questions {
+	views := make([]quizQuestionView, 0, len(questions))
+	for _, q := range questions {
 		v := quizQuestionView{ID: q.ID, Prompt: q.Prompt, Type: string(q.Type), Options: resolveOptions(q.Options)}
 		myAns, iAnswered := mine[q.ID]
 		partnerAns, theyAnswered := theirs[q.ID]
@@ -402,7 +540,7 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quizID := chi.URLParam(r, "quizId")
-	quiz, found := findQuiz(quizID)
+	cat, quiz, found := findQuizAndCategoryIn(quizCatalog, quizID)
 	if !found {
 		writeError(w, http.StatusNotFound, "unknown_quiz", "unknown quiz")
 		return
@@ -411,19 +549,30 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &req) {
 		return
 	}
-	question, found := quiz.question(req.QuestionID)
-	if !found {
-		writeError(w, http.StatusBadRequest, "unknown_question", "unknown question")
-		return
-	}
 	answer := strings.TrimSpace(req.Answer)
 	if answer == "" {
 		writeError(w, http.StatusBadRequest, "empty", "pick or write an answer first")
 		return
 	}
-	// Choice questions store the option id, never its (localizable) label —
-	// otherwise two partners on different languages could never match, and a
-	// stored answer would stop resolving the moment the label wording changes.
+	st, sessionID, gerr := d.loadQuizCategoryState(r.Context(), c.ID, cat.ID)
+	if gerr != nil {
+		d.serverError(w, "quiz: cat state", gerr)
+		return
+	}
+	// Validate the answer against the actual live question set for this
+	// generation — the regenerated question IDs won't match the seed catalog.
+	questions := d.resolveQuizQuestions(r.Context(), c.ID, cat.ID, sessionID, &st, quiz, langParam(r))
+	var question *catalogQuestion
+	for i := range questions {
+		if questions[i].ID == req.QuestionID {
+			question = &questions[i]
+			break
+		}
+	}
+	if question == nil {
+		writeError(w, http.StatusBadRequest, "unknown_question", "unknown question")
+		return
+	}
 	if question.Type == qTypeChoice {
 		validOption := false
 		for _, o := range question.Options {
@@ -437,17 +586,12 @@ func (d Deps) handleAnswerQuiz(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	gen, _, gerr := d.quizCatalogGen(r.Context(), c.ID)
-	if gerr != nil {
-		d.serverError(w, "quiz: gen", gerr)
-		return
-	}
-	key := quizAnswerKey(quizID, gen)
+	key := quizAnswerKey(cat.ID, quizID, st.Generation)
 	if err := d.Store.UpsertQuizAnswer(r.Context(), c.ID, key, req.QuestionID, userID, answer); err != nil {
 		d.serverError(w, "quiz: save", err)
 		return
 	}
-	d.notifyTurnOrResults(r.Context(), c.ID, userID, key, quiz.Title, len(quiz.Questions),
+	d.notifyTurnOrResults(r.Context(), c.ID, userID, key, quiz.Title, len(questions),
 		"You've both answered — see how you compare 💛",
 		map[string]string{"type": "quiz", "quizId": quizID})
 	w.WriteHeader(http.StatusNoContent)
