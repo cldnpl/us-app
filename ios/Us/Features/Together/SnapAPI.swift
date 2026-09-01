@@ -14,7 +14,10 @@ extension APIClient {
         return try decoder.decode(SnapRound.self, from: data)
     }
 
-    func newSnap() async throws -> SnapRound {
-        try await send("/v1/games/snap/new", method: "POST")
+    /// `force` abandons an in-progress hunt even if the partner hasn't snapped
+    /// yet. Without it the server returns 409 `snap_waiting`.
+    func newSnap(force: Bool = false) async throws -> SnapRound {
+        try await send("/v1/games/snap/new", method: "POST",
+                       queryItems: force ? [URLQueryItem(name: "force", value: "1")] : [])
     }
 }

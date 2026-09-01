@@ -49,19 +49,20 @@ final class APIClient {
         _ path: String,
         method: String = "GET",
         body: (any Encodable)? = nil,
+        queryItems: [URLQueryItem] = [],
         authorized: Bool = true
     ) async throws -> T {
-        let data = try await raw(path, method: method, body: body, authorized: authorized, retryOn401: true)
+        let data = try await raw(path, method: method, body: body, queryItems: queryItems, authorized: authorized, retryOn401: true)
         if T.self == Empty.self { return Empty() as! T }
         return try decoder.decode(T.self, from: data)
     }
 
-    func sendVoid(_ path: String, method: String, body: (any Encodable)? = nil, authorized: Bool = true) async throws {
-        _ = try await raw(path, method: method, body: body, authorized: authorized, retryOn401: true)
+    func sendVoid(_ path: String, method: String, body: (any Encodable)? = nil, queryItems: [URLQueryItem] = [], authorized: Bool = true) async throws {
+        _ = try await raw(path, method: method, body: body, queryItems: queryItems, authorized: authorized, retryOn401: true)
     }
 
-    private func raw(_ path: String, method: String, body: (any Encodable)?, authorized: Bool, retryOn401: Bool) async throws -> Data {
-        var req = URLRequest(url: try await localizedURL(for: path))
+    private func raw(_ path: String, method: String, body: (any Encodable)?, queryItems: [URLQueryItem] = [], authorized: Bool, retryOn401: Bool) async throws -> Data {
+        var req = URLRequest(url: try await localizedURL(for: path, queryItems: queryItems))
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if authorized, let token = TokenStore.accessToken {
@@ -74,7 +75,7 @@ final class APIClient {
 
         if http.statusCode == 401 && authorized && retryOn401 {
             if try await refresh() {
-                return try await raw(path, method: method, body: body, authorized: authorized, retryOn401: false)
+                return try await raw(path, method: method, body: body, queryItems: queryItems, authorized: authorized, retryOn401: false)
             }
             throw APIClientError.unauthorized
         }
@@ -116,19 +117,34 @@ final class APIClient {
     /// server ignores it for endpoints whose content is not localized, while
     /// quiz/hwdykm/debate handlers can never accidentally omit it.
     private func localizedURL(for path: String, queryItems extraQueryItems: [URLQueryItem] = []) async throws -> URL {
-        let url = baseURL.appendingPathComponent(path)
+        // Split any query string embedded in `path` — `appendingPathComponent`
+        // would percent-encode the `?`, silently dropping the params.
+        var pathOnly = path
+        var embedded: [URLQueryItem] = []
+        if let mark = path.firstIndex(of: "?") {
+            pathOnly = String(path[..<mark])
+            let query = String(path[path.index(after: mark)...])
+            if !query.isEmpty,
+               let parsed = URLComponents(string: "?" + query)?.queryItems {
+                embedded = parsed
+            }
+        }
+        let url = baseURL.appendingPathComponent(pathOnly)
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw APIClientError.invalidResponse
         }
         var items = components.queryItems ?? []
+        for item in embedded where !items.contains(where: { $0.name == item.name }) {
+            items.append(item)
+        }
         for item in extraQueryItems where !items.contains(where: { $0.name == item.name }) {
             items.append(item)
         }
         if !items.contains(where: { $0.name == "lang" }) {
             let code = await LanguageManager.shared.current.code
             items.append(URLQueryItem(name: "lang", value: code))
-            components.queryItems = items
         }
+        components.queryItems = items
         guard let localized = components.url else { throw APIClientError.invalidResponse }
         return localized
     }

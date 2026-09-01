@@ -160,7 +160,9 @@ struct HomeView: View {
                 PartnerMapView()
             } label: {
                 DistanceMapCard(mine: mine, partner: partner,
-                                myName: myName, partnerName: partnerName, km: mapKm ?? 0)
+                                myName: myName, partnerName: partnerName, km: mapKm ?? 0,
+                                myAvatarPath: session.user?.avatarPath,
+                                partnerAvatarPath: session.partner?.avatarPath)
             }
             .buttonStyle(.plain)
         } else {

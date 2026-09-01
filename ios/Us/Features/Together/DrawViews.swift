@@ -7,6 +7,7 @@ struct DrawTogetherView: View {
     @EnvironmentObject var session: Session
     @State private var round: DrawRound?
     @State private var errorMessage: String?
+    @State private var confirmForceNewRound = false
 
     private var partnerName: String { session.partner?.displayName ?? "your partner" }
     private var accent: Color { QuizPalette.accent("purple") }
@@ -30,6 +31,22 @@ struct DrawTogetherView: View {
         .navigationTitle(Text(loc: "Draw Together"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: session.remoteChangeID) { await load() }
+        // Poll so that when either partner starts a new round from scratch, the
+        // other phone leaves its current round (drawing pad or waiting screen)
+        // without waiting for a push or a manual refresh.
+        .task { await pollRound() }
+        .confirmationDialog(
+            Text(loc: "Start a new drawing?"),
+            isPresented: $confirmForceNewRound,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) { Task { await newRound(force: true) } } label: {
+                Text(loc: "Start over")
+            }
+            Button(loc: "Cancel", role: .cancel) {}
+        } message: {
+            Text(loc: "This will end the current round for both of you and pick a new prompt.")
+        }
     }
 
     // MARK: reveal / waiting
@@ -65,13 +82,18 @@ struct DrawTogetherView: View {
                                 .font(.subheadline.bold())
                         }
                         .buttonStyle(PillButtonStyle(color: accent))
-                    }
-
-                    if !round.revealed {
+                    } else {
                         Button { Task { await reload() } } label: {
                             Label(loc: "Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
                         }
                         .foregroundStyle(accent)
+                        // Escape hatch: without this the only way out of the
+                        // waiting state is the partner submitting their drawing.
+                        Button { confirmForceNewRound = true } label: {
+                            Label(loc: "Start a new drawing", systemImage: "arrow.clockwise")
+                                .font(.footnote.bold())
+                        }
+                        .foregroundStyle(.secondary)
                     }
                 }
                 .padding(.top, 4)
@@ -124,9 +146,9 @@ struct DrawTogetherView: View {
         }
     }
 
-    private func newRound() async {
+    private func newRound(force: Bool = false) async {
         do {
-            round = try await APIClient.shared.newDrawRound()
+            round = try await APIClient.shared.newDrawRound(force: force)
             Haptics.tap(.light)
         } catch {
             // The partner may still be working in the existing round. Re-read
@@ -134,6 +156,20 @@ struct DrawTogetherView: View {
             // second, overlapping drawing.
             await reload()
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
+        }
+    }
+
+    /// Every few seconds, re-fetch the current round so a fresh one started by
+    /// the partner (via `Start a new drawing`) replaces the local state
+    /// immediately, even if the partner is currently on the drawing pad.
+    private func pollRound() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let latest = try? await APIClient.shared.getDraw(),
+               latest.roundId != round?.roundId {
+                round = latest
+            }
         }
     }
 }

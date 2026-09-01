@@ -10,6 +10,7 @@ struct SnapHuntView: View {
     @State private var showPicker = false
     @State private var submitting = false
     @State private var errorMessage: String?
+    @State private var confirmForceNewRound = false
 
     private var partnerName: String { session.partner?.displayName ?? "your partner" }
     private var accent: Color { QuizPalette.accent("green") }
@@ -32,9 +33,24 @@ struct SnapHuntView: View {
         .navigationTitle(Text(loc: "Snap Hunt"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: session.remoteChangeID) { await load() }
+        // Poll so a fresh hunt started by the partner replaces the local one
+        // without requiring a manual refresh.
+        .task { await pollRound() }
         .fullScreenCover(isPresented: $showPicker) {
             CameraPicker { image in picked = image }
                 .ignoresSafeArea()
+        }
+        .confirmationDialog(
+            Text(loc: "Start a new hunt?"),
+            isPresented: $confirmForceNewRound,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) { Task { await newRound(force: true) } } label: {
+                Text(loc: "Start over")
+            }
+            Button(loc: "Cancel", role: .cancel) {}
+        } message: {
+            Text(loc: "This will end the current hunt for both of you and pick a new clue.")
         }
     }
 
@@ -98,6 +114,12 @@ struct SnapHuntView: View {
                     Text(errorMessage).font(.footnote)
                         .foregroundStyle(Color(dynamic: .systemRed, dark: UIColor(red: 1.0, green: 0.55, blue: 0.55, alpha: 1)))
                 }
+
+                Button { confirmForceNewRound = true } label: {
+                    Label(loc: "Start a new hunt", systemImage: "arrow.clockwise")
+                        .font(.footnote.bold())
+                }
+                .foregroundStyle(.secondary)
             }
             .padding(24)
             .frame(maxWidth: .infinity)
@@ -143,15 +165,23 @@ struct SnapHuntView: View {
                 }
 
                 VStack(spacing: 10) {
-                    Button { Task { await newRound() } } label: {
-                        Label(loc: "New hunt", systemImage: "arrow.clockwise").font(.subheadline.bold())
-                    }
-                    .buttonStyle(PillButtonStyle(color: accent))
-                    if !round.revealed {
+                    if round.revealed {
+                        Button { Task { await newRound() } } label: {
+                            Label(loc: "New hunt", systemImage: "arrow.clockwise").font(.subheadline.bold())
+                        }
+                        .buttonStyle(PillButtonStyle(color: accent))
+                    } else {
                         Button { Task { await reload() } } label: {
                             Label(loc: "Check again", systemImage: "arrow.triangle.2.circlepath").font(.footnote.bold())
                         }
                         .foregroundStyle(accent)
+                        // Escape hatch while my partner still hasn't snapped —
+                        // without this the only way out is to keep refreshing.
+                        Button { confirmForceNewRound = true } label: {
+                            Label(loc: "Start a new hunt", systemImage: "arrow.clockwise")
+                                .font(.footnote.bold())
+                        }
+                        .foregroundStyle(.secondary)
                     }
                 }
                 .padding(.top, 4)
@@ -231,9 +261,9 @@ struct SnapHuntView: View {
         }
     }
 
-    private func newRound() async {
+    private func newRound(force: Bool = false) async {
         do {
-            round = try await APIClient.shared.newSnap()
+            round = try await APIClient.shared.newSnap(force: force)
             picked = nil
             Haptics.tap(.light)
         } catch {
@@ -242,6 +272,20 @@ struct SnapHuntView: View {
             // stale clue or trying to create another one.
             await reload()
             errorMessage = (error as? APIErrorResponse)?.error ?? error.localizedDescription
+        }
+    }
+
+    /// Poll so a fresh hunt started by the partner replaces the local one,
+    /// even if the partner started it while I'm still on the hunt screen.
+    private func pollRound() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard !Task.isCancelled else { return }
+            if let latest = try? await APIClient.shared.getSnap(),
+               latest.roundId != round?.roundId {
+                round = latest
+                picked = nil
+            }
         }
     }
 }

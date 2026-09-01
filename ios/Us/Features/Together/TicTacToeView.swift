@@ -4,6 +4,7 @@ struct TicTacToeView: View {
     @EnvironmentObject var session: Session
     @State private var game: Game?
     @State private var errorMessage: String?
+    @State private var confirmRestart = false
 
     private let poll = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
@@ -18,6 +19,14 @@ struct TicTacToeView: View {
                     Button(loc: "New game") { Task { await newGame() } }
                         .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, 40)
+                } else if game != nil {
+                    // Escape hatch while it's the partner's turn (or you'd
+                    // rather scrap this board and start clean).
+                    Button { confirmRestart = true } label: {
+                        Label(loc: "Start a new game", systemImage: "arrow.clockwise")
+                            .font(.footnote.bold())
+                    }
+                    .foregroundStyle(.secondary)
                 }
                 if let errorMessage {
                     Text(errorMessage).font(.footnote).foregroundStyle(.red)
@@ -31,6 +40,18 @@ struct TicTacToeView: View {
         .onReceive(poll) { _ in
             // Keep in sync with the partner while it isn't our turn.
             if !myTurn { Task { await load() } }
+        }
+        .confirmationDialog(
+            Text(loc: "Start a new game?"),
+            isPresented: $confirmRestart,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) { Task { await newGame() } } label: {
+                Text(loc: "Start over")
+            }
+            Button(loc: "Cancel", role: .cancel) {}
+        } message: {
+            Text(loc: "This will end the current board for both of you.")
         }
     }
 

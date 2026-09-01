@@ -22,10 +22,12 @@ struct ProfileEditorSheet: View {
 /// Dedicated account editor presented as its own page, not inline in Settings.
 struct ProfileEditView: View {
     @EnvironmentObject var session: Session
+    @ObservedObject private var cycle = CycleManager.shared
     @State private var nameDraft = ""
     @FocusState private var nameFocused: Bool
     @State private var showEmailChange = false
     @State private var pickerItem: PhotosPickerItem?
+    @State private var showLibraryPicker = false
     @State private var showCamera = false
     @State private var uploadingAvatar = false
     @State private var avatarError: String?
@@ -38,8 +40,14 @@ struct ProfileEditView: View {
                     Avatar(path: session.user?.avatarPath, name: session.user?.displayName, size: 64)
                     VStack(alignment: .leading, spacing: 6) {
                         Menu {
-                            PhotosPicker(selection: $pickerItem, matching: .images,
-                                         photoLibrary: .shared()) {
+                            // PhotosPicker inside a Menu doesn't reliably present on
+                            // iOS — the menu dismisses without ever opening the
+                            // library sheet. Route through a state flag and let the
+                            // `.photosPicker(isPresented:)` modifier below own the
+                            // presentation instead.
+                            Button {
+                                showLibraryPicker = true
+                            } label: {
                                 Label(loc: "Choose from library", systemImage: "photo.on.rectangle")
                             }
                             Button {
@@ -96,6 +104,17 @@ struct ProfileEditView: View {
             } header: {
                 Text(loc: "Profile")
             }
+
+            Section {
+                Toggle("I have a menstrual cycle".loc, isOn: Binding(
+                    get: { cycle.userHasCycle == true },
+                    set: { cycle.setUserHasCycle($0) }
+                ))
+            } header: {
+                Text(loc: "You")
+            } footer: {
+                Text(loc: "Off if you're supporting a partner who has one.")
+            }
         }
         .navigationTitle(Text(loc: "Edit"))
         .navigationBarTitleDisplayMode(.inline)
@@ -117,6 +136,8 @@ struct ProfileEditView: View {
             }
             .ignoresSafeArea()
         }
+        .photosPicker(isPresented: $showLibraryPicker, selection: $pickerItem,
+                      matching: .images, photoLibrary: .shared())
         .onChange(of: pickerItem) { newItem in
             guard let newItem else { return }
             Task {
@@ -134,7 +155,12 @@ struct ProfileEditView: View {
         uploadingAvatar = true; avatarError = nil
         defer { uploadingAvatar = false }
         do {
+            // Invalidate any cached image at the *previous* avatar path so a
+            // fallback to the old URL can't linger. Older server builds don't
+            // version the avatar URL, so this is how the swap becomes instant.
+            let previousPath = session.user?.avatarPath
             let updated = try await APIClient.shared.uploadAvatar(jpeg)
+            primeAvatarCache(newJPEG: jpeg, uploaded: image, previousPath: previousPath, newPath: updated.avatarPath)
             session.applyUpdatedUser(updated)
             Haptics.success()
         } catch {
@@ -146,12 +172,41 @@ struct ProfileEditView: View {
         uploadingAvatar = true; avatarError = nil
         defer { uploadingAvatar = false }
         do {
+            let previousPath = session.user?.avatarPath
             let updated = try await APIClient.shared.deleteAvatar()
+            if let previousPath { invalidateAvatarPath(previousPath) }
             session.applyUpdatedUser(updated)
             Haptics.tap(.light)
         } catch {
             avatarError = (error as? APIErrorResponse)?.error ?? error.localizedDescription
         }
+    }
+
+    /// Drops any cached bytes for the given avatar URL and tells every visible
+    /// RemoteImage bound to it to reload.
+    private func invalidateAvatarPath(_ path: String) {
+        ImageCache.shared.remove(for: path)
+        NotificationCenter.default.post(name: .imageCacheInvalidated,
+                                        object: nil, userInfo: ["path": path])
+    }
+
+    /// Refreshes the avatar cache after an upload: purges the stale bytes at
+    /// both the previous and new URL, seeds the new URL with the JPEG we just
+    /// sent (so the swap is visible without a round-trip), and nudges any
+    /// visible avatars to reload.
+    private func primeAvatarCache(newJPEG: Data, uploaded: UIImage,
+                                  previousPath: String?, newPath: String?) {
+        if let previousPath { invalidateAvatarPath(previousPath) }
+        guard let newPath else { return }
+        ImageCache.shared.remove(for: newPath)
+        // Server re-encodes; use the local image as a warm placeholder so the
+        // switch is immediate. RemoteImage's reload will replace it with the
+        // server's canonical bytes once fetched.
+        if let seed = UIImage(data: newJPEG) ?? Optional(uploaded) {
+            ImageCache.shared.set(seed, for: newPath)
+        }
+        NotificationCenter.default.post(name: .imageCacheInvalidated,
+                                        object: nil, userInfo: ["path": newPath])
     }
 
     private func commitName() {

@@ -291,6 +291,10 @@ func (d Deps) handleSubmitSnap(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /v1/games/snap/new — start a fresh hunt with a new clue.
+//
+// By default this refuses to abandon a live hunt while either partner is still
+// snapping. `?force=1` lets the caller explicitly restart the hunt; the
+// partner is notified so their current shot is known to be discarded.
 func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 	userID, ok := d.authedUser(w, r)
 	if !ok {
@@ -302,7 +306,9 @@ func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 	}
 	partner, _ := d.Store.GetPartner(r.Context(), c.ID, userID)
 
+	force := r.URL.Query().Get("force") == "1"
 	prev := ""
+	forcedAbandon := false
 	if g, err := d.Store.GetLatestGame(r.Context(), c.ID, snapGameType); err == nil {
 		if g.Status == "active" {
 			current, viewErr := d.buildSnapView(r, g, userID, partner.ID)
@@ -311,8 +317,11 @@ func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if !current.Revealed {
-				writeError(w, http.StatusConflict, "snap_waiting", "join your partner and finish this hunt first")
-				return
+				if !force {
+					writeError(w, http.StatusConflict, "snap_waiting", "join your partner and finish this hunt first")
+					return
+				}
+				forcedAbandon = true
 			}
 		}
 		var st snapState
@@ -340,6 +349,15 @@ func (d Deps) handleNewSnap(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		d.serverError(w, "snap: view", err)
 		return
+	}
+	if forcedAbandon {
+		d.sendPartnerPush(r.Context(), c.ID, userID, func(name string) push.Notification {
+			return push.Notification{
+				Title: "📸",
+				Body:  name + " started a new hunt — fresh clue!",
+				Data:  map[string]string{"type": "snap"},
+			}
+		})
 	}
 	writeJSON(w, http.StatusCreated, v)
 }

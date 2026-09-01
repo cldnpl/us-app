@@ -9,6 +9,8 @@ struct DistanceMapCard: View {
     let myName: String
     let partnerName: String
     let km: Double
+    var myAvatarPath: String? = nil
+    var partnerAvatarPath: String? = nil
 
     var body: some View {
         VStack(spacing: 14) {
@@ -24,8 +26,8 @@ struct DistanceMapCard: View {
     }
 
     private var pins: [DistancePin] {
-        [DistancePin(name: myName, coordinate: mine),
-         DistancePin(name: partnerName, coordinate: partner)]
+        [DistancePin(name: myName, coordinate: mine, avatarPath: myAvatarPath),
+         DistancePin(name: partnerName, coordinate: partner, avatarPath: partnerAvatarPath)]
     }
 
     private var region: MKCoordinateRegion {
@@ -42,9 +44,8 @@ struct DistanceMapCard: View {
         Map(coordinateRegion: .constant(region), annotationItems: pins) { pin in
             MapAnnotation(coordinate: pin.coordinate) {
                 VStack(spacing: 2) {
-                    Image(systemName: "heart.circle.fill")
-                        .font(.title2).foregroundStyle(Theme.rose)
-                        .background(Circle().fill(.background).padding(2))
+                    Avatar(path: pin.avatarPath, name: pin.name, size: 30)
+                        .background(Circle().fill(.background).padding(-2))
                     Text(verbatim: pin.name.loc)
                         .font(.caption2).bold()
                         .lineLimit(1)
@@ -111,6 +112,7 @@ private struct DistancePin: Identifiable {
     let id = UUID()
     let name: String
     let coordinate: CLLocationCoordinate2D
+    let avatarPath: String?
 }
 
 /// A single horizontal line, used for the dashed distance connector.

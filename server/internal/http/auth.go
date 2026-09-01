@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,7 +34,10 @@ func toDomainUser(u store.User) domain.User {
 	// fallback.
 	var avatarURL *string
 	if u.AvatarPath != nil && *u.AvatarPath != "" {
-		p := "/v1/users/" + u.ID + "/avatar"
+		// Version the URL with updated_at so the client's image cache misses
+		// after an avatar upload — the served bytes change but the path key
+		// wouldn't, so a stale cached image would otherwise linger.
+		p := "/v1/users/" + u.ID + "/avatar?v=" + strconv.FormatInt(u.UpdatedAt.Unix(), 10)
 		avatarURL = &p
 	}
 	return domain.User{
