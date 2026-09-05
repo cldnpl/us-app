@@ -50,6 +50,10 @@
 	<string>Leyla uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Add photos to your shared gallery and send them to your partner's widget.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>ChopinScript.otf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

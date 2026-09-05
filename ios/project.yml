@@ -54,6 +54,10 @@ targets:
         # right away instead of waiting for its next scheduled reload.
         UIBackgroundModes:
           - remote-notification
+        # Custom fonts bundled in the app (Resources/Fonts). Each entry is the
+        # font file name; the in-app PostScript name is set inside the file.
+        UIAppFonts:
+          - ChopinScript.otf
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         NSCameraUsageDescription: "Take a photo for your shared diary or for Snap Hunt, so your partner can see it."
         NSHealthShareUsageDescription: "Leyla reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle & health screen. It is read-only \u2014 Leyla never writes to Health \u2014 and it stays on this iPhone unless you choose to share a gentle heads-up with your partner."
