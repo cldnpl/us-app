@@ -125,7 +125,7 @@ struct PaywallView: View {
                 Button(loc: "Restore") { Task { await premium.restore() } }
                     .disabled(premium.isRestoring)
                 Link("Terms".loc, destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Link("Privacy".loc, destination: URL(string: "https://usapp.love/privacy")!)
+                Link("Privacy".loc, destination: URL(string: "https://leyla.app/privacy")!)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
