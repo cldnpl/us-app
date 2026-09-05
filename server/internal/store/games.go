@@ -31,10 +31,17 @@ func scanGame(row pgx.Row) (GameSession, error) {
 }
 
 func (s *Store) CreateGame(ctx context.Context, coupleID, gameType string, state []byte, turnUserID string) (GameSession, error) {
+	// turn_user_id is a nullable uuid column; pgx rejects "" as an invalid uuid,
+	// so encode "no current turn" as SQL NULL. Rounds owned by the couple as a
+	// whole (quiz-category and pack-round bookkeeping) use this path.
+	var turn any
+	if turnUserID != "" {
+		turn = turnUserID
+	}
 	return scanGame(s.pool.QueryRow(ctx,
 		`INSERT INTO game_sessions (couple_id, game_type, state, turn_user_id, status)
 		 VALUES ($1, $2, $3, $4, 'active') RETURNING `+gameCols,
-		coupleID, gameType, state, turnUserID))
+		coupleID, gameType, state, turn))
 }
 
 // GetLatestGame returns the most recent game of a type regardless of status, so
