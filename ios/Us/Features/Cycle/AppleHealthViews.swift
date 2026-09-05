@@ -177,3 +177,24 @@ struct AppleHealthSourceNote: View {
             .frame(maxWidth: .infinity)
     }
 }
+
+/// A small, unmistakable "Apple Health" pill — the Health-app-red heart glyph
+/// plus the words "Apple Health". Placed at the top of every cycle-related card
+/// so anyone (including App Review) sees at a glance that the feature is
+/// powered by HealthKit, without having to open the screen.
+struct AppleHealthBadge: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "heart.text.square.fill")
+                .font(.caption)
+                .foregroundStyle(.red)
+            Text(loc: "Apple Health")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.red)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(.red.opacity(0.10), in: Capsule())
+        .accessibilityLabel("Powered by Apple Health")
+    }
+}

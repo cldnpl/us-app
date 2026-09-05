@@ -91,21 +91,21 @@ struct SelfCycleCard: View {
 
     var body: some View {
         Card {
-            HStack(spacing: 16) {
-                Image(systemName: insights.phase.symbol)
-                    .font(.system(size: 26))
-                    .foregroundStyle(insights.phase.color)
-                    .frame(width: 40)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(verbatim: insights.phase.title.loc).font(.headline)
-                    Text(loc: "Day \(insights.cycleDay) · next period \(nextPeriodText)")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                    // Names the data source right where the numbers are shown.
-                    Label(loc: "from Apple Health", systemImage: "heart.text.square.fill")
-                        .font(.caption2).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                AppleHealthBadge()
+                HStack(spacing: 16) {
+                    Image(systemName: insights.phase.symbol)
+                        .font(.system(size: 26))
+                        .foregroundStyle(insights.phase.color)
+                        .frame(width: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(verbatim: insights.phase.title.loc).font(.headline)
+                        Text(loc: "Day \(insights.cycleDay) · next period \(nextPeriodText)")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
             }
         }
     }
@@ -127,24 +127,27 @@ struct PartnerPeriodCard: View {
 
     var body: some View {
         Card {
-            HStack(spacing: 16) {
-                Image(systemName: phase?.symbol ?? "heart.text.square.fill")
-                    .font(.system(size: 26))
-                    .foregroundStyle(phase?.color ?? Theme.rose)
-                    .frame(width: 40)
-                VStack(alignment: .leading, spacing: 3) {
-                    if let phase {
-                        Text(loc: "\(partnerName) · \(phase.title)").font(.headline)
-                        Text(phase.partnerTips.first ?? phase.partnerHint)
-                            .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
-                    } else {
-                        Text(loc: "Check \(partnerName)'s cycle").font(.headline)
-                        Text(loc: "Gentle tips to support her — once she shares her cycle.")
-                            .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+            VStack(alignment: .leading, spacing: 10) {
+                AppleHealthBadge()
+                HStack(spacing: 16) {
+                    Image(systemName: phase?.symbol ?? "heart.text.square.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(phase?.color ?? Theme.rose)
+                        .frame(width: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let phase {
+                            Text(loc: "\(partnerName) · \(phase.title)").font(.headline)
+                            Text(phase.partnerTips.first ?? phase.partnerHint)
+                                .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                        } else {
+                            Text(loc: "Check \(partnerName)'s cycle").font(.headline)
+                            Text(loc: "Gentle tips based on her Apple Health cycle — once she shares it.")
+                                .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                        }
                     }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
             }
         }
     }
@@ -160,18 +163,21 @@ struct PartnerPeriodCard: View {
 struct CycleSetupCard: View {
     var body: some View {
         Card {
-            HStack(spacing: 16) {
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(size: 26))
-                    .foregroundStyle(Theme.rose)
-                    .frame(width: 40)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(loc: "Cycle & health").font(.headline)
-                    Text(loc: "Track your cycle with Apple Health, or get tips to support your partner's.")
-                        .font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                AppleHealthBadge()
+                HStack(spacing: 16) {
+                    Image(systemName: "heart.text.square.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(Theme.rose)
+                        .frame(width: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(loc: "Cycle tracking with Apple Health").font(.headline)
+                        Text(loc: "Us reads your menstrual cycle from Apple Health to show your current phase, cycle day and next-period estimate — or gives you supportive tips for your partner's cycle.")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
             }
         }
     }
@@ -221,6 +227,13 @@ struct CycleDetailView: View {
             Theme.softBackground.ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 16) {
+                    // Every path through this screen starts with an unmistakable
+                    // "Apple Health" identifier — App Review guideline 2.5.1
+                    // requires the HealthKit functionality to be clearly named.
+                    HStack {
+                        AppleHealthBadge()
+                        Spacer()
+                    }
                     switch cycle.userHasCycle {
                     case nil:          askCard
                     case .some(true):  selfContent
@@ -232,7 +245,7 @@ struct CycleDetailView: View {
                 .padding(.vertical, 16)
             }
         }
-        .navigationTitle(Text(loc: "Cycle & health"))
+        .navigationTitle(Text(loc: "Cycle & Apple Health"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await cycle.refreshOnAppear()

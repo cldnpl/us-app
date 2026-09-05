@@ -236,8 +236,10 @@ struct AppleHealthSettingsView: View {
                 Link(destination: AppleHealth.appURL) {
                     Label(loc: "Open the Health app", systemImage: "arrow.up.forward.app")
                 }
+            } header: {
+                Text(loc: "Apple Health integration")
             } footer: {
-                Text(loc: "\(AppleHealth.readsLine) \(AppleHealth.neverWritesLine) \(AppleHealth.manageLine)")
+                Text(loc: "Us uses Apple's HealthKit framework to read your menstrual cycle data from the Apple Health app, with your permission, so it can show your current phase, cycle day and next-period estimate in the Cycle screen. It is read-only — Us never writes to Health and never uploads your health data. You can review or revoke access anytime in Health ▸ Sharing ▸ Apps, or in Settings ▸ Privacy & Security ▸ Health ▸ Us.")
             }
         }
         .navigationTitle(Text(loc: "Apple Health"))
