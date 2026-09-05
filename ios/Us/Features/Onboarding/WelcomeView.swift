@@ -14,7 +14,7 @@ struct WelcomeView: View {
 
                 VStack(spacing: 16) {
                     Spacer()
-                    Image("UsLogo")
+                    Image("LeylaLogo")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
@@ -93,7 +93,7 @@ struct IntroPage: Identifiable {
 
     static let all: [IntroPage] = [
         .init(symbol: "heart.fill",
-              title: "Welcome to Us.",
+              title: "Welcome to Leyla",
               subtitle: "Everything a couple needs — in one little app."),
         .init(symbol: "paperplane.fill",
               title: "Feel close, always",

@@ -40,7 +40,7 @@ struct NotificationsPrimerView: View {
                         .font(.system(.largeTitle, design: .rounded).bold())
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
-                    Text(loc: "Us only notifies you when \(partnerName) does something you'd want to know about.")
+                    Text(loc: "Leyla only notifies you when \(partnerName) does something you'd want to know about.")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.95))
                         .multilineTextAlignment(.center)

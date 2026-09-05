@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Pick the language Us. is displayed in.
+/// Pick the language Leyla is displayed in.
 ///
 /// Each row shows the language's own name first, because someone scanning for
 /// their language recognises "Русский" faster than "Russian". Search matches

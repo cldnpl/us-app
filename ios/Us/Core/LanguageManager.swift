@@ -4,7 +4,7 @@ import SwiftUI
 /// Owns the app's display language.
 ///
 /// iOS normally picks the language from the system settings. This lets someone
-/// choose a different one *inside* Us. — useful when the phone is in a language
+/// choose a different one *inside* Leyla — useful when the phone is in a language
 /// they don't share with their partner, or when the phone language isn't one we
 /// support but a second language they speak is.
 ///

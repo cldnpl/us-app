@@ -1,7 +1,7 @@
 import SwiftUI
 import AVKit
 
-/// Guides the user through adding the Us. widget to their Home Screen.
+/// Guides the user through adding the Leyla widget to their Home Screen.
 ///
 /// iOS doesn't let an app place its own widget — only the person can, from the
 /// system widget gallery — so the only thing we can do is show them how. A
@@ -26,7 +26,7 @@ struct AddWidgetGuideView: View {
                     VStack(alignment: .leading, spacing: 18) {
                         step(1, "Touch and hold an empty area of your Home Screen until the apps jiggle.")
                         step(2, "Tap the **＋** button in the top-left corner.")
-                        step(3, "Search for **Us.** and pick a widget size.")
+                        step(3, "Search for **Leyla** and pick a widget size.")
                         step(4, "Tap **Add Widget**, then **Done**.")
                     }
                     .padding(20)
@@ -72,7 +72,7 @@ struct AddWidgetGuideView: View {
                         .strokeBorder(Theme.hairline, lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
-                .accessibilityLabel("A recording showing how to add the Us. widget to the Home Screen. The written steps are below.")
+                .accessibilityLabel("A recording showing how to add the Leyla widget to the Home Screen. The written steps are below.")
         } else {
             widgetPreview
         }
@@ -91,7 +91,7 @@ struct AddWidgetGuideView: View {
         .background(Theme.roseGradient, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Theme.rose.opacity(0.35), radius: 16, y: 8)
         .overlay(alignment: .bottom) {
-            Text(loc: "Us.")
+            Text(loc: "Leyla")
                 .font(.caption2.bold())
                 .foregroundStyle(.secondary)
                 .offset(y: 22)

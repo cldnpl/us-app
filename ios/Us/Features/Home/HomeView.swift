@@ -92,7 +92,7 @@ struct HomeView: View {
         .accessibilityLabel(missYouSent ? "Sent" : "Send I miss you to \(partnerName)")
     }
 
-    /// Pill in the nav bar (between the Us. logo and the profile icon).
+    /// Pill in the nav bar (between the Leyla logo and the profile icon).
     private var addWidgetPill: some View {
         Button { showAddWidget = true } label: {
             HStack(spacing: 4) {

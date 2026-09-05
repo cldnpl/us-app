@@ -2,7 +2,7 @@ import SwiftUI
 
 /// "About you" onboarding, shown once right after sign-in and before pairing:
 /// 1. confirm your name,
-/// 2. see why Us. asks for location before the system permission prompt.
+/// 2. see why Leyla asks for location before the system permission prompt.
 ///
 /// Apple HIG: we explain *why* before triggering the system location prompt.
 struct PersonalOnboardingView: View {
@@ -79,7 +79,7 @@ struct PersonalOnboardingView: View {
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text(loc: "This is how your partner will see you in Us.")
+                Text(loc: "This is how your partner will see you in Leyla.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
@@ -128,12 +128,12 @@ struct PersonalOnboardingView: View {
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text(loc: "This tailors Us. for you — track your own cycle, or get gentle tips to support your partner's. You can change it anytime.")
+                Text(loc: "This tailors Leyla for you — track your own cycle, or get gentle tips to support your partner's. You can change it anytime.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
                 // Says up front that cycle tracking is powered by Apple Health.
-                Label(loc: "If you do, Us reads your cycle from Apple Health — only after you allow it. Nothing is written to Health.", systemImage: "heart.text.square.fill")
+                Label(loc: "If you do, Leyla reads your cycle from Apple Health — only after you allow it. Nothing is written to Health.", systemImage: "heart.text.square.fill")
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(0.9))
                     .multilineTextAlignment(.leading)
@@ -173,7 +173,7 @@ struct PersonalOnboardingView: View {
                     .font(.system(.largeTitle, design: .rounded).bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                Text(loc: "When you and your partner both turn it on, Us. shows how far apart you are and powers the distance widgets. You're in control — you can turn it off anytime.")
+                Text(loc: "When you and your partner both turn it on, Leyla shows how far apart you are and powers the distance widgets. You're in control — you can turn it off anytime.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)

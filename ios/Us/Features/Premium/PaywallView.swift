@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Us. Premium paywall. Shown whenever someone taps a locked quiz pack or
+/// The Leyla Premium paywall. Shown whenever someone taps a locked quiz pack or
 /// game: an animated iPhone playing through what's behind the lock, the perks,
 /// and one €2.99/month button.
 struct PaywallView: View {
@@ -42,7 +42,7 @@ struct PaywallView: View {
 
     private var header: some View {
         VStack(spacing: 10) {
-            Text(loc: "US. PREMIUM")
+            Text(loc: "LEYLA PREMIUM")
                 .font(.caption.bold()).tracking(2.5)
                 .foregroundStyle(Theme.rose)
 

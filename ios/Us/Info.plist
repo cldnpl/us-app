@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Us.</string>
+	<string>Leyla</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconName</key>
@@ -41,13 +41,13 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your shared diary or for Snap Hunt, so your partner can see it.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Us reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle &amp; health screen. It is read-only — Us never writes to Health — and it stays on this iPhone unless you choose to share a gentle heads-up with your partner.</string>
+	<string>Leyla reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle &amp; health screen. It is read-only — Leyla never writes to Health — and it stays on this iPhone unless you choose to share a gentle heads-up with your partner.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Us does not write or change Apple Health data. This description is included because HealthKit requires it for the app’s Health access; your cycle data is only read to show your current phase, cycle day, and next-period estimate.</string>
+	<string>Leyla does not write or change Apple Health data. This description is included because HealthKit requires it for the app’s Health access; your cycle data is only read to show your current phase, cycle day, and next-period estimate.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Allow Always so the distance between you and your partner keeps updating on your widgets even when Us isn't open. Sharing stays off until you turn it on, and you can stop anytime.</string>
+	<string>Allow Always so the distance between you and your partner keeps updating on your widgets even when Leyla isn't open. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
+	<string>Leyla uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Add photos to your shared gallery and send them to your partner's widget.</string>
 	<key>UIBackgroundModes</key>

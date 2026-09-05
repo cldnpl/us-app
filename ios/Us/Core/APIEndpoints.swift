@@ -1,6 +1,6 @@
 import Foundation
 
-/// High-level API methods mapping to the Us backend endpoints.
+/// High-level API methods mapping to the Leyla backend endpoints.
 extension APIClient {
     func register(email: String, password: String, displayName: String) async throws -> AuthResponse {
         try await send("/v1/auth/register", method: "POST",

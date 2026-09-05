@@ -33,7 +33,7 @@ targets:
     info:
       path: Us/Info.plist
       properties:
-        CFBundleDisplayName: "Us."
+        CFBundleDisplayName: "Leyla"
         CFBundleIconName: AppIcon
         CFBundleShortVersionString: "1.1"
         CFBundleVersion: "14"
@@ -45,22 +45,22 @@ targets:
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-        NSLocationWhenInUseUsageDescription: "Us uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime."
+        NSLocationWhenInUseUsageDescription: "Leyla uses your location to show how far apart you and your partner are and to power distance features and widgets. Sharing stays off until you turn it on, and you can stop anytime."
         # "Always" is what keeps the distance widget correct without opening the
-        # app: iOS wakes Us in the background on a significant move so your
+        # app: iOS wakes Leyla in the background on a significant move so your
         # partner's widget updates on its own.
-        NSLocationAlwaysAndWhenInUseUsageDescription: "Allow Always so the distance between you and your partner keeps updating on your widgets even when Us isn't open. Sharing stays off until you turn it on, and you can stop anytime."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Allow Always so the distance between you and your partner keeps updating on your widgets even when Leyla isn't open. Sharing stays off until you turn it on, and you can stop anytime."
         # Silent pushes tell the app the partner moved, so the widget refreshes
         # right away instead of waiting for its next scheduled reload.
         UIBackgroundModes:
           - remote-notification
         NSPhotoLibraryUsageDescription: "Add photos to your shared gallery and send them to your partner's widget."
         NSCameraUsageDescription: "Take a photo for your shared diary or for Snap Hunt, so your partner can see it."
-        NSHealthShareUsageDescription: "Us reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle & health screen. It is read-only \u2014 Us never writes to Health \u2014 and it stays on this iPhone unless you choose to share a gentle heads-up with your partner."
-        # App Review 2.5.1 requires this even though Us never writes to Health;
+        NSHealthShareUsageDescription: "Leyla reads your menstrual cycle data from Apple Health to show your current phase, cycle day and next-period estimate in the Cycle & health screen. It is read-only \u2014 Leyla never writes to Health \u2014 and it stays on this iPhone unless you choose to share a gentle heads-up with your partner."
+        # App Review 2.5.1 requires this even though Leyla never writes to Health;
         # HealthKit surfaces the key at permission time. Keep it in project.yml
         # so xcodegen doesn't strip it out of the generated Info.plist.
-        NSHealthUpdateUsageDescription: "Us does not write or change Apple Health data. This description is included because HealthKit requires it for the app\u2019s Health access; your cycle data is only read to show your current phase, cycle day, and next-period estimate."
+        NSHealthUpdateUsageDescription: "Leyla does not write or change Apple Health data. This description is included because HealthKit requires it for the app\u2019s Health access; your cycle data is only read to show your current phase, cycle day, and next-period estimate."
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - usapp
@@ -82,7 +82,7 @@ targets:
     info:
       path: UsWidget/Info.plist
       properties:
-        CFBundleDisplayName: "Us."
+        CFBundleDisplayName: "Leyla"
         CFBundleShortVersionString: "1.1"
         CFBundleVersion: "14"
         # Lets the distance widget take its own location fix while it refreshes

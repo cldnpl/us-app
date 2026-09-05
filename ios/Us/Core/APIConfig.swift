@@ -1,7 +1,7 @@
 import Foundation
 
 enum APIConfig {
-    /// Base URL of the Us backend. Shared with the widget extension via
+    /// Base URL of the Leyla backend. Shared with the widget extension via
     /// `SharedConfig` so both talk to the same server.
     ///
     /// For local backend development, temporarily point `SharedConfig.apiBaseURL`

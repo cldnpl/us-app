@@ -56,7 +56,7 @@ struct UsWidgetEntryView: View {
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.9))
             } else {
-                Text(entry.snapshot?.partnerName ?? "Us.")
+                Text(entry.snapshot?.partnerName ?? "Leyla")
                     .font(.headline)
                     .foregroundStyle(.white)
             }
@@ -86,7 +86,7 @@ struct UsWidget: Widget {
         StaticConfiguration(kind: kind, provider: UsProvider()) { entry in
             UsWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Us.")
+        .configurationDisplayName("Leyla")
         .description("Your days together — tap to open the app.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }

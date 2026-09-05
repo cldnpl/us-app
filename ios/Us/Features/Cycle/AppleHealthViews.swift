@@ -4,20 +4,20 @@ import SwiftUI
 ///
 /// App Review (guideline 2.5.1) requires an app that uses HealthKit to say so
 /// plainly in its own interface, so these views are deliberately explicit about
-/// what Us reads, what it never does, and where the user controls it — and they
+/// what Leyla reads, what it never does, and where the user controls it — and they
 /// are shown on every path through the cycle feature, including the supporter
 /// path where no HealthKit data is read at all.
 enum AppleHealth {
     /// Deep link to the Health app. Health ships with iOS and cannot be removed.
     static let appURL = URL(string: "x-apple-health://")!
 
-    static let readsLine = "Us reads your menstrual cycle data from Apple Health, with your permission."
+    static let readsLine = "Leyla reads your menstrual cycle data from Apple Health, with your permission."
     /// Says plainly that the cycle can come from whichever app she already uses,
     /// as long as it syncs to Health — that's the whole point of reading Health
     /// rather than asking her to type her periods in again.
     static let otherAppsLine = "It works with whatever you already track your period in — Health itself, or apps like Flo or Clue that sync to it."
-    static let neverWritesLine = "Us never writes to Apple Health and never uploads your health data. Your cycle is calculated on this iPhone."
-    static let manageLine = "You can review or revoke access anytime in Health ▸ Sharing ▸ Apps, or in Settings ▸ Privacy & Security ▸ Health ▸ Us."
+    static let neverWritesLine = "Leyla never writes to Apple Health and never uploads your health data. Your cycle is calculated on this iPhone."
+    static let manageLine = "You can review or revoke access anytime in Health ▸ Sharing ▸ Apps, or in Settings ▸ Privacy & Security ▸ Health ▸ Leyla."
 }
 
 /// Full card identifying the Apple Health integration, with the connect action

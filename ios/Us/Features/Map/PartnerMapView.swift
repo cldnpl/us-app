@@ -140,7 +140,7 @@ struct PartnerMapView: View {
                 Button {
                     location.requestAlwaysIfPossible()
                 } label: {
-                    Label(loc: "Keep the distance updating when Us is closed", systemImage: "arrow.triangle.2.circlepath")
+                    Label(loc: "Keep the distance updating when Leyla is closed", systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption.weight(.semibold))
                         .multilineTextAlignment(.center)
                 }

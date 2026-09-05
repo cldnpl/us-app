@@ -38,7 +38,7 @@ struct PairingView: View {
                                 Text(loc: "Share this code with your partner")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
-                                ShareLink(item: "Join me on Us. 💜 Use my pairing code: \(code)") {
+                                ShareLink(item: "Join me on Leyla 💜 Use my pairing code: \(code)") {
                                     Label(loc: "Share code", systemImage: "square.and.arrow.up")
                                 }
                             } else {

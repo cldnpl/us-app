@@ -1,6 +1,6 @@
 import Foundation
 
-/// A language Us. can be displayed in.
+/// A language Leyla can be displayed in.
 ///
 /// The list is chosen for world coverage rather than country count: one entry
 /// per major language bloc (the Americas, Europe, the ex-Soviet states, MENA,

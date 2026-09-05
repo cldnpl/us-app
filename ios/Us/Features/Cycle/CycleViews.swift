@@ -172,7 +172,7 @@ struct CycleSetupCard: View {
                         .frame(width: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(loc: "Cycle tracking with Apple Health").font(.headline)
-                        Text(loc: "Us reads your menstrual cycle from Apple Health to show your current phase, cycle day and next-period estimate — or gives you supportive tips for your partner's cycle.")
+                        Text(loc: "Leyla reads your menstrual cycle from Apple Health to show your current phase, cycle day and next-period estimate — or gives you supportive tips for your partner's cycle.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
@@ -354,7 +354,7 @@ struct CycleDetailView: View {
             Card {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(loc: "No period logged yet").font(.headline)
-                    Text(loc: "Us is connected to Apple Health but hasn't found a period in the last 12 months. Log one in Health — or in the app you already use, like Flo or Clue, with Health sharing turned on — and your cycle appears here on its own.")
+                    Text(loc: "Leyla is connected to Apple Health but hasn't found a period in the last 12 months. Log one in Health — or in the app you already use, like Flo or Clue, with Health sharing turned on — and your cycle appears here on its own.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Button {
                         Task { await refreshFromHealth() }
@@ -447,7 +447,7 @@ struct CycleDetailView: View {
             Card {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(loc: "Your cycle").font(.headline)
-                    Text(loc: "Us shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health — including periods synced there from Flo, Clue or any other app. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
+                    Text(loc: "Leyla shows your current phase, your cycle day and your next period by reading the cycle you already track in Apple Health — including periods synced there from Flo, Clue or any other app. It stays on this iPhone until you choose to share a heads-up with \(partnerName).")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
             }
@@ -529,7 +529,7 @@ struct CycleDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label(loc: "Apple Health", systemImage: "heart.text.square.fill")
                     .font(.headline).foregroundStyle(Theme.rose)
-                Text(loc: "What you see here comes from the cycle \(partnerName) tracks in Apple Health on her own iPhone, and only the part she chooses to share. Us doesn't read any health data from this iPhone unless you turn on your own cycle tracking.")
+                Text(loc: "What you see here comes from the cycle \(partnerName) tracks in Apple Health on her own iPhone, and only the part she chooses to share. Leyla doesn't read any health data from this iPhone unless you turn on your own cycle tracking.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
         }
@@ -635,7 +635,7 @@ struct CycleDetailView: View {
     }
 
     private var privacyNote: some View {
-        Text(loc: "Cycle predictions are estimates, not medical advice. Us reads menstrual cycle data from Apple Health only with your permission, never writes to Health, and never uploads it.")
+        Text(loc: "Cycle predictions are estimates, not medical advice. Leyla reads menstrual cycle data from Apple Health only with your permission, never writes to Health, and never uploads it.")
             .font(.caption).foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 8)

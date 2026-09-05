@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// Shared visual language for Us. — warm blush→coral→peach gradients, rounded cards.
+/// Shared visual language for Leyla — warm blush→coral→peach gradients, rounded cards.
 ///
 /// The brand hues (blush/coral/peach/rose) are fixed: they are the identity, and
 /// they read fine against both a light and a dark backdrop. Anything used as
@@ -79,7 +79,7 @@ extension Color {
 struct BrandLogo: View {
     var color: Color = Theme.rose
     var body: some View {
-        Image("UsLogo")
+        Image("LeylaLogo")
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
@@ -87,7 +87,7 @@ struct BrandLogo: View {
             .foregroundStyle(color)
             .fixedSize()
             .accessibilityAddTraits(.isHeader)
-            .accessibilityLabel("Us.")
+            .accessibilityLabel("Leyla")
     }
 }
 

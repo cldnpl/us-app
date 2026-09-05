@@ -7,7 +7,7 @@ enum SharedConfig {
     /// auth tokens for the interactive widget, partner preferences).
     static let appGroup = "group.com.claudianapolitano.us"
 
-    /// Base URL of the Us backend. Kept in sync with the app's `APIConfig`.
+    /// Base URL of the Leyla backend. Kept in sync with the app's `APIConfig`.
     static let apiBaseURL = URL(string: "https://us-app-production-9aa4.up.railway.app")!
 
     /// Shared `UserDefaults` suite backed by the App Group.

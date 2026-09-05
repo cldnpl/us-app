@@ -63,7 +63,7 @@ struct SettingsView: View {
                     NavigationLink { PremiumSettingsView() } label: {
                         HStack {
                             Label {
-                                Text(loc: "Us. Premium")
+                                Text(loc: "Leyla Premium")
                             } icon: {
                                 Image(systemName: "sparkles")
                                     .foregroundStyle(Theme.coral)
@@ -239,7 +239,7 @@ struct AppleHealthSettingsView: View {
             } header: {
                 Text(loc: "Apple Health integration")
             } footer: {
-                Text(loc: "Us uses Apple's HealthKit framework to read your menstrual cycle data from the Apple Health app, with your permission, so it can show your current phase, cycle day and next-period estimate in the Cycle screen. It is read-only — Us never writes to Health and never uploads your health data. You can review or revoke access anytime in Health ▸ Sharing ▸ Apps, or in Settings ▸ Privacy & Security ▸ Health ▸ Us.")
+                Text(loc: "Leyla uses Apple's HealthKit framework to read your menstrual cycle data from the Apple Health app, with your permission, so it can show your current phase, cycle day and next-period estimate in the Cycle screen. It is read-only — Leyla never writes to Health and never uploads your health data. You can review or revoke access anytime in Health ▸ Sharing ▸ Apps, or in Settings ▸ Privacy & Security ▸ Health ▸ Leyla.")
             }
         }
         .navigationTitle(Text(loc: "Apple Health"))
@@ -259,7 +259,7 @@ struct PremiumSettingsView: View {
             Section {
                 if premium.isPremium {
                     HStack {
-                        Label(loc: "Us. Premium", systemImage: "sparkles")
+                        Label(loc: "Leyla Premium", systemImage: "sparkles")
                         Spacer()
                         Text(PremiumStore.isTestFlightBuild ? "Beta" : "Active")
                             .foregroundStyle(.secondary)
@@ -273,7 +273,7 @@ struct PremiumSettingsView: View {
                         showPaywall = true
                     } label: {
                         HStack {
-                            Label(loc: "Unlock Us. Premium", systemImage: "sparkles")
+                            Label(loc: "Unlock Leyla Premium", systemImage: "sparkles")
                             Spacer()
                             Text(premium.priceLine).foregroundStyle(.secondary)
                         }
@@ -289,7 +289,7 @@ struct PremiumSettingsView: View {
                 #endif
             } footer: {
                 if PremiumStore.isTestFlightBuild {
-                    Text(loc: "Thanks for testing Us. — every quiz pack and game is unlocked for you while the app is in beta.")
+                    Text(loc: "Thanks for testing Leyla — every quiz pack and game is unlocked for you while the app is in beta.")
                 } else if premium.isPremium {
                     Text(loc: "Every quiz pack and game is unlocked for both of you.")
                 } else {

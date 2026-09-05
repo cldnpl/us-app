@@ -1,7 +1,7 @@
 import Foundation
 import StoreKit
 
-/// Owns the Us. Premium subscription: what's free, what's locked, and the
+/// Owns the Leyla Premium subscription: what's free, what's locked, and the
 /// StoreKit 2 purchase/entitlement state.
 ///
 /// Free tier: the first two quiz categories (Starters, Relationship) and the
