@@ -33,7 +33,7 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#ffb5c2] via-[#ff6b6b] to-[#ffd9ba]">
         <div className="mx-auto max-w-5xl px-6 pt-24 pb-28 text-center text-white">
-          <h1 className="text-7xl sm:text-8xl font-black tracking-tight drop-shadow-sm">Us.</h1>
+          <h1 className="text-7xl sm:text-8xl font-black tracking-tight drop-shadow-sm" style={{ fontFamily: '"Chopin Script", "Snell Roundhand", cursive' }}>Leyla</h1>
           <p className="mt-4 text-2xl sm:text-3xl font-medium">Two people, one little world.</p>
           <p className="mx-auto mt-5 max-w-xl text-lg text-white/90">
             A private app for couples — built for long-distance, lovely for close.
@@ -44,7 +44,7 @@ export default function Home() {
                Coming to the App Store
             </span>
           </div>
-          <p className="mt-4 text-sm text-white/80">Free to use — Premium just €0.99/month.</p>
+          <p className="mt-4 text-sm text-white/80">Free to use — Leyla Premium just €2.99/month.</p>
         </div>
       </section>
 
@@ -119,7 +119,7 @@ export default function Home() {
               <h3 className="text-xl font-bold">Premium</h3>
               <span className="rounded-full bg-[#ff6b6b]/10 px-3 py-1 text-sm font-semibold text-[#ff6b6b]">Best for two</span>
             </div>
-            <p className="mt-1 text-3xl font-black">€0.99<span className="text-lg font-medium text-neutral-400">/month</span></p>
+            <p className="mt-1 text-3xl font-black">€2.99<span className="text-lg font-medium text-neutral-400">/month</span></p>
             <ul className="mt-6 space-y-3 text-neutral-600">
               {premiumPerks.map((p) => (
                 <li key={p} className="flex gap-3"><span className="text-[#ff6b6b]">✓</span>{p}</li>

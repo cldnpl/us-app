@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Footer from "../components/Footer";
 
-export const metadata = { title: "Privacy Policy — Us." };
+export const metadata = { title: "Privacy Policy — Leyla" };
 
 export default function Privacy() {
   return (
@@ -13,7 +13,7 @@ export default function Privacy() {
 
         <div className="mt-8 space-y-6 text-neutral-700 leading-relaxed">
           <p>
-            Us. is a private, two-person app. We collect only what we need to connect you with your
+            Leyla is a private, two-person app. We collect only what we need to connect you with your
             partner and run the features you use. We never sell your data.
           </p>
 
@@ -32,7 +32,7 @@ export default function Privacy() {
             <p className="mt-3">
               You can export or permanently delete your account and data from within the app at any
               time. To request help, email{" "}
-              <a href="mailto:dev@sharepact.com" className="text-[#ff6b6b]">dev@sharepact.com</a>.
+              <a href="mailto:napolitano.claudia@icloud.com" className="text-[#ff6b6b]">napolitano.claudia@icloud.com</a>.
             </p>
           </section>
 

@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="border-t border-black/5 bg-white">
       <div className="mx-auto max-w-5xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-neutral-500">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-[#ff6b6b]">Us.</span>
+          <span className="text-2xl font-bold text-[#ff6b6b]" style={{ fontFamily: '"Chopin Script", "Snell Roundhand", cursive' }}>Leyla</span>
           <span>© {new Date().getFullYear()} · Two people, one little world.</span>
         </div>
         <nav className="flex items-center gap-6">

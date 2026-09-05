@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Footer from "../components/Footer";
 
-export const metadata = { title: "Terms of Service — Us." };
+export const metadata = { title: "Terms of Service — Leyla" };
 
 export default function Terms() {
   return (
@@ -13,7 +13,7 @@ export default function Terms() {
 
         <div className="mt-8 space-y-6 text-neutral-700 leading-relaxed">
           <p>
-            By using Us., you agree to these terms. Us. is provided for personal, non-commercial use
+            By using Leyla, you agree to these terms. Leyla is provided for personal, non-commercial use
             between two paired partners.
           </p>
           <section>
@@ -26,7 +26,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-bold text-neutral-900">Premium subscription</h2>
             <p className="mt-3">
-              Premium is an auto-renewing subscription billed at €0.99/month through your App Store
+              Leyla Premium is an auto-renewing subscription billed at €2.99/month through your App Store
               account. It renews unless cancelled at least 24 hours before the end of the period.
               Manage or cancel anytime in your Apple ID settings.
             </p>
@@ -34,7 +34,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-bold text-neutral-900">Availability</h2>
             <p className="mt-3">
-              We work hard to keep Us. running, but the service is provided &ldquo;as is&rdquo;
+              We work hard to keep Leyla running, but the service is provided &ldquo;as is&rdquo;
               without warranty. We may update these terms; we&apos;ll note changes here.
             </p>
           </section>

@@ -1,13 +1,13 @@
-# "Us." — Product, Technical & Delivery Plan
+# "Leyla" — Product, Technical & Delivery Plan
 
 > **Status:** Final draft for approval. Covers the app, backend, real-time features, freemium model, landing page, deployment to your server, branding, and roadmap.
-> **App name:** **Us.** (display) · **Date:** 2026-07-03
+> **App name:** **Leyla** (display) · **Date:** 2026-07-03
 
 ---
 
 ## 1. Context & Vision
 
-**Us.** is a private, two-person app that keeps couples emotionally close — built **first for long-distance couples** (time zones, distance, reunions) and just as warm for couples who live together. The core idea is *ambient presence*: your partner is always one tap — or one glance at a widget — away.
+**Leyla** is a private, two-person app that keeps couples emotionally close — built **first for long-distance couples** (time zones, distance, reunions) and just as warm for couples who live together. The core idea is *ambient presence*: your partner is always one tap — or one glance at a widget — away.
 
 **Design pillars**
 1. **Native & HIG-first** — SwiftUI + system components only; feels like an Apple app.
@@ -21,7 +21,7 @@
 
 | Area | Decision |
 |---|---|
-| App name | **Us.** (code module `Us`, display `Us.`) |
+| App name | **Leyla** (code module `Us`, display `Leyla`) |
 | iOS app | **Swift / SwiftUI only**, **iOS 16+** (lock-screen widgets ✅; no in-widget buttons → Miss-You widget deep-links to auto-send) |
 | Backend | **Go** (REST + WebSocket), Docker-deployed |
 | Auth | **Sign in with Apple + Email/Password** |
@@ -165,7 +165,7 @@ Auth (`/auth/apple`, `/auth/register|login|refresh|logout`) · Profile (`/me`, `
 
 ## 12. Landing Page (Vercel)
 - **Stack:** Next.js (App Router) + Tailwind, deployed via Vercel.
-- **Sections:** Hero ("Us." wordmark + tagline *"Two people, one little world."* + app mockup + App Store badge/"Coming soon") · feature highlights (Miss You, photo-to-widget, partner map, draw/play, LDR distance & countdown) · long-distance section · widget showcase · **pricing** (Free vs Premium €0.99/mo) · privacy/trust · footer.
+- **Sections:** Hero ("Leyla" wordmark + tagline *"Two people, one little world."* + app mockup + App Store badge/"Coming soon") · feature highlights (Miss You, photo-to-widget, partner map, draw/play, LDR distance & countdown) · long-distance section · widget showcase · **pricing** (Free vs Premium €0.99/mo) · privacy/trust · footer.
 - **Legal pages (Apple-required):** `/privacy`, `/terms`, `/support`.
 - **Deploy:** Vercel, custom domain **`us.islamov.online`** (CNAME → Vercel); free `*.vercel.app` for previews.
 
@@ -192,17 +192,17 @@ TLS everywhere · JWT access + rotating refresh (Keychain) · every couple resou
 ---
 
 ## 15. Branding — Name & Logo
-- **Name:** **Us.** — ultra-minimal, intimate, instantly a couple app. Code module `Us`, bundle id suggestion `com.sharepact.us`, URL scheme `usapp://`. (App Store display name "Us." — confirm availability at submission.)
+- **Name:** **Leyla** — ultra-minimal, intimate, instantly a couple app. Code module `Us`, bundle id suggestion `com.sharepact.us`, URL scheme `usapp://`. (App Store display name "Leyla" — confirm availability at submission.)
 - **Logo prompt (Midjourney/DALL·E/Ideogram):**
-  > *Minimalist iOS app icon for a couples app called "Us." Two simple abstract shapes gently merging into one — two hearts overlapping into a single form (alt: two crescent moons forming a circle, or two dots joined by an orbit ring). Flat vector, clean geometry, generous negative space, soft rounded edges. Warm gradient: blush pink → coral → soft peach. Centered on an iOS squircle with a subtle top-down gradient. No text, no letters. Cute, modern, premium, friendly. Flat 2D, crisp, dribbble-quality, App Store icon style. --ar 1:1*
+  > *Minimalist iOS app icon for a couples app called "Leyla" Two simple abstract shapes gently merging into one — two hearts overlapping into a single form (alt: two crescent moons forming a circle, or two dots joined by an orbit ring). Flat vector, clean geometry, generous negative space, soft rounded edges. Warm gradient: blush pink → coral → soft peach. Centered on an iOS squircle with a subtle top-down gradient. No text, no letters. Cute, modern, premium, friendly. Flat 2D, crisp, dribbble-quality, App Store icon style. --ar 1:1*
   Palette variant: lavender → periwinkle. Motif variants: continuous line-art heart-knot; two dots + orbit ring.
 
 ---
 
 ## 16. Project Structure (monorepo)
 ```
-Us/
-├── ios/           # Xcode (SwiftUI, iOS16): App target, Widget ext, Shared App-Group models
+Leyla-app/
+├── ios/           # Xcode (SwiftUI, iOS16): App target (still named `Us` for App Store record continuity), Widget ext, Shared App-Group models
 ├── server/        # Go: cmd/api, internal/{http,ws,auth,media,push,location,db,domain}, migrations, Dockerfile, docker-compose.yml
 ├── landing/       # Next.js + Tailwind (Vercel)
 └── docs/PRD.md    # this document, saved into the repo
